@@ -50,7 +50,7 @@ export default function TeacherTimetable() {
   const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
   // Mock timetable data
-  const [timetable, setTimetable] = useState({
+  const [timetable, setTimetable] = useState<{[key: string]: any}>({
     'section-a': {
       'Monday': {
         '09:00-10:00': { subject: 'Data Structures', room: 'CS-101', type: 'lecture' },

@@ -21,8 +21,17 @@ import {
 } from 'lucide-react';
 
 export default function TeacherQuestionBanks() {
+  interface FormData {
+    title: string;
+    subject: string;
+    sections: string[];
+    description: string;
+    file: File | null;
+    type: string;
+  }
+
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     title: '',
     subject: '',
     sections: [],

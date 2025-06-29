@@ -54,7 +54,7 @@ export default function TeacherAttendance() {
   };
 
   const handleMarkAllPresent = () => {
-    const allPresent = {};
+    const allPresent: {[key: number]: boolean} = {};
     filteredStudents.forEach(student => {
       allPresent[student.id] = true;
     });
@@ -62,7 +62,7 @@ export default function TeacherAttendance() {
   };
 
   const handleMarkAllAbsent = () => {
-    const allAbsent = {};
+    const allAbsent: {[key: number]: boolean} = {};
     filteredStudents.forEach(student => {
       allAbsent[student.id] = false;
     });

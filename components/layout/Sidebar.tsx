@@ -23,6 +23,7 @@ import {
   Bell,
   X
 } from 'lucide-react';
+import { apiClient } from '@/lib/api';
 
 interface SidebarProps {
   role: string;
@@ -59,6 +60,7 @@ const roleMenus = {
   ],
   'super-admin': [
     { icon: Home, label: 'Dashboard', href: '/dashboard/super-admin' },
+    { icon: Users, label: 'Sections Management', href: '/dashboard/super-admin/sections' },
     { icon: BarChart3, label: 'Analytics', href: '/dashboard/super-admin/analytics' },
     { icon: Users, label: 'All Users', href: '/dashboard/super-admin/users' },
     { icon: Shield, label: 'System Logs', href: '/dashboard/super-admin/logs' },
@@ -79,10 +81,17 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
     }
   }, []);
 
-  const handleLogout = () => {
-    localStorage.removeItem('user');
-    localStorage.removeItem('token');
-    router.push('/auth/login');
+  const handleLogout = async () => {
+    try {
+      await apiClient.logout();
+      router.push('/auth/login');
+    } catch (error) {
+      console.error('Logout error:', error);
+      // Force logout even if API call fails
+      localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      router.push('/auth/login');
+    }
   };
 
   const handleLinkClick = () => {
@@ -149,13 +158,13 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
                 />
               ) : (
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
-                  {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                  {user.firstName ? user.firstName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
                 </span>
               )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 dark:text-white truncate">
-                {user.name || user.email}
+                {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
               </p>
               <span className={cn(
                 "inline-flex items-center px-2 py-1 rounded-full text-xs font-medium capitalize",

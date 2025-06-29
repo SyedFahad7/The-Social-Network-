@@ -21,16 +21,27 @@ import {
   Download
 } from 'lucide-react';
 
+// Define proper types for form data
+interface AssignmentFormData {
+  title: string;
+  description: string;
+  subject: string;
+  sections: string[];
+  dueDate: string;
+  file: File | null;
+  type: string;
+}
+
 export default function TeacherAssignments() {
   const [showUploadForm, setShowUploadForm] = useState(false);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<AssignmentFormData>({
     title: '',
     description: '',
     subject: '',
-    sections: [],
+    sections: [] as string[],
     dueDate: '',
     file: null,
-    type: 'assignment' // assignment or test
+    type: 'assignment'
   });
 
   const assignments = [
@@ -69,7 +80,7 @@ export default function TeacherAssignments() {
     }
   ];
 
-  const handleInputChange = (field: string, value: any) => {
+  const handleInputChange = (field: keyof AssignmentFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
@@ -91,7 +102,7 @@ export default function TeacherAssignments() {
       title: '',
       description: '',
       subject: '',
-      sections: [],
+      sections: [] as string[],
       dueDate: '',
       file: null,
       type: 'assignment'
@@ -212,7 +223,7 @@ export default function TeacherAssignments() {
                     id="file"
                     type="file"
                     accept=".pdf,.doc,.docx"
-                    onChange={(e) => handleInputChange('file', e.target.files?.[0])}
+                    onChange={(e) => handleInputChange('file', e.target.files?.[0] || null)}
                     className="cursor-pointer"
                   />
                 </div>

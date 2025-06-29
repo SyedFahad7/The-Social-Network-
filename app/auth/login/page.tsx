@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { GraduationCap, Eye, EyeOff, AlertCircle } from 'lucide-react';
+import { apiClient } from '@/lib/api';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
@@ -18,60 +19,38 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
-  // Mock user database - In real app, this would be in your backend
-  const mockUsers = [
-    { email: 'student@demo.com', password: 'demo123', role: 'student', name: 'John Doe', section: 'A', rollNumber: 'CS2021001', department: 'Computer Science' },
-    { email: 'teacher@demo.com', password: 'demo123', role: 'teacher', name: 'Prof. Smith', employeeId: 'EMP001', department: 'Computer Science' },
-    { email: 'admin@demo.com', password: 'demo123', role: 'admin', name: 'Admin User', department: 'Computer Science' },
-    { email: 'hod@demo.com', password: 'demo123', role: 'super-admin', name: 'Dr. Johnson', department: 'Computer Science' },
-  ];
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     
-    // Simulate API call delay
-    setTimeout(() => {
-      // Find user in mock database
-      const user = mockUsers.find(u => u.email === email && u.password === password);
+    try {
+      const response = await apiClient.login(email, password, role);
       
-      if (!user) {
-        setError('Invalid email or password');
-        setIsLoading(false);
-        return;
+      if (response.success) {
+        // Redirect based on role
+        switch (role) {
+          case 'student':
+            router.push('/dashboard/student');
+            break;
+          case 'teacher':
+            router.push('/dashboard/teacher');
+            break;
+          case 'admin':
+            router.push('/dashboard/admin');
+            break;
+          case 'super-admin':
+            router.push('/dashboard/super-admin');
+            break;
+          default:
+            router.push('/dashboard');
+        }
       }
-
-      // Check if selected role matches user's actual role
-      if (user.role !== role) {
-        setError('Selected role does not match your account type');
-        setIsLoading(false);
-        return;
-      }
-
-      // Store user data and token
-      localStorage.setItem('user', JSON.stringify(user));
-      localStorage.setItem('token', 'mock-jwt-token');
-      
-      // Redirect based on role
-      switch (role) {
-        case 'student':
-          router.push('/dashboard/student');
-          break;
-        case 'teacher':
-          router.push('/dashboard/teacher');
-          break;
-        case 'admin':
-          router.push('/dashboard/admin');
-          break;
-        case 'super-admin':
-          router.push('/dashboard/super-admin');
-          break;
-        default:
-          router.push('/dashboard');
-      }
+    } catch (error: any) {
+      setError(error.message || 'Login failed. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (

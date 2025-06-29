@@ -42,7 +42,7 @@ export default function SectionDetails() {
     }
   };
 
-  const [assignmentGrades, setAssignmentGrades] = useState({
+  const [assignmentGrades, setAssignmentGrades] = useState<{[key: number]: any}>({
     1: { assignment1: 85, assignment2: 90, assignment3: 88, submitted1: true, submitted2: true, submitted3: false },
     2: { assignment1: 92, assignment2: 87, assignment3: 95, submitted1: true, submitted2: true, submitted3: true },
     3: { assignment1: 78, assignment2: 85, assignment3: 82, submitted1: true, submitted2: false, submitted3: true },
@@ -50,7 +50,7 @@ export default function SectionDetails() {
     5: { assignment1: 75, assignment2: 80, assignment3: 85, submitted1: false, submitted2: true, submitted3: true },
   });
 
-  const [testGrades, setTestGrades] = useState({
+  const [testGrades, setTestGrades] = useState<{[key: number]: any}>({
     1: { test1: 88, test2: 92, test3: 85, attended1: true, attended2: true, attended3: false },
     2: { test1: 95, test2: 90, test3: 88, attended1: true, attended2: true, attended3: true },
     3: { test1: 82, test2: 85, test3: 80, attended1: true, attended2: false, attended3: true },
