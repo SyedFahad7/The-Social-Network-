@@ -1,0 +1,96 @@
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const dotenv = require('dotenv');
+
+// Load environment variables
+dotenv.config();
+
+// Import routes
+const authRoutes = require('./routes/auth');
+const userRoutes = require('./routes/users');
+const assignmentRoutes = require('./routes/assignments');
+const attendanceRoutes = require('./routes/attendance');
+const timetableRoutes = require('./routes/timetable');
+const certificateRoutes = require('./routes/certificates');
+const feedbackRoutes = require('./routes/feedback');
+
+// Import middleware
+const { errorHandler } = require('./middleware/errorHandler');
+const { requestLogger } = require('./middleware/logger');
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+// Middleware
+app.use(cors({
+  origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+  credentials: true
+}));
+
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// Request logging
+app.use(requestLogger);
+
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Social Network API is running!',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV
+  });
+});
+
+// API Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use('/api/assignments', assignmentRoutes);
+app.use('/api/attendance', attendanceRoutes);
+app.use('/api/timetable', timetableRoutes);
+app.use('/api/certificates', certificateRoutes);
+app.use('/api/feedback', feedbackRoutes);
+
+// Error handling middleware (must be last)
+app.use(errorHandler);
+
+// 404 handler
+app.use('*', (req, res) => {
+  res.status(404).json({
+    success: false,
+    message: `Route ${req.originalUrl} not found`
+  });
+});
+
+// Database connection
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+})
+.then(() => {
+  console.log('✅ Connected to MongoDB');
+  
+  // Start server only after DB connection
+  app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`📊 Environment: ${process.env.NODE_ENV}`);
+    console.log(`🌐 API Health: http://localhost:${PORT}/api/health`);
+  });
+})
+.catch((error) => {
+  console.error('❌ MongoDB connection error:', error);
+  process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('👋 SIGTERM received. Shutting down gracefully...');
+  mongoose.connection.close(() => {
+    console.log('📦 MongoDB connection closed.');
+    process.exit(0);
+  });
+});
+
+module.exports = app;
