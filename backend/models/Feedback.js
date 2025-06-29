@@ -124,7 +124,7 @@ const feedbackSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Response Schema
+// Response Schema - Fixed the Mixed type issue
 const responseSchema = new mongoose.Schema({
   feedback: {
     type: mongoose.Schema.Types.ObjectId,
@@ -137,14 +137,14 @@ const responseSchema = new mongoose.Schema({
     required: [true, 'Respondent is required']
   },
   
-  // Responses
+  // Responses - Fixed the answer field definition
   answers: [{
     questionId: {
       type: mongoose.Schema.Types.ObjectId,
       required: true
     },
-    answer: {
-      type: mongoose.Schema.Mixed, // Can be string, number, array, etc.
+    answerValue: {  // Changed from 'answer' to 'answerValue' to avoid conflicts
+      type: mongoose.Schema.Types.Mixed, // Can be string, number, array, etc.
       required: true
     }
   }],
