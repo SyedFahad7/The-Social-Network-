@@ -269,6 +269,33 @@ class ApiClient {
     });
   }
 
+  // Department methods
+  async getDepartments() {
+    return this.request('/departments');
+  }
+
+  async getDepartmentById(id: string) {
+    return this.request(`/departments/${id}`);
+  }
+
+  async createDepartment(departmentData: any) {
+    return this.request('/departments', {
+      method: 'POST',
+      body: JSON.stringify(departmentData),
+    });
+  }
+
+  async updateDepartment(id: string, departmentData: any) {
+    return this.request(`/departments/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(departmentData),
+    });
+  }
+
+  async getDepartmentStats(id: string) {
+    return this.request(`/departments/${id}/stats`);
+  }
+
   // Health check
   async healthCheck() {
     return this.request('/health');
@@ -315,7 +342,12 @@ export const {
   submitFeedbackResponse,
   getFeedbackResponses,
   activateFeedback,
-  healthCheck
+  healthCheck,
+  getDepartments,
+  getDepartmentById,
+  createDepartment,
+  updateDepartment,
+  getDepartmentStats
 } = apiClient;
 
 export default apiClient;

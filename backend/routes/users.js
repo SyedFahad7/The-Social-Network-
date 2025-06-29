@@ -40,8 +40,18 @@ router.get('/', [
   // Build query
   const query = { isActive: true };
   
+  // If user is not super-admin, only show users from their department
+  if (req.user.role !== 'super-admin') {
+    query.department = req.user.department;
+  }
+  
   if (role) query.role = role;
-  if (department) query.department = department;
+  if (department) {
+    // Only allow filtering by department if user is super-admin or it's their own department
+    if (req.user.role === 'super-admin' || department === req.user.department) {
+      query.department = department;
+    }
+  }
   
   if (search) {
     query.$or = [
@@ -111,8 +121,8 @@ router.post('/', [
     .isIn(['student', 'teacher', 'admin', 'super-admin'])
     .withMessage('Please select a valid role'),
   body('department')
-    .isIn(['Computer Science', 'Information Technology', 'Electronics & Communication', 'Mechanical Engineering'])
-    .withMessage('Please select a valid department'),
+    .notEmpty()
+    .withMessage('Department is required'),
   body('password')
     .isLength({ min: 6 })
     .withMessage('Password must be at least 6 characters'),
