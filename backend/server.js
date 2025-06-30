@@ -15,6 +15,7 @@ const attendanceRoutes = require('./routes/attendance');
 const timetableRoutes = require('./routes/timetable');
 const certificateRoutes = require('./routes/certificates');
 const feedbackRoutes = require('./routes/feedback');
+const sectionRoutes = require('./routes/sections');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -78,6 +79,7 @@ app.use('/api/attendance', attendanceRoutes);
 app.use('/api/timetable', timetableRoutes);
 app.use('/api/certificates', certificateRoutes);
 app.use('/api/feedback', feedbackRoutes);
+app.use('/api/sections', sectionRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

@@ -300,6 +300,106 @@ class ApiClient {
   async healthCheck() {
     return this.request('/health');
   }
+
+  // Section methods
+  async getSections(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/sections?${queryString}`);
+  }
+
+  async getSectionById(id: string) {
+    return this.request(`/sections/${id}`);
+  }
+
+  async createSection(sectionData: any) {
+    return this.request('/sections', {
+      method: 'POST',
+      body: JSON.stringify(sectionData),
+    });
+  }
+
+  async updateSection(id: string, sectionData: any) {
+    return this.request(`/sections/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(sectionData),
+    });
+  }
+
+  async deleteSection(id: string) {
+    return this.request(`/sections/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async getTeacherSections(teacherId: string) {
+    return this.request(`/sections/teacher/${teacherId}`);
+  }
+
+  // Test methods
+  async getTests(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/tests?${queryString}`);
+  }
+
+  async getTestById(id: string) {
+    return this.request(`/tests/${id}`);
+  }
+
+  async createTest(testData: any) {
+    return this.request('/tests', {
+      method: 'POST',
+      body: JSON.stringify(testData),
+    });
+  }
+
+  async updateTest(id: string, testData: any) {
+    return this.request(`/tests/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(testData),
+    });
+  }
+
+  async deleteTest(id: string) {
+    return this.request(`/tests/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  // Question Bank methods
+  async getQuestionBanks(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/questionbanks?${queryString}`);
+  }
+
+  async getQuestionBankById(id: string) {
+    return this.request(`/questionbanks/${id}`);
+  }
+
+  async createQuestionBank(questionBankData: any) {
+    return this.request('/questionbanks', {
+      method: 'POST',
+      body: JSON.stringify(questionBankData),
+    });
+  }
+
+  async updateQuestionBank(id: string, questionBankData: any) {
+    return this.request(`/questionbanks/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(questionBankData),
+    });
+  }
+
+  async deleteQuestionBank(id: string) {
+    return this.request(`/questionbanks/${id}`, {
+      method: 'DELETE',
+    });
+  }
+
+  async incrementDownloads(id: string) {
+    return this.request(`/questionbanks/${id}/download`, {
+      method: 'PUT',
+    });
+  }
 }
 
 // Create and export a singleton instance
@@ -347,7 +447,24 @@ export const {
   getDepartmentById,
   createDepartment,
   updateDepartment,
-  getDepartmentStats
+  getDepartmentStats,
+  getSections,
+  getSectionById,
+  createSection,
+  updateSection,
+  deleteSection,
+  getTeacherSections,
+  getTests,
+  getTestById,
+  createTest,
+  updateTest,
+  deleteTest,
+  getQuestionBanks,
+  getQuestionBankById,
+  createQuestionBank,
+  updateQuestionBank,
+  deleteQuestionBank,
+  incrementDownloads
 } = apiClient;
 
 export default apiClient;
