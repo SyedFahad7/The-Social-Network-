@@ -37,22 +37,23 @@ const userSchema = new mongoose.Schema({
     }
   },
   department: {
-  type: String,
-  required: [true, 'Department is required'],
-  ref: 'Department',
-  validate: {
-    validator: async function (v) {
-      try {
-        const Department = mongoose.model('Department');
-        const department = await Department.findById(new mongoose.Types.ObjectId(v));
-        return department && department.isActive;
-      } catch (err) {
-        return false;
-      }
-    },
-    message: 'Please select a valid department'
-  }
-},
+    type: mongoose.Schema.Types.ObjectId, // Change from String to ObjectId
+    ref: 'Department',
+    required: [true, 'Department is required'],
+    validate: {
+      validator: async function (v) {
+        try {
+          const Department = mongoose.model('Department');
+          const department = await Department.findById(v);
+          return department && department.isActive;
+        } catch (err) {
+          return false;
+        }
+      },
+      message: 'Please select a valid department'
+    }
+  },
+  
 
   
   // Student-specific fields
