@@ -1,11 +1,11 @@
 const express = require('express');
 const router = express.Router();
 const Section = require('../models/Section');
-const auth = require('../middleware/auth');
+const { authenticate } = require('../middleware/auth');
 const { isTeacher, isSuperAdmin } = require('../middleware/roleCheck');
 
 // Get all sections (filtered by department for non-super-admin)
-router.get('/', auth, async (req, res) => {
+router.get('/', authenticate, async (req, res) => {
   try {
     let query = {};
     
@@ -32,7 +32,7 @@ router.get('/', auth, async (req, res) => {
 });
 
 // Get sections by teacher
-router.get('/teacher/:teacherId', auth, async (req, res) => {
+router.get('/teacher/:teacherId', authenticate, async (req, res) => {
   try {
     const sections = await Section.find({ teacherId: req.params.teacherId })
       .populate('departmentId', 'name code');
@@ -51,7 +51,7 @@ router.get('/teacher/:teacherId', auth, async (req, res) => {
 });
 
 // Get section by ID
-router.get('/:id', auth, async (req, res) => {
+router.get('/:id', authenticate, async (req, res) => {
   try {
     const section = await Section.findById(req.params.id)
       .populate('teacherId', 'firstName lastName email')
@@ -78,7 +78,7 @@ router.get('/:id', auth, async (req, res) => {
 });
 
 // Create new section (super admin only)
-router.post('/', auth, isSuperAdmin, async (req, res) => {
+router.post('/', authenticate, isSuperAdmin, async (req, res) => {
   try {
     const section = new Section(req.body);
     await section.save();
@@ -101,7 +101,7 @@ router.post('/', auth, isSuperAdmin, async (req, res) => {
 });
 
 // Update section (super admin only)
-router.put('/:id', auth, isSuperAdmin, async (req, res) => {
+router.put('/:id', authenticate, isSuperAdmin, async (req, res) => {
   try {
     const section = await Section.findByIdAndUpdate(
       req.params.id,
@@ -131,7 +131,7 @@ router.put('/:id', auth, isSuperAdmin, async (req, res) => {
 });
 
 // Delete section (super admin only)
-router.delete('/:id', auth, isSuperAdmin, async (req, res) => {
+router.delete('/:id', authenticate, isSuperAdmin, async (req, res) => {
   try {
     const section = await Section.findByIdAndDelete(req.params.id);
     
