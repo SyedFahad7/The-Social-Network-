@@ -1,6 +1,6 @@
-export { default as UserCard } from './UserCard';
-export { default as StatsCard } from './StatsCard';
-export { default as StudentAnalytics } from './StudentAnalytics';
-export { default as UserForm } from './UserForm';
-export { default as SearchAndFilter } from './SearchAndFilter';
-export { default as QuickActionCard } from './QuickActionCard'; 
+export { StatsCard } from './StatsCard';
+export { QuickActionCard } from './QuickActionCard';
+export { SearchAndFilter } from './SearchAndFilter';
+export { UserCard } from './UserCard';
+export { StudentAnalytics } from './StudentAnalytics';
+export { UserForm } from './UserForm'; 

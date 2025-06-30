@@ -37,19 +37,23 @@ const userSchema = new mongoose.Schema({
     }
   },
   department: {
-    type: String,
-    required: [true, 'Department is required'],
-    ref: 'Department',
-    validate: {
-      validator: async function(v) {
-        // Check if department exists in Department collection
+  type: String,
+  required: [true, 'Department is required'],
+  ref: 'Department',
+  validate: {
+    validator: async function (v) {
+      try {
         const Department = mongoose.model('Department');
-        const department = await Department.findById(v);
+        const department = await Department.findById(new mongoose.Types.ObjectId(v));
         return department && department.isActive;
-      },
-      message: 'Please select a valid department'
-    }
-  },
+      } catch (err) {
+        return false;
+      }
+    },
+    message: 'Please select a valid department'
+  }
+},
+
   
   // Student-specific fields
   rollNumber: {

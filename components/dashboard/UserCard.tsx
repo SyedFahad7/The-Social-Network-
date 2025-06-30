@@ -1,172 +1,133 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { 
-  GraduationCap, 
-  UserCheck, 
-  Shield, 
-  Crown, 
-  Eye, 
-  Edit, 
-  Trash2 
-} from 'lucide-react';
-
-interface User {
-  _id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'student' | 'teacher' | 'admin' | 'super-admin';
-  department: string;
-  rollNumber?: string;
-  section?: string;
-  employeeId?: string;
-  isActive: boolean;
-  createdAt: string;
-  lastLogin?: string;
-}
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Eye, Edit, Trash2, Mail, Phone } from 'lucide-react';
 
 interface UserCardProps {
-  user: User;
-  getDepartmentName: (departmentId: string) => string;
-  onView?: (user: User) => void;
-  onEdit?: (user: User) => void;
+  user: {
+    _id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    role: 'student' | 'teacher' | 'admin' | 'super-admin';
+    department?: string;
+    isActive: boolean;
+    phone?: string;
+    rollNumber?: string;
+  };
+  onView?: (userId: string) => void;
+  onEdit?: (userId: string) => void;
   onDelete?: (userId: string) => void;
-  onRoleChange?: (userId: string, newRole: string) => void;
-  showRoleChange?: boolean;
-  showViewButton?: boolean;
-  showEditButton?: boolean;
-  showDeleteButton?: boolean;
+  showActions?: boolean;
+  showDepartment?: boolean;
+  showContact?: boolean;
 }
 
-export default function UserCard({
+export function UserCard({
   user,
-  getDepartmentName,
   onView,
   onEdit,
   onDelete,
-  onRoleChange,
-  showRoleChange = false,
-  showViewButton = true,
-  showEditButton = true,
-  showDeleteButton = true
+  showActions = true,
+  showDepartment = true,
+  showContact = false
 }: UserCardProps) {
-  const getRoleIcon = (role: string) => {
-    switch (role) {
-      case 'super-admin': return <Crown className="w-4 h-4" />;
-      case 'admin': return <Shield className="w-4 h-4" />;
-      case 'teacher': return <UserCheck className="w-4 h-4" />;
-      case 'student': return <GraduationCap className="w-4 h-4" />;
-      default: return <GraduationCap className="w-4 h-4" />;
-    }
-  };
-
   const getRoleColor = (role: string) => {
     switch (role) {
-      case 'super-admin': return 'bg-purple-100 text-purple-800';
-      case 'admin': return 'bg-orange-100 text-orange-800';
-      case 'teacher': return 'bg-green-100 text-green-800';
       case 'student': return 'bg-blue-100 text-blue-800';
+      case 'teacher': return 'bg-green-100 text-green-800';
+      case 'admin': return 'bg-purple-100 text-purple-800';
+      case 'super-admin': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
     }
   };
 
-  const getAvatarColor = (role: string) => {
+  const getRoleLabel = (role: string) => {
     switch (role) {
-      case 'super-admin': return 'bg-purple-200';
-      case 'admin': return 'bg-orange-200';
-      case 'teacher': return 'bg-green-200';
-      case 'student': return 'bg-blue-200';
-      default: return 'bg-gray-200';
+      case 'student': return 'Student';
+      case 'teacher': return 'Teacher';
+      case 'admin': return 'Admin';
+      case 'super-admin': return 'Super Admin';
+      default: return role;
     }
   };
 
-  const getIconColor = (role: string) => {
-    switch (role) {
-      case 'super-admin': return 'text-purple-600';
-      case 'admin': return 'text-orange-600';
-      case 'teacher': return 'text-green-600';
-      case 'student': return 'text-blue-600';
-      default: return 'text-gray-600';
-    }
+  const getInitials = (firstName: string, lastName: string) => {
+    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
+    <Card className="hover:shadow-md transition-shadow duration-200">
       <CardContent className="p-6">
-        <div className="flex items-center justify-between">
+        <div className="flex items-start justify-between">
           <div className="flex items-center space-x-4">
-            <div className={`w-12 h-12 ${getAvatarColor(user.role)} rounded-full flex items-center justify-center`}>
-              {getRoleIcon(user.role)}
-            </div>
+            <Avatar className="w-12 h-12">
+              <AvatarFallback className="bg-gray-100 text-gray-700">
+                {getInitials(user.firstName, user.lastName)}
+              </AvatarFallback>
+            </Avatar>
             <div>
-              <h3 className="font-semibold text-gray-900">
-                {user.firstName} {user.lastName}
-              </h3>
-              <p className="text-sm text-gray-600">{user.email}</p>
-              <div className="flex items-center space-x-2 mt-1">
-                <Badge className={getRoleColor(user.role)}>
-                  {user.role.replace('-', ' ')}
+              <div className="flex items-center space-x-2 mb-1">
+                <h3 className="font-semibold text-gray-900">
+                  {user.firstName} {user.lastName}
+                </h3>
+                <Badge 
+                  variant={user.isActive ? "default" : "secondary"}
+                  className={user.isActive ? "bg-green-100 text-green-800" : "bg-gray-100 text-gray-600"}
+                >
+                  {user.isActive ? 'Active' : 'Inactive'}
                 </Badge>
-                <Badge variant="outline">{getDepartmentName(user.department)}</Badge>
+              </div>
+              <p className="text-sm text-gray-600 mb-1">{user.email}</p>
+              <div className="flex items-center space-x-2">
+                <Badge className={getRoleColor(user.role)}>
+                  {getRoleLabel(user.role)}
+                </Badge>
                 {user.rollNumber && (
-                  <Badge variant="outline">{user.rollNumber}</Badge>
-                )}
-                {user.section && (
-                  <Badge variant="outline">Section {user.section}</Badge>
-                )}
-                {user.employeeId && (
-                  <Badge variant="outline">{user.employeeId}</Badge>
+                  <span className="text-sm text-gray-500 font-mono">
+                    {user.rollNumber}
+                  </span>
                 )}
               </div>
+              {showDepartment && user.department && (
+                <p className="text-sm text-gray-500 mt-1">
+                  Department: {user.department}
+                </p>
+              )}
+              {showContact && user.phone && (
+                <div className="flex items-center space-x-1 mt-1">
+                  <Phone className="w-3 h-3 text-gray-400" />
+                  <span className="text-sm text-gray-500">{user.phone}</span>
+                </div>
+              )}
             </div>
           </div>
           
-          <div className="flex items-center space-x-2">
-            {user.role === 'student' && showViewButton && onView && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => onView(user)}
-              >
-                <Eye className="w-4 h-4" />
-              </Button>
-            )}
-            {showRoleChange && onRoleChange && (user.role === 'teacher' || user.role === 'admin') && (
-              <Select 
-                value={user.role} 
-                onValueChange={(value) => onRoleChange(user._id, value)}
-              >
-                <SelectTrigger className="w-32">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
-                </SelectContent>
-              </Select>
-            )}
-            {showEditButton && onEdit && (
-              <Button 
-                size="sm" 
-                variant="outline"
-                onClick={() => onEdit(user)}
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
-            )}
-            {showDeleteButton && onDelete && (
-              <Button 
-                size="sm" 
-                variant="outline" 
-                className="text-red-600 hover:text-red-700"
-                onClick={() => onDelete(user._id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            )}
-          </div>
+          {showActions && (
+            <div className="flex space-x-2">
+              {onView && (
+                <Button size="sm" variant="outline" onClick={() => onView(user._id)}>
+                  <Eye className="w-4 h-4" />
+                </Button>
+              )}
+              {onEdit && (
+                <Button size="sm" variant="outline" onClick={() => onEdit(user._id)}>
+                  <Edit className="w-4 h-4" />
+                </Button>
+              )}
+              {onDelete && (
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={() => onDelete(user._id)}
+                  className="text-red-600 hover:text-red-700"
+                >
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </CardContent>
     </Card>

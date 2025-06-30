@@ -2,19 +2,24 @@
 
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
   Users, 
   Plus, 
+  GraduationCap, 
+  UserCheck, 
+  Shield, 
+  Crown,
+  Eye,
+  Edit,
+  Trash2,
   Search,
-  GraduationCap,
-  UserCheck,
-  Shield
+  Filter,
+  X
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { 
@@ -25,71 +30,39 @@ import {
   SearchAndFilter 
 } from '@/components/dashboard';
 
-interface User {
-  _id: string;
-  email: string;
-  firstName: string;
-  lastName: string;
-  role: 'student' | 'teacher' | 'admin' | 'super-admin';
-  department: string;
-  rollNumber?: string;
-  section?: string;
-  employeeId?: string;
-  isActive: boolean;
-  createdAt: string;
-  lastLogin?: string;
-}
-
 interface Department {
   _id: string;
   name: string;
   code: string;
-  description: string;
 }
 
-interface StudentAnalytics {
-  attendance: {
-    total: number;
-    present: number;
-    percentage: number;
-  };
-  assignments: {
-    total: number;
-    submitted: number;
-    averageGrade: number;
-  };
-  tests: {
-    total: number;
-    attended: number;
-    averageGrade: number;
-  };
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: 'student' | 'teacher' | 'admin' | 'super-admin';
+  department: string;
+  isActive: boolean;
+  phone?: string;
+  rollNumber?: string;
+  employeeId?: string;
+  createdAt: string;
 }
 
 export default function SuperAdminUsers() {
   const [users, setUsers] = useState<User[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
-  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedRole, setSelectedRole] = useState('');
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [showUserForm, setShowUserForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
-  const [studentAnalytics, setStudentAnalytics] = useState<StudentAnalytics | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [roleFilter, setRoleFilter] = useState('all');
-  const [departmentFilter, setDepartmentFilter] = useState('all');
   const [showStudentDialog, setShowStudentDialog] = useState(false);
-  const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    role: '',
-    department: '',
-    rollNumber: '',
-    section: '',
-    employeeId: '',
-    password: ''
-  });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Fetch users and departments on component mount
   useEffect(() => {
     fetchData();
   }, []);
@@ -105,6 +78,7 @@ export default function SuperAdminUsers() {
       if (usersResponse.success) {
         setUsers(usersResponse.data.users || []);
       }
+
       if (departmentsResponse.success) {
         setDepartments(departmentsResponse.data || []);
       }
@@ -115,71 +89,67 @@ export default function SuperAdminUsers() {
     }
   };
 
-  const handleInputChange = (field: string, value: any) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const getDepartmentName = (departmentId: string) => {
+    const dept = departments.find(d => d._id === departmentId);
+    return dept ? dept.name : 'Unknown Department';
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const filteredUsers = users.filter(user => {
+    const matchesSearch = 
+      user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (user.rollNumber && user.rollNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
+      (user.employeeId && user.employeeId.toLowerCase().includes(searchTerm.toLowerCase()));
     
-    try {
-      if (editingUser) {
-        const updateData: any = { ...formData };
-        if (!updateData.password) {
-          delete updateData.password;
-        }
-        
-        const response = await apiClient.updateUser(editingUser._id, updateData);
-        if (response.success) {
-          await fetchData();
-          setEditingUser(null);
-        }
-      } else {
-        const response = await apiClient.createUser(formData);
-        if (response.success) {
-          await fetchData();
-        }
-      }
+    const matchesRole = !selectedRole || user.role === selectedRole;
+    const matchesDepartment = !selectedDepartment || user.department === selectedDepartment;
+    
+    return matchesSearch && matchesRole && matchesDepartment;
+  });
 
-      setShowCreateForm(false);
-      setFormData({
-        email: '',
-        firstName: '',
-        lastName: '',
-        role: '',
-        department: '',
-        rollNumber: '',
-        section: '',
-        employeeId: '',
-        password: ''
-      });
+  const students = filteredUsers.filter(user => user.role === 'student');
+  const teachers = filteredUsers.filter(user => user.role === 'teacher');
+  const admins = filteredUsers.filter(user => user.role === 'admin');
+  const superAdmins = filteredUsers.filter(user => user.role === 'super-admin');
+
+  const handleCreateUser = async (userData: any) => {
+    try {
+      setIsSubmitting(true);
+      const response = await apiClient.createUser(userData);
+      if (response.success) {
+        setShowUserForm(false);
+        fetchData();
+      }
     } catch (error) {
-      console.error('Error saving user:', error);
+      console.error('Error creating user:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
-  const handleEdit = (user: User) => {
-    setEditingUser(user);
-    setFormData({
-      email: user.email,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      role: user.role,
-      department: user.department,
-      rollNumber: user.rollNumber || '',
-      section: user.section || '',
-      employeeId: user.employeeId || '',
-      password: ''
-    });
-    setShowCreateForm(true);
+  const handleUpdateUser = async (userData: any) => {
+    try {
+      setIsSubmitting(true);
+      const response = await apiClient.updateUser(userData._id, userData);
+      if (response.success) {
+        setShowUserForm(false);
+        setEditingUser(null);
+        fetchData();
+      }
+    } catch (error) {
+      console.error('Error updating user:', error);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleDelete = async (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
     if (confirm('Are you sure you want to delete this user?')) {
       try {
         const response = await apiClient.deleteUser(userId);
         if (response.success) {
-          await fetchData();
+          fetchData();
         }
       } catch (error) {
         console.error('Error deleting user:', error);
@@ -187,62 +157,63 @@ export default function SuperAdminUsers() {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: string) => {
-    try {
-      const response = await apiClient.updateUser(userId, { role: newRole });
-      if (response.success) {
-        await fetchData();
-      }
-    } catch (error) {
-      console.error('Error updating user role:', error);
-    }
-  };
-
-  const handleViewStudent = async (student: User) => {
-    setSelectedStudent(student);
+  const handleViewStudent = (user: User) => {
+    setSelectedStudent(user);
     setShowStudentDialog(true);
-    
-    try {
-      // Fetch student analytics (mock data for now)
-      const analytics: StudentAnalytics = {
-        attendance: {
-          total: 45,
-          present: 42,
-          percentage: 93.3
-        },
-        assignments: {
-          total: 8,
-          submitted: 7,
-          averageGrade: 85.7
-        },
-        tests: {
-          total: 3,
-          attended: 3,
-          averageGrade: 88.3
-        }
-      };
-      setStudentAnalytics(analytics);
-    } catch (error) {
-      console.error('Error fetching student analytics:', error);
-    }
   };
 
-  const filteredUsers = users.filter(user => {
-    const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.rollNumber?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         user.employeeId?.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesRole = roleFilter === 'all' || user.role === roleFilter;
-    const matchesDepartment = departmentFilter === 'all' || user.department === departmentFilter;
-    
-    return matchesSearch && matchesRole && matchesDepartment;
-  });
+  const handleEditUser = (user: User) => {
+    setEditingUser(user);
+    setShowUserForm(true);
+  };
 
-  const getDepartmentName = (departmentId: string) => {
-    const dept = departments.find(d => d._id === departmentId);
-    return dept ? dept.name : departmentId;
+  const clearFilters = () => {
+    setSearchTerm('');
+    setSelectedRole('');
+    setSelectedDepartment('');
+  };
+
+  const getRoleStats = () => {
+    const totalUsers = users.length;
+    const activeUsers = users.filter(u => u.isActive).length;
+    const students = users.filter(u => u.role === 'student').length;
+    const teachers = users.filter(u => u.role === 'teacher').length;
+    const admins = users.filter(u => u.role === 'admin').length;
+
+    return [
+      {
+        title: 'Total Users',
+        value: totalUsers.toString(),
+        change: `${activeUsers} active`,
+        icon: Users,
+        color: 'text-blue-600',
+        bgColor: 'bg-blue-100'
+      },
+      {
+        title: 'Students',
+        value: students.toString(),
+        change: `${Math.round((students / totalUsers) * 100)}% of total`,
+        icon: GraduationCap,
+        color: 'text-green-600',
+        bgColor: 'bg-green-100'
+      },
+      {
+        title: 'Teachers',
+        value: teachers.toString(),
+        change: `${Math.round((teachers / totalUsers) * 100)}% of total`,
+        icon: UserCheck,
+        color: 'text-purple-600',
+        bgColor: 'bg-purple-100'
+      },
+      {
+        title: 'Admins',
+        value: admins.toString(),
+        change: `${Math.round((admins / totalUsers) * 100)}% of total`,
+        icon: Shield,
+        color: 'text-orange-600',
+        bgColor: 'bg-orange-100'
+      }
+    ];
   };
 
   if (loading) {
@@ -251,7 +222,7 @@ export default function SuperAdminUsers() {
         <div className="p-6">
           <div className="flex items-center justify-center h-64">
             <div className="text-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
               <p className="mt-4 text-gray-600">Loading users...</p>
             </div>
           </div>
@@ -263,13 +234,14 @@ export default function SuperAdminUsers() {
   return (
     <DashboardLayout role="super-admin">
       <div className="p-6 space-y-6">
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">User Management</h1>
-            <p className="text-gray-600">Manage students, teachers, and administrators in your department</p>
+            <p className="text-gray-600">Manage all users across departments</p>
           </div>
           <Button 
-            onClick={() => setShowCreateForm(true)}
+            onClick={() => setShowUserForm(true)}
             className="bg-green-600 hover:bg-green-700"
           >
             <Plus className="w-4 h-4 mr-2" />
@@ -277,100 +249,88 @@ export default function SuperAdminUsers() {
           </Button>
         </div>
 
-        {/* Create/Edit Form */}
-        {showCreateForm && (
-          <UserForm
-            formData={formData}
-            departments={departments}
-            editingUser={editingUser}
-            onInputChange={handleInputChange}
-            onSubmit={handleSubmit}
-            onCancel={() => {
-              setShowCreateForm(false);
-              setEditingUser(null);
-              setFormData({
-                email: '',
-                firstName: '',
-                lastName: '',
-                role: '',
-                department: '',
-                rollNumber: '',
-                section: '',
-                employeeId: '',
-                password: ''
-              });
-            }}
-          />
-        )}
+        {/* Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {getRoleStats().map((stat, index) => (
+            <StatsCard
+              key={index}
+              title={stat.title}
+              value={stat.value}
+              change={stat.change}
+              icon={stat.icon}
+              color={stat.color}
+              bgColor={stat.bgColor}
+            />
+          ))}
+        </div>
 
-        {/* Filters */}
+        {/* Search and Filters */}
         <SearchAndFilter
           searchTerm={searchTerm}
           onSearchChange={setSearchTerm}
-          searchPlaceholder="Search users..."
           filters={[
             {
               key: 'role',
-              value: roleFilter,
+              label: 'Role',
+              value: selectedRole,
               options: [
-                { value: 'all', label: 'All Roles' },
-                { value: 'student', label: 'Students' },
-                { value: 'teacher', label: 'Teachers' },
-                { value: 'admin', label: 'Admins' }
+                { value: 'student', label: 'Student' },
+                { value: 'teacher', label: 'Teacher' },
+                { value: 'admin', label: 'Admin' },
+                { value: 'super-admin', label: 'Super Admin' }
               ],
-              placeholder: 'Filter by role',
-              onValueChange: setRoleFilter
+              onChange: setSelectedRole
             },
             {
               key: 'department',
-              value: departmentFilter,
-              options: [
-                { value: 'all', label: 'All Departments' },
-                ...departments.map(dept => ({ value: dept._id, label: dept.name }))
-              ],
-              placeholder: 'Filter by department',
-              onValueChange: setDepartmentFilter
+              label: 'Department',
+              value: selectedDepartment,
+              options: departments.map(dept => ({
+                value: dept._id,
+                label: dept.name
+              })),
+              onChange: setSelectedDepartment
             }
           ]}
+          onClearFilters={clearFilters}
+          placeholder="Search users..."
         />
 
-        {/* Users List */}
-        <Tabs defaultValue="all" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="all">All Users ({filteredUsers.length})</TabsTrigger>
-            <TabsTrigger value="students">Students ({filteredUsers.filter(u => u.role === 'student').length})</TabsTrigger>
-            <TabsTrigger value="teachers">Teachers ({filteredUsers.filter(u => u.role === 'teacher').length})</TabsTrigger>
-            <TabsTrigger value="admins">Admins ({filteredUsers.filter(u => u.role === 'admin').length})</TabsTrigger>
+        {/* User Tabs */}
+        <Tabs defaultValue="students" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="students" className="flex items-center space-x-2">
+              <GraduationCap className="w-4 h-4" />
+              <span>Students ({students.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="teachers" className="flex items-center space-x-2">
+              <UserCheck className="w-4 h-4" />
+              <span>Teachers ({teachers.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="admins" className="flex items-center space-x-2">
+              <Shield className="w-4 h-4" />
+              <span>Admins ({admins.length})</span>
+            </TabsTrigger>
+            <TabsTrigger value="super-admins" className="flex items-center space-x-2">
+              <Crown className="w-4 h-4" />
+              <span>Super Admins ({superAdmins.length})</span>
+            </TabsTrigger>
           </TabsList>
-
-          <TabsContent value="all">
-            <div className="grid gap-4">
-              {filteredUsers.map((user) => (
-                <UserCard
-                  key={user._id}
-                  user={user}
-                  getDepartmentName={getDepartmentName}
-                  onView={handleViewStudent}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onRoleChange={handleRoleChange}
-                  showRoleChange={true}
-                />
-              ))}
-            </div>
-          </TabsContent>
 
           <TabsContent value="students">
             <div className="grid gap-4">
-              {filteredUsers.filter(user => user.role === 'student').map((user) => (
+              {students.map((user) => (
                 <UserCard
                   key={user._id}
-                  user={user}
-                  getDepartmentName={getDepartmentName}
-                  onView={handleViewStudent}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  showRoleChange={false}
+                  user={{
+                    ...user,
+                    department: getDepartmentName(user.department)
+                  }}
+                  onView={() => handleViewStudent(user)}
+                  onEdit={() => handleEditUser(user)}
+                  onDelete={() => handleDeleteUser(user._id)}
+                  showDepartment={true}
+                  showContact={true}
                 />
               ))}
             </div>
@@ -378,16 +338,17 @@ export default function SuperAdminUsers() {
 
           <TabsContent value="teachers">
             <div className="grid gap-4">
-              {filteredUsers.filter(user => user.role === 'teacher').map((user) => (
+              {teachers.map((user) => (
                 <UserCard
                   key={user._id}
-                  user={user}
-                  getDepartmentName={getDepartmentName}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onRoleChange={handleRoleChange}
-                  showRoleChange={true}
-                  showViewButton={false}
+                  user={{
+                    ...user,
+                    department: getDepartmentName(user.department)
+                  }}
+                  onEdit={() => handleEditUser(user)}
+                  onDelete={() => handleDeleteUser(user._id)}
+                  showDepartment={true}
+                  showContact={true}
                 />
               ))}
             </div>
@@ -395,72 +356,98 @@ export default function SuperAdminUsers() {
 
           <TabsContent value="admins">
             <div className="grid gap-4">
-              {filteredUsers.filter(user => user.role === 'admin').map((user) => (
+              {admins.map((user) => (
                 <UserCard
                   key={user._id}
-                  user={user}
-                  getDepartmentName={getDepartmentName}
-                  onEdit={handleEdit}
-                  onDelete={handleDelete}
-                  onRoleChange={handleRoleChange}
-                  showRoleChange={true}
-                  showViewButton={false}
+                  user={{
+                    ...user,
+                    department: getDepartmentName(user.department)
+                  }}
+                  onEdit={() => handleEditUser(user)}
+                  onDelete={() => handleDeleteUser(user._id)}
+                  showDepartment={true}
+                  showContact={true}
+                />
+              ))}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="super-admins">
+            <div className="grid gap-4">
+              {superAdmins.map((user) => (
+                <UserCard
+                  key={user._id}
+                  user={{
+                    ...user,
+                    department: getDepartmentName(user.department)
+                  }}
+                  onEdit={() => handleEditUser(user)}
+                  onDelete={() => handleDeleteUser(user._id)}
+                  showDepartment={true}
+                  showContact={true}
                 />
               ))}
             </div>
           </TabsContent>
         </Tabs>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <StatsCard
-            title="Total Users"
-            value={users.length}
-            icon={Users}
-            color="text-blue-600"
-            bgColor="bg-blue-100"
-          />
-          <StatsCard
-            title="Students"
-            value={users.filter(u => u.role === 'student').length}
-            icon={GraduationCap}
-            color="text-green-600"
-            bgColor="bg-green-100"
-          />
-          <StatsCard
-            title="Teachers"
-            value={users.filter(u => u.role === 'teacher').length}
-            icon={UserCheck}
-            color="text-purple-600"
-            bgColor="bg-purple-100"
-          />
-          <StatsCard
-            title="Admins"
-            value={users.filter(u => u.role === 'admin').length}
-            icon={Shield}
-            color="text-orange-600"
-            bgColor="bg-orange-100"
-          />
-        </div>
+        {/* User Form Dialog */}
+        {showUserForm && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+              <UserForm
+                user={editingUser || undefined}
+                departments={departments}
+                onSubmit={editingUser ? handleUpdateUser : handleCreateUser}
+                onCancel={() => {
+                  setShowUserForm(false);
+                  setEditingUser(null);
+                }}
+                isLoading={isSubmitting}
+                mode={editingUser ? 'edit' : 'create'}
+              />
+            </div>
+          </div>
+        )}
 
-        {/* Student Detail Dialog */}
+        {/* Student Analytics Dialog */}
         <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle className="flex items-center space-x-2">
-                <GraduationCap className="w-5 h-5" />
-                <span>Student Details</span>
-              </DialogTitle>
+              <DialogTitle>Student Analytics</DialogTitle>
               <DialogDescription>
-                Comprehensive view of student information and performance analytics
+                Detailed performance analytics for {selectedStudent?.firstName} {selectedStudent?.lastName}
               </DialogDescription>
             </DialogHeader>
-            
-            {selectedStudent && studentAnalytics && (
+            {selectedStudent && (
               <StudentAnalytics
-                student={selectedStudent}
-                analytics={studentAnalytics}
-                getDepartmentName={getDepartmentName}
+                student={{
+                  _id: selectedStudent._id,
+                  firstName: selectedStudent.firstName,
+                  lastName: selectedStudent.lastName,
+                  rollNumber: selectedStudent.rollNumber || '',
+                  email: selectedStudent.email,
+                  department: getDepartmentName(selectedStudent.department)
+                }}
+                analytics={{
+                  attendance: {
+                    present: 45,
+                    total: 50,
+                    percentage: 90
+                  },
+                  assignments: {
+                    submitted: 8,
+                    total: 10,
+                    averageGrade: 85
+                  },
+                  tests: {
+                    attended: 5,
+                    total: 6,
+                    averageGrade: 88
+                  },
+                  overallPerformance: 87,
+                  trend: 'up'
+                }}
               />
             )}
           </DialogContent>
