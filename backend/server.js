@@ -6,6 +6,9 @@ const dotenv = require('dotenv');
 // Load environment variables
 dotenv.config();
 
+// Load models in correct order (Department before User)
+require('./models');
+
 // Import routes
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
@@ -27,7 +30,7 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors({
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
+    // Allow requests with no origin (like mobile apps or curl requests
     if (!origin) return callback(null, true);
     
     const allowedOrigins = [

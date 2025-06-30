@@ -43,10 +43,13 @@ const userSchema = new mongoose.Schema({
     validate: {
       validator: async function (v) {
         try {
+          console.log('[VALIDATING DEPARTMENT]', v); // Debug log
           const Department = mongoose.model('Department');
           const department = await Department.findById(v);
+          console.log('[FOUND DEPT]', department); // Debug log
           return department && department.isActive;
         } catch (err) {
+          console.error('[DEPARTMENT VALIDATION ERROR]', err); // Debug log
           return false;
         }
       },
