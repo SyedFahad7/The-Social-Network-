@@ -33,6 +33,7 @@ interface UserFormProps {
   onCancel: () => void;
   isLoading?: boolean;
   mode: 'create' | 'edit';
+  isSuperAdmin?: boolean;
 }
 
 export function UserForm({
@@ -41,13 +42,14 @@ export function UserForm({
   onSubmit,
   onCancel,
   isLoading = false,
-  mode
-}: UserFormProps) {
+  mode,
+  isSuperAdmin = false
+}: UserFormProps & { mode: 'create' | 'edit' }) {
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
-    role: 'student' as UserRole,
+    role: isSuperAdmin && mode === 'create' ? 'teacher' as UserRole : 'student' as UserRole,
     department: '',
     phone: '',
     rollNumber: '',
@@ -63,15 +65,21 @@ export function UserForm({
         firstName: user.firstName || '',
         lastName: user.lastName || '',
         email: user.email || '',
-        role: user.role || 'student',
-        department: user.department || '',
+        role: user.role || (isSuperAdmin && mode === 'create' ? 'teacher' : 'student'),
+        department: user.department || (isSuperAdmin && departments.length > 0 ? departments[0]._id : ''),
         phone: user.phone || '',
         rollNumber: user.rollNumber || '',
         employeeId: user.employeeId || '',
         isActive: user.isActive
       });
+    } else if (mode === 'create') {
+      setFormData(prev => ({
+        ...prev,
+        role: isSuperAdmin ? 'teacher' : prev.role,
+        department: isSuperAdmin && departments.length > 0 ? departments[0]._id : prev.department
+      }));
     }
-  }, [user, mode]);
+  }, [user, mode, isSuperAdmin, departments]);
 
   const handleInputChange = (field: string, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -118,11 +126,23 @@ export function UserForm({
     e.preventDefault();
     
     if (validateForm()) {
-      const submitData = {
-        ...formData,
-        ...(mode === 'edit' && { _id: user?._id })
+      let payload: any;
+      switch (mode) {
+        case 'edit':
+          payload = { ...formData, _id: user?._id };
+          break;
+        case 'create':
+        default:
+          payload = { ...formData, password: 'teacher123' };
+          break;
+      }
+      const cleanPayload = (payload: any) => {
+        if (payload.role !== 'student') {
+          delete payload.rollNumber;
+        }
+        return payload;
       };
-      onSubmit(submitData);
+      onSubmit(cleanPayload(payload));
     }
   };
 
@@ -201,6 +221,7 @@ export function UserForm({
                 value={formData.email}
                 onChange={(e) => handleInputChange('email', e.target.value)}
                 className={errors.email ? 'border-red-500' : ''}
+                disabled={mode === 'edit' && formData.role === 'student'}
               />
               {errors.email && (
                 <p className="text-sm text-red-500">{errors.email}</p>
@@ -226,15 +247,24 @@ export function UserForm({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="role">Role *</Label>
-                <Select value={formData.role} onValueChange={(value: UserRole) => handleInputChange('role', value)}>
+                <Select value={formData.role} onValueChange={(value: UserRole) => handleInputChange('role', value)} disabled={mode === 'edit' && (formData.role === 'student' || formData.role === 'super-admin')}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="student">Student</SelectItem>
-                    <SelectItem value="teacher">Teacher</SelectItem>
-                    <SelectItem value="admin">Admin</SelectItem>
-                    <SelectItem value="super-admin">Super Admin</SelectItem>
+                    {isSuperAdmin ? (
+                      <>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                      </>
+                    ) : (
+                      <>
+                        <SelectItem value="student">Student</SelectItem>
+                        <SelectItem value="teacher">Teacher</SelectItem>
+                        <SelectItem value="admin">Admin</SelectItem>
+                        <SelectItem value="super-admin">Super Admin</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
                 <div className="flex items-center space-x-2">
@@ -246,7 +276,7 @@ export function UserForm({
               
               <div className="space-y-2">
                 <Label htmlFor="department">Department *</Label>
-                <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)}>
+                <Select value={formData.department} onValueChange={(value) => handleInputChange('department', value)} disabled={isSuperAdmin}>
                   <SelectTrigger className={errors.department ? 'border-red-500' : ''}>
                     <SelectValue placeholder="Select department" />
                   </SelectTrigger>

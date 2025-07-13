@@ -1,13 +1,6 @@
 const mongoose = require('mongoose');
 
 const departmentSchema = new mongoose.Schema({
-  _id: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
   name: {
     type: String,
     required: [true, 'Department name is required'],

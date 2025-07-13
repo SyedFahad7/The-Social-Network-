@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { StatsCard } from '@/components/dashboard';
+import { AttendanceOverview } from '@/components/dashboard/AttendanceOverview';
 
 interface Department {
   _id: string;
@@ -101,7 +102,6 @@ export default function SuperAdminDashboard() {
     const students = users.filter(u => u.role === 'student').length;
     const teachers = users.filter(u => u.role === 'teacher').length;
     const admins = users.filter(u => u.role === 'admin').length;
-
     const stats = [
       {
         title: 'Total Users',
@@ -114,7 +114,7 @@ export default function SuperAdminDashboard() {
       {
         title: 'Students',
         value: students.toString(),
-        change: `${Math.round((students / totalUsers) * 100)}% of total`,
+        change: totalUsers > 0 ? `${Math.round((students / totalUsers) * 100)}% of total` : '0% of total',
         icon: GraduationCap,
         color: 'text-green-600',
         bgColor: 'bg-green-100'
@@ -122,21 +122,20 @@ export default function SuperAdminDashboard() {
       {
         title: 'Teachers',
         value: teachers.toString(),
-        change: `${Math.round((teachers / totalUsers) * 100)}% of total`,
+        change: totalUsers > 0 ? `${Math.round((teachers / totalUsers) * 100)}% of total` : '0% of total',
         icon: UserCheck,
         color: 'text-purple-600',
         bgColor: 'bg-purple-100'
       },
       {
-        title: 'Departments',
-        value: departments.length.toString(),
-        change: `${admins} admins`,
-        icon: Database,
+        title: 'Admins',
+        value: admins.toString(),
+        change: `${departments.length} departments`,
+        icon: Shield,
         color: 'text-orange-600',
         bgColor: 'bg-orange-100'
       }
     ];
-
     setSystemStats(stats);
   };
 
@@ -225,45 +224,26 @@ export default function SuperAdminDashboard() {
 
         {/* Department Overview & Critical Alerts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Department Overview */}
+          {/* Department Overview (now Attendance Overview) */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <BarChart3 className="w-5 h-5" />
-                <span>Department Overview</span>
+                <span>Attendance Overview</span>
               </CardTitle>
-              <CardDescription>Performance metrics across all departments</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                {departmentStats.map((dept, index) => (
-                  <div key={index} className="p-4 border rounded-lg">
-                    <div className="flex items-center justify-between mb-3">
-                      <h4 className="font-semibold text-gray-900">{dept.department}</h4>
-                      <div className="flex items-center space-x-2">
-                        <TrendingUp className={`w-4 h-4 ${
-                          dept.trend === 'up' ? 'text-green-500' : 'text-red-500'
-                        }`} />
-                        <span className="text-sm font-medium">{dept.activeRate}</span>
-                      </div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <p className="text-gray-500">Students</p>
-                        <p className="font-medium text-blue-600">{dept.students}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Teachers</p>
-                        <p className="font-medium text-green-600">{dept.teachers}</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+              {/* Attendance metrics for today */}
+              <AttendanceOverview />
+              <div className="mt-4 flex justify-end">
+                <Button variant="outline" onClick={() => window.location.href = '/dashboard/super-admin/analytics'}>
+                  Go to Analytics
+                </Button>
               </div>
             </CardContent>
           </Card>
-
-          {/* Critical Alerts */}
+          {/* System Alerts commented out */}
+          {/*
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
@@ -294,6 +274,7 @@ export default function SuperAdminDashboard() {
               </div>
             </CardContent>
           </Card>
+          */}
         </div>
 
         {/* Quick Actions & Audit Logs */}
@@ -309,19 +290,15 @@ export default function SuperAdminDashboard() {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 gap-4">
-                <Button variant="outline" className="h-20 flex-col space-y-2">
+                <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => window.location.href = '/dashboard/super-admin/users'}>
                   <Users className="w-6 h-6" />
                   <span className="text-sm">Manage Users</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex-col space-y-2">
-                  <Database className="w-6 h-6" />
-                  <span className="text-sm">Departments</span>
+                <Button variant="outline" className="h-20 flex-col space-y-2" onClick={() => window.location.href = '/dashboard/super-admin/analytics'}>
+                  <BarChart3 className="w-6 h-6" />
+                  <span className="text-sm">Analytics</span>
                 </Button>
-                <Button variant="outline" className="h-20 flex-col space-y-2">
-                  <Eye className="w-6 h-6" />
-                  <span className="text-sm">System Logs</span>
-                </Button>
-                <Button variant="outline" className="h-20 flex-col space-y-2">
+                <Button variant="outline" className="h-20 flex-col space-y-2" disabled>
                   <Download className="w-6 h-6" />
                   <span className="text-sm">Export Data</span>
                 </Button>

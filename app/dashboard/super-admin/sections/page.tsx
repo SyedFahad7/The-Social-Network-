@@ -28,6 +28,7 @@ interface Section {
   currentStudents: number;
   status: 'active' | 'inactive';
   createdAt: string;
+  year: string;
 }
 
 export default function SuperAdminSections() {
@@ -40,6 +41,7 @@ export default function SuperAdminSections() {
     teacherId: '',
     maxStudents: 50
   });
+  const [selectedYear, setSelectedYear] = useState('all');
 
   // Mock data - replace with API calls
   const [sections, setSections] = useState<Section[]>([
@@ -53,7 +55,8 @@ export default function SuperAdminSections() {
       maxStudents: 50,
       currentStudents: 52,
       status: 'active',
-      createdAt: '2025-01-01'
+      createdAt: '2025-01-01',
+      year: '2'
     },
     {
       id: 'section-b',
@@ -65,7 +68,8 @@ export default function SuperAdminSections() {
       maxStudents: 50,
       currentStudents: 48,
       status: 'active',
-      createdAt: '2025-01-02'
+      createdAt: '2025-01-02',
+      year: '2'
     },
     {
       id: 'section-c',
@@ -77,7 +81,8 @@ export default function SuperAdminSections() {
       maxStudents: 50,
       currentStudents: 56,
       status: 'active',
-      createdAt: '2025-01-03'
+      createdAt: '2025-01-03',
+      year: '2'
     }
   ]);
 
@@ -99,7 +104,7 @@ export default function SuperAdminSections() {
       // Update existing section
       setSections(prev => prev.map(section => 
         section.id === editingSection.id 
-          ? { ...section, ...formData, teacherName: teachers.find(t => t.id === formData.teacherId)?.name || '' }
+          ? { ...section, ...formData, year: selectedYear, teacherName: teachers.find(t => t.id === formData.teacherId)?.name || '' }
           : section
       ));
       setEditingSection(null);
@@ -115,13 +120,15 @@ export default function SuperAdminSections() {
         maxStudents: formData.maxStudents,
         currentStudents: 0,
         status: 'active',
-        createdAt: new Date().toISOString().split('T')[0]
+        createdAt: new Date().toISOString().split('T')[0],
+        year: selectedYear
       };
       setSections(prev => [...prev, newSection]);
     }
 
     setShowCreateForm(false);
     setFormData({ name: '', subject: '', code: '', teacherId: '', maxStudents: 50 });
+    setSelectedYear('all');
   };
 
   const handleEdit = (section: Section) => {
@@ -146,6 +153,10 @@ export default function SuperAdminSections() {
     return status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800';
   };
 
+  const filteredSections = selectedYear && selectedYear !== "all"
+    ? sections.filter(s => s.year === selectedYear)
+    : sections;
+
   return (
     <DashboardLayout role="super-admin">
       <div className="p-6 space-y-6">
@@ -163,6 +174,22 @@ export default function SuperAdminSections() {
           </Button>
         </div>
 
+        {/* Year Filter */}
+        <div className="mb-4">
+          <label className="text-sm font-medium text-gray-700 mr-2">Filter by Year:</label>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All Years" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              <SelectItem value="2">2nd Year</SelectItem>
+              <SelectItem value="3">3rd Year</SelectItem>
+              <SelectItem value="4">4th Year</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+
         {/* Create/Edit Form */}
         {showCreateForm && (
           <Card className="border-2 border-green-200 bg-green-50">
@@ -174,7 +201,20 @@ export default function SuperAdminSections() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="year">Year</Label>
+                    <Select value={selectedYear} onValueChange={setSelectedYear} required>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select year" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="2">2nd Year</SelectItem>
+                        <SelectItem value="3">3rd Year</SelectItem>
+                        <SelectItem value="4">4th Year</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="space-y-2">
                     <Label htmlFor="name">Section Name</Label>
                     <Input
@@ -261,7 +301,7 @@ export default function SuperAdminSections() {
 
         {/* Sections List */}
         <div className="grid gap-6">
-          {sections.map((section) => (
+          {filteredSections.map((section) => (
             <Card key={section.id} className="hover:shadow-md transition-shadow">
               <CardContent className="p-6">
                 <div className="flex items-center justify-between">

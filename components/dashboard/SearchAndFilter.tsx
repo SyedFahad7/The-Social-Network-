@@ -26,7 +26,7 @@ export function SearchAndFilter({
   placeholder = "Search...",
   showClearButton = true
 }: SearchAndFilterProps) {
-  const hasActiveFilters = filters.some(filter => filter.value) || searchTerm;
+  const hasActiveFilters = filters.some(filter => filter.value && filter.value !== 'all') || searchTerm;
 
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between space-y-4 sm:space-y-0">
@@ -44,12 +44,12 @@ export function SearchAndFilter({
         {filters.map((filter) => (
           <div key={filter.key} className="flex items-center space-x-2">
             <span className="text-sm text-gray-600">{filter.label}:</span>
-            <Select value={filter.value} onValueChange={filter.onChange}>
+            <Select value={filter.value || 'all'} onValueChange={filter.onChange}>
               <SelectTrigger className="w-40">
                 <SelectValue placeholder={`All ${filter.label}`} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All {filter.label}</SelectItem>
+                <SelectItem value="all">All {filter.label}</SelectItem>
                 {filter.options.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}

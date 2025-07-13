@@ -133,29 +133,6 @@ export default function LoginPage() {
             </Button>
           </form>
 
-          <div className="mt-6 p-4 bg-gray-50 dark:bg-gray-700/50 rounded-lg">
-            <p className="text-xs text-gray-500 dark:text-gray-400 mb-2">Demo Credentials:</p>
-            <div className="grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <p className="font-medium text-gray-700 dark:text-gray-300">Student:</p>
-                <p className="text-gray-600 dark:text-gray-400">student@demo.com</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-700 dark:text-gray-300">Teacher:</p>
-                <p className="text-gray-600 dark:text-gray-400">teacher@demo.com</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-700 dark:text-gray-300">Admin:</p>
-                <p className="text-gray-600 dark:text-gray-400">admin@demo.com</p>
-              </div>
-              <div>
-                <p className="font-medium text-gray-700 dark:text-gray-300">Super Admin:</p>
-                <p className="text-gray-600 dark:text-gray-400">hod@demo.com</p>
-              </div>
-            </div>
-            <p className="text-xs text-gray-400 dark:text-gray-500 mt-2">Password: demo123</p>
-          </div>
-
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-300">
               Don't have an account? Contact your system administrator.

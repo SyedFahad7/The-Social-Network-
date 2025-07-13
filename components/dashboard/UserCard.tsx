@@ -53,8 +53,28 @@ export function UserCard({
     }
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+  const getInitials = (firstName?: string, lastName?: string) => {
+    if (firstName && lastName) {
+      return `${firstName.charAt(0)}${lastName.charAt(0)}`.toUpperCase();
+    } else if (firstName) {
+      return firstName.charAt(0).toUpperCase();
+    } else if (lastName) {
+      return lastName.charAt(0).toUpperCase();
+    } else {
+      return 'U';
+    }
+  };
+
+  const getDisplayName = (firstName?: string, lastName?: string) => {
+    if (firstName && lastName) {
+      return `${firstName} ${lastName}`;
+    } else if (firstName) {
+      return firstName;
+    } else if (lastName) {
+      return lastName;
+    } else {
+      return 'Unknown User';
+    }
   };
 
   return (
@@ -70,7 +90,7 @@ export function UserCard({
             <div>
               <div className="flex items-center space-x-2 mb-1">
                 <h3 className="font-semibold text-gray-900">
-                  {user.firstName} {user.lastName}
+                  {getDisplayName(user.firstName, user.lastName)}
                 </h3>
                 <Badge 
                   variant={user.isActive ? "default" : "secondary"}

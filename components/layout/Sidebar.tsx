@@ -42,12 +42,13 @@ const roleMenus = {
   ],
   teacher: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/teacher' },
-    { icon: Users, label: 'My Sections', href: '/dashboard/teacher/sections' },
-    { icon: FileText, label: 'Assignments', href: '/dashboard/teacher/assignments' },
-    { icon: Calendar, label: 'Timetable', href: '/dashboard/teacher/timetable' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/teacher/attendance' },
-    { icon: BookOpen, label: 'Question Banks', href: '/dashboard/teacher/question-banks' },
-    { icon: MessageSquare, label: 'Feedback', href: '/dashboard/teacher/feedback' },
+    // Commented out menu items:
+    // { icon: Users, label: 'My Sections', href: '/dashboard/teacher/sections' },
+    // { icon: FileText, label: 'Assignments', href: '/dashboard/teacher/assignments' },
+    // { icon: Calendar, label: 'Timetable', href: '/dashboard/teacher/timetable' },
+    // { icon: BookOpen, label: 'Question Banks', href: '/dashboard/teacher/question-banks' },
+    // { icon: MessageSquare, label: 'Feedback', href: '/dashboard/teacher/feedback' },
   ],
   admin: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/admin' },
@@ -63,8 +64,6 @@ const roleMenus = {
     { icon: Users, label: 'Sections Management', href: '/dashboard/super-admin/sections' },
     { icon: BarChart3, label: 'Analytics', href: '/dashboard/super-admin/analytics' },
     { icon: Users, label: 'All Users', href: '/dashboard/super-admin/users' },
-    { icon: Shield, label: 'System Logs', href: '/dashboard/super-admin/logs' },
-    { icon: Settings, label: 'System Config', href: '/dashboard/super-admin/config' },
     { icon: Bell, label: 'Notifications', href: '/dashboard/super-admin/notifications' },
   ],
 };
@@ -202,6 +201,7 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
 
       {/* Footer */}
       <div className="p-4 border-t border-gray-200 dark:border-gray-700 space-y-2">
+        {/* Commented out Settings link
         <Link
           href={`/dashboard/${role}/settings`}
           onClick={handleLinkClick}
@@ -210,6 +210,7 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
           <Settings className="w-5 h-5" />
           <span>Settings</span>
         </Link>
+        */}
         <Button
           onClick={handleLogout}
           variant="ghost"

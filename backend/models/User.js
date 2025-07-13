@@ -18,15 +18,27 @@ const userSchema = new mongoose.Schema({
   },
   firstName: {
     type: String,
-    required: [true, 'First name is required'],
     trim: true,
-    maxlength: [50, 'First name cannot exceed 50 characters']
+    maxlength: [50, 'First name cannot exceed 50 characters'],
+    validate: {
+      validator: function(v) {
+        // At least one of firstName or lastName must be provided
+        return v || this.lastName;
+      },
+      message: 'Either first name or last name must be provided'
+    }
   },
   lastName: {
     type: String,
-    required: [true, 'Last name is required'],
     trim: true,
-    maxlength: [50, 'Last name cannot exceed 50 characters']
+    maxlength: [50, 'Last name cannot exceed 50 characters'],
+    validate: {
+      validator: function(v) {
+        // At least one of firstName or lastName must be provided
+        return v || this.firstName;
+      },
+      message: 'Either first name or last name must be provided'
+    }
   },
   role: {
     type: String,
@@ -37,7 +49,7 @@ const userSchema = new mongoose.Schema({
     }
   },
   department: {
-    type: mongoose.Schema.Types.ObjectId, // Change from String to ObjectId
+    type: mongoose.Schema.Types.ObjectId, // Must match Department._id (ObjectId)
     ref: 'Department',
     required: [true, 'Department is required'],
     validate: {
@@ -45,8 +57,14 @@ const userSchema = new mongoose.Schema({
         try {
           console.log('[VALIDATING DEPARTMENT]', v); // Debug log
           const Department = mongoose.model('Department');
+          console.log('[DEPARTMENT MODEL]', Department ? 'Found' : 'Not found'); // Debug log
           const department = await Department.findById(v);
           console.log('[FOUND DEPT]', department); // Debug log
+          if (!department) {
+            console.log('[DEPARTMENT NOT FOUND] Department with ID', v, 'does not exist');
+            return false;
+          }
+          console.log('[DEPARTMENT IS ACTIVE]', department.isActive);
           return department && department.isActive;
         } catch (err) {
           console.error('[DEPARTMENT VALIDATION ERROR]', err); // Debug log
@@ -91,6 +109,20 @@ const userSchema = new mongoose.Schema({
         return true;
       },
       message: 'Section is required for students'
+    }
+  },
+  year: {
+    type: Number,
+    enum: [2, 3, 4],
+    required: function() { return this.role === 'student'; },
+    validate: {
+      validator: function(v) {
+        if (this.role === 'student') {
+          return [2, 3, 4].includes(v);
+        }
+        return true;
+      },
+      message: 'Year is required for students and must be 2, 3, or 4'
     }
   },
   
@@ -161,7 +193,19 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null
-  }
+  },
+  currentSemester: {
+    type: Number,
+    required: function() { return this.role === 'student'; }
+  },
+  semesterHistory: [
+    {
+      academicYear: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicYear', required: true },
+      semester: { type: Number, required: true },
+      year: { type: Number, required: true },
+      section: { type: String, required: true }
+    }
+  ]
 }, {
   timestamps: true, // Adds createdAt and updatedAt
   toJSON: { 
@@ -183,7 +227,15 @@ userSchema.index({ employeeId: 1 }, { sparse: true });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {
-  return `${this.firstName} ${this.lastName}`;
+  if (this.firstName && this.lastName) {
+    return `${this.firstName} ${this.lastName}`;
+  } else if (this.firstName) {
+    return this.firstName;
+  } else if (this.lastName) {
+    return this.lastName;
+  } else {
+    return 'Unknown User';
+  }
 });
 
 // Method to compare password - Plain text comparison

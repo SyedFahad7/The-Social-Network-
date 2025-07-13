@@ -29,6 +29,7 @@ import {
   UserForm, 
   SearchAndFilter 
 } from '@/components/dashboard';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 interface Department {
   _id: string;
@@ -48,6 +49,16 @@ interface User {
   rollNumber?: string;
   employeeId?: string;
   createdAt: string;
+  year?: number;
+}
+
+// Helper to get current user from localStorage
+function getCurrentUser() {
+  if (typeof window !== 'undefined') {
+    const user = localStorage.getItem('user');
+    if (user) return JSON.parse(user);
+  }
+  return null;
 }
 
 export default function SuperAdminUsers() {
@@ -55,13 +66,18 @@ export default function SuperAdminUsers() {
   const [departments, setDepartments] = useState<Department[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedRole, setSelectedRole] = useState('');
-  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [selectedRole, setSelectedRole] = useState('all');
+  const [selectedDepartment, setSelectedDepartment] = useState('all');
   const [showUserForm, setShowUserForm] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [selectedStudent, setSelectedStudent] = useState<User | null>(null);
   const [showStudentDialog, setShowStudentDialog] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('all');
+
+  const currentUser = getCurrentUser();
+  const isSuperAdmin = currentUser?.role === 'super-admin';
+  const superAdminDept = currentUser?.department;
 
   useEffect(() => {
     fetchData();
@@ -101,11 +117,12 @@ export default function SuperAdminUsers() {
       user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
       (user.rollNumber && user.rollNumber.toLowerCase().includes(searchTerm.toLowerCase())) ||
       (user.employeeId && user.employeeId.toLowerCase().includes(searchTerm.toLowerCase()));
-    
-    const matchesRole = !selectedRole || user.role === selectedRole;
-    const matchesDepartment = !selectedDepartment || user.department === selectedDepartment;
-    
-    return matchesSearch && matchesRole && matchesDepartment;
+    const matchesRole = selectedRole === 'all' || user.role === selectedRole;
+    const matchesDepartment = isSuperAdmin
+      ? user.department && superAdminDept && String(user.department) === String(superAdminDept)
+      : selectedDepartment === 'all' || (user.department && String(user.department) === String(selectedDepartment));
+    const matchesYear = selectedYear === 'all' || (user.year && user.year.toString() === selectedYear);
+    return matchesSearch && matchesRole && matchesDepartment && matchesYear;
   });
 
   const students = filteredUsers.filter(user => user.role === 'student');
@@ -131,14 +148,25 @@ export default function SuperAdminUsers() {
   const handleUpdateUser = async (userData: any) => {
     try {
       setIsSubmitting(true);
+      console.log('Updating user with data:', userData);
+      
       const response = await apiClient.updateUser(userData._id, userData);
+      console.log('Update response:', response);
+      
       if (response.success) {
+        console.log('User updated successfully');
         setShowUserForm(false);
         setEditingUser(null);
-        fetchData();
+        await fetchData(); // Refresh the data
+        // You could add a toast notification here
+        alert('User updated successfully!');
+      } else {
+        console.error('Update failed:', response.message);
+        alert(`Update failed: ${response.message}`);
       }
     } catch (error) {
       console.error('Error updating user:', error);
+      alert(`Error updating user: ${error instanceof Error ? error.message : 'Unknown error'}`);
     } finally {
       setIsSubmitting(false);
     }
@@ -169,8 +197,9 @@ export default function SuperAdminUsers() {
 
   const clearFilters = () => {
     setSearchTerm('');
-    setSelectedRole('');
-    setSelectedDepartment('');
+    setSelectedRole('all');
+    setSelectedDepartment(isSuperAdmin ? superAdminDept : 'all');
+    setSelectedYear('all');
   };
 
   const getRoleStats = () => {
@@ -216,6 +245,17 @@ export default function SuperAdminUsers() {
     ];
   };
 
+  // Detailed debug logs for department filtering
+  console.log('All users:', users.map(u => ({
+    _id: u._id,
+    email: u.email,
+    role: u.role,
+    department: u.department,
+    departmentType: typeof u.department,
+    year: u.year
+  })));
+  console.log('superAdminDept:', superAdminDept, 'type:', typeof superAdminDept);
+
   if (loading) {
     return (
       <DashboardLayout role="super-admin">
@@ -247,6 +287,22 @@ export default function SuperAdminUsers() {
             <Plus className="w-4 h-4 mr-2" />
             Add User
           </Button>
+        </div>
+
+        {/* Year Filter */}
+        <div className="mb-4">
+          <label className="text-sm font-medium text-gray-700 mr-2">Filter by Year:</label>
+          <Select value={selectedYear} onValueChange={setSelectedYear}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="All Years" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Years</SelectItem>
+              <SelectItem value="2">2nd Year</SelectItem>
+              <SelectItem value="3">3rd Year</SelectItem>
+              <SelectItem value="4">4th Year</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Stats */}
@@ -281,16 +337,20 @@ export default function SuperAdminUsers() {
               ],
               onChange: setSelectedRole
             },
-            {
+            // Only show department filter if not super-admin
+            ...(!isSuperAdmin ? [{
               key: 'department',
               label: 'Department',
               value: selectedDepartment,
-              options: departments.map(dept => ({
-                value: dept._id,
-                label: dept.name
-              })),
+              options: [
+                { value: 'all', label: 'All Departments' },
+                ...departments.map(dept => ({
+                  value: dept._id,
+                  label: dept.name
+                }))
+              ],
               onChange: setSelectedDepartment
-            }
+            }] : [])
           ]}
           onClearFilters={clearFilters}
           placeholder="Search users..."
@@ -319,74 +379,90 @@ export default function SuperAdminUsers() {
 
           <TabsContent value="students">
             <div className="grid gap-4">
-              {students.map((user) => (
-                <UserCard
-                  key={user._id}
-                  user={{
-                    ...user,
-                    department: getDepartmentName(user.department)
-                  }}
-                  onView={() => handleViewStudent(user)}
-                  onEdit={() => handleEditUser(user)}
-                  onDelete={() => handleDeleteUser(user._id)}
-                  showDepartment={true}
-                  showContact={true}
-                />
-              ))}
+              {filteredUsers.filter(u => u.role === 'student').length === 0 ? (
+                <div className="text-center text-gray-500">No students found.</div>
+              ) : (
+                filteredUsers.filter(u => u.role === 'student').map((user) => (
+                  <UserCard
+                    key={user._id}
+                    user={{
+                      ...user,
+                      department: getDepartmentName(user.department)
+                    }}
+                    onView={() => handleViewStudent(user)}
+                    onEdit={() => handleEditUser(user)}
+                    onDelete={() => handleDeleteUser(user._id)}
+                    showDepartment={true}
+                    showContact={true}
+                  />
+                ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="teachers">
             <div className="grid gap-4">
-              {teachers.map((user) => (
-                <UserCard
-                  key={user._id}
-                  user={{
-                    ...user,
-                    department: getDepartmentName(user.department)
-                  }}
-                  onEdit={() => handleEditUser(user)}
-                  onDelete={() => handleDeleteUser(user._id)}
-                  showDepartment={true}
-                  showContact={true}
-                />
-              ))}
+              {filteredUsers.filter(u => u.role === 'teacher').length === 0 ? (
+                <div className="text-center text-gray-500">No teachers found.</div>
+              ) : (
+                filteredUsers.filter(u => u.role === 'teacher').map((user) => (
+                  <UserCard
+                    key={user._id}
+                    user={{
+                      ...user,
+                      department: getDepartmentName(user.department)
+                    }}
+                    onEdit={() => handleEditUser(user)}
+                    onDelete={() => handleDeleteUser(user._id)}
+                    showDepartment={true}
+                    showContact={true}
+                  />
+                ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="admins">
             <div className="grid gap-4">
-              {admins.map((user) => (
-                <UserCard
-                  key={user._id}
-                  user={{
-                    ...user,
-                    department: getDepartmentName(user.department)
-                  }}
-                  onEdit={() => handleEditUser(user)}
-                  onDelete={() => handleDeleteUser(user._id)}
-                  showDepartment={true}
-                  showContact={true}
-                />
-              ))}
+              {filteredUsers.filter(u => u.role === 'admin').length === 0 ? (
+                <div className="text-center text-gray-500">No admins found.</div>
+              ) : (
+                filteredUsers.filter(u => u.role === 'admin').map((user) => (
+                  <UserCard
+                    key={user._id}
+                    user={{
+                      ...user,
+                      department: getDepartmentName(user.department)
+                    }}
+                    onEdit={() => handleEditUser(user)}
+                    onDelete={() => handleDeleteUser(user._id)}
+                    showDepartment={true}
+                    showContact={true}
+                  />
+                ))
+              )}
             </div>
           </TabsContent>
 
           <TabsContent value="super-admins">
             <div className="grid gap-4">
-              {superAdmins.map((user) => (
-                <UserCard
-                  key={user._id}
-                  user={{
-                    ...user,
-                    department: getDepartmentName(user.department)
-                  }}
-                  onEdit={() => handleEditUser(user)}
-                  onDelete={() => handleDeleteUser(user._id)}
-                  showDepartment={true}
-                  showContact={true}
-                />
-              ))}
+              {filteredUsers.filter(u => u.role === 'super-admin').length === 0 ? (
+                <div className="text-center text-gray-500">No super admins found.</div>
+              ) : (
+                filteredUsers.filter(u => u.role === 'super-admin').map((user) => (
+                  <UserCard
+                    key={user._id}
+                    user={{
+                      ...user,
+                      department: getDepartmentName(user.department)
+                    }}
+                    onEdit={() => handleEditUser(user)}
+                    onDelete={() => handleDeleteUser(user._id)}
+                    showDepartment={true}
+                    showContact={true}
+                  />
+                ))
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -397,7 +473,7 @@ export default function SuperAdminUsers() {
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <UserForm
                 user={editingUser || undefined}
-                departments={departments}
+                departments={isSuperAdmin ? departments.filter(d => d._id === superAdminDept) : departments}
                 onSubmit={editingUser ? handleUpdateUser : handleCreateUser}
                 onCancel={() => {
                   setShowUserForm(false);
@@ -405,6 +481,7 @@ export default function SuperAdminUsers() {
                 }}
                 isLoading={isSubmitting}
                 mode={editingUser ? 'edit' : 'create'}
+                isSuperAdmin={isSuperAdmin}
               />
             </div>
           </div>
@@ -412,7 +489,7 @@ export default function SuperAdminUsers() {
 
         {/* Student Analytics Dialog */}
         <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto font-bold">
             <DialogHeader>
               <DialogTitle>Student Analytics</DialogTitle>
               <DialogDescription>

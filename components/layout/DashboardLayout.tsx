@@ -107,14 +107,14 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <span className="text-sm font-medium text-white">
-                      {user.name ? user.name.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                    </span>
+                                      <span className="text-sm font-medium text-white">
+                    {user.firstName ? user.firstName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
+                  </span>
                   )}
                 </div>
                 <div className="hidden md:block">
                   <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user.name || user.email}
+                    {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
                   </p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
                     {user.role?.replace('-', ' ')}

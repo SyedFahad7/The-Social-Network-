@@ -1,5 +1,5 @@
 // API configuration for the Social Network frontend
-const API_BASE_URL = 'https://social-network-bwsf.onrender.com/api';
+const API_BASE_URL = 'http://localhost:5000/api';
 
 // API client with authentication
 class ApiClient {
@@ -400,6 +400,15 @@ class ApiClient {
       method: 'PUT',
     });
   }
+
+  async getAcademicYears() {
+    return this.request('/academic-years');
+  }
+
+  async getSubjects(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/subjects?${queryString}`);
+  }
 }
 
 // Create and export a singleton instance
@@ -464,7 +473,9 @@ export const {
   createQuestionBank,
   updateQuestionBank,
   deleteQuestionBank,
-  incrementDownloads
+  incrementDownloads,
+  getAcademicYears,
+  getSubjects
 } = apiClient;
 
 export default apiClient;

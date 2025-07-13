@@ -38,6 +38,11 @@ const sectionSchema = new mongoose.Schema({
     type: String,
     enum: ['active', 'inactive'],
     default: 'active'
+  },
+  year: {
+    type: Number,
+    enum: [2, 3, 4],
+    required: true
   }
 }, {
   timestamps: true

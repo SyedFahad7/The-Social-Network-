@@ -106,6 +106,11 @@ const assignmentSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
+  },
+  year: {
+    type: Number,
+    enum: [2, 3, 4],
+    required: true
   }
 }, {
   timestamps: true

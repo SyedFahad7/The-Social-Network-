@@ -71,7 +71,7 @@ router.post('/login', [
 
     // Update last login
     user.lastLogin = new Date();
-    await user.save();
+    await user.save({ validateBeforeSave: false });
 
     // Generate token
     const token = generateToken(user._id);
