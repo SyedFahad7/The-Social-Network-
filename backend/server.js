@@ -41,16 +41,12 @@ app.use(cors({
       'http://localhost:3002',
       'http://localhost:3003',
       'http://localhost:3004',
-      'http://localhost:3005'
+      'http://localhost:3005',
+      'https://social-network-final.vercel.app'
     ];
     
     // Allow requests from allowed origins
     if (allowedOrigins.indexOf(origin) !== -1) {
-      return callback(null, true);
-    }
-    
-    // Allow requests from your production domain (if you have one)
-    if (origin && origin.includes('your-production-domain.com')) {
       return callback(null, true);
     }
     
