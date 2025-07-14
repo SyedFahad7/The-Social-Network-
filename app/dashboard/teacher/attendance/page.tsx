@@ -61,6 +61,8 @@ export default function TeacherAttendance() {
   const [viewAttendanceLoading, setViewAttendanceLoading] = useState(false);
   const [viewAttendanceResults, setViewAttendanceResults] = useState<any[]>([]);
   const [viewAttendanceError, setViewAttendanceError] = useState('');
+  // Add state to track which hours are already marked
+  const [markedHours, setMarkedHours] = useState<number[]>([]);
 
   // Auto-dismiss Mark Attendance messages
   useEffect(() => {
@@ -206,60 +208,50 @@ export default function TeacherAttendance() {
     }
   }, [selectedAcademicYear, selectedYear, selectedSemester, selectedSection]);
 
-  // Fetch attendance if all selectors are chosen
+  // Update the useEffect that checks for already marked attendance:
   useEffect(() => {
     if (selectedAcademicYear && selectedYear && selectedSemester && selectedSection && selectedSubject && selectedDate && selectedHours.length > 0) {
       setLoading(true);
-      setAttendanceAlreadyMarked(false); // Reset state when filters change
-      setShowStudents(false); // Reset showStudents when hour changes
+      setAttendanceAlreadyMarked(false);
+      setShowStudents(false);
+      setMarkedHours([]);
       const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
       const department = user.department;
-      
-      console.log('[ATTENDANCE] Checking attendance for:', {
-        academicYear: selectedAcademicYear,
-        department,
-        year: selectedYear,
-        semester: selectedSemester,
-        section: selectedSection,
-        date: selectedDate,
-        hours: selectedHours
-      });
-      
-      // Check for ANY attendance for this hour/date/section combination (not just specific subject)
-      apiClient.getAttendance?.({
-        academicYear: selectedAcademicYear,
-        department,
-        year: selectedYear,
-        semester: selectedSemester,
-        section: selectedSection,
-        date: selectedDate,
-        hours: selectedHours
-        // Note: Not including subjectId to check for ANY attendance in this slot
-      }).then(res => {
-        console.log('[ATTENDANCE] Attendance check response:', res);
-        if (res?.success && res.data.length > 0) {
-          // Attendance exists for this slot (any subject)
-          console.log('[ATTENDANCE] Attendance already marked for this hour');
+      // For each selected hour, check if attendance exists
+      Promise.all(selectedHours.map(async h => {
+        const res = await apiClient.getAttendance?.({
+          academicYear: selectedAcademicYear,
+          department,
+          year: selectedYear,
+          semester: selectedSemester,
+          section: selectedSection,
+          date: selectedDate,
+          hour: h
+        });
+        return res?.success && res.data.length > 0 ? Number(h) : null;
+      })).then(results => {
+        const alreadyMarked = results.filter(h => h !== null) as number[];
+        setMarkedHours(alreadyMarked);
+        if (alreadyMarked.length === selectedHours.length) {
           setAttendanceAlreadyMarked(true);
-          setError('Attendance already marked for this hour. To edit, use Check History.');
+          setError('Attendance already marked for all selected hours. To edit, use Check History.');
           setShowStudents(false);
-          // Don't clear students array - let it be managed by the students fetching logic
           setAttendance({});
           setMarking({});
           setLate({});
           setComments({});
+        } else if (alreadyMarked.length > 0) {
+          setAttendanceAlreadyMarked(false);
+          setError(`Attendance already marked for hour(s): ${alreadyMarked.join(', ')}. You can mark the others.`);
         } else {
-          // No attendance yet, but don't clear students - keep them for marking
-          console.log('[ATTENDANCE] No attendance found, keeping students for marking');
           setAttendanceAlreadyMarked(false);
           setError('');
-          // Don't clear students here - let them stay for marking
         }
       }).finally(() => setLoading(false));
     } else {
-      // Reset state when not all filters are selected
       setAttendanceAlreadyMarked(false);
       setError('');
+      setMarkedHours([]);
     }
   }, [selectedAcademicYear, selectedYear, selectedSemester, selectedSection, selectedSubject, selectedDate, selectedHours]);
 
@@ -512,6 +504,8 @@ export default function TeacherAttendance() {
     }));
     const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
     const department = user.department;
+    // When saving attendance, only send unmarked hours
+    const unmarkedHours = selectedHours.filter(h => !markedHours.includes(Number(h)));
     const postBody = {
       academicYear: selectedAcademicYear,
       department,
@@ -520,7 +514,7 @@ export default function TeacherAttendance() {
       section: selectedSection,
       subject: selectedSubject,
       date: selectedDate,
-      hours: selectedHours.map(Number),
+      hours: unmarkedHours.map(Number),
       students: studentsData
     };
     setLoading(true);
@@ -640,7 +634,6 @@ export default function TeacherAttendance() {
           year: selectedYear,
           semester: selectedSemester,
           section: selectedSection,
-          subjectId: selectedSubject,
           date: selectedDate,
           hour: hour
         });
@@ -866,6 +859,11 @@ export default function TeacherAttendance() {
                 <Loader2 className="animate-spin h-8 w-8 text-gray-500" />
               </div>
             )}
+            {tab === 'mark' && markedHours.length > 0 && markedHours.length < selectedHours.length && (
+  <div className="text-yellow-700 font-medium mt-2">
+    Already marked for hour(s): {markedHours.join(', ')}. You can mark the others.
+  </div>
+)}
 
             {/* Comments Dialog */}
             <Dialog open={commentDialog.open} onOpenChange={open => setCommentDialog({ open, studentId: open ? commentDialog.studentId : null })}>
@@ -1085,11 +1083,10 @@ export default function TeacherAttendance() {
             <Card>
               <CardHeader>
                 <CardTitle>Filters</CardTitle>
-                <CardDescription>Choose filters and click Fetch Attendance to view summary</CardDescription>
+                <CardDescription>Choose filters and click Fetch Attendance to view summary. Subject is not used for summary.</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  {/* Academic Year, Year, Semester, Section, Subject, Date, Hours (reuse same filter UI as history/mark) */}
                   <div>
                     <label>Academic Year</label>
                     <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
@@ -1135,17 +1132,6 @@ export default function TeacherAttendance() {
                     </Select>
                   </div>
                   <div>
-                    <label>Subject</label>
-                    <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
-                        {subjects.map((sub: any) => (
-                          <SelectItem key={sub._id} value={sub._id}>{sub.name} ({sub.code})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-                  <div>
                     <label>Date</label>
                     <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
                   </div>
@@ -1168,9 +1154,12 @@ export default function TeacherAttendance() {
                     </div>
                   </div>
                 </div>
-                <div className="mt-4">
-                  <Button onClick={handleViewAttendance} disabled={viewAttendanceLoading || !selectedAcademicYear || !selectedYear || !selectedSemester || !selectedSection || !selectedSubject || !selectedDate || selectedHours.length === 0}>
+                <div className="mt-4 flex gap-2">
+                  <Button onClick={handleViewAttendance} disabled={viewAttendanceLoading || !selectedAcademicYear || !selectedYear || !selectedSemester || !selectedSection || !selectedDate || selectedHours.length === 0}>
                     Fetch Attendance
+                  </Button>
+                  <Button variant="outline" onClick={() => { setSelectedHours(['1','2','3','4','5','6']); handleViewAttendance(); }} disabled={viewAttendanceLoading || !selectedAcademicYear || !selectedYear || !selectedSemester || !selectedSection || !selectedDate}>
+                    Full Day Attendance
                   </Button>
                 </div>
                 {viewAttendanceError && <div className="text-red-600 font-medium mt-2">{viewAttendanceError}</div>}
