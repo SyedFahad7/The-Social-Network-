@@ -1,5 +1,5 @@
 // API configuration for the Social Network frontend
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 // API client with authentication
 class ApiClient {
@@ -9,13 +9,27 @@ class ApiClient {
   constructor() {
     this.baseURL = API_BASE_URL;
     // Get token from localStorage if available
+    this.token = null;
     if (typeof window !== 'undefined') {
-      this.token = localStorage.getItem('token');
+      try {
+        this.token = localStorage.getItem('token');
+      } catch (error) {
+        console.warn('Could not access localStorage:', error);
+      }
     }
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Refresh token from localStorage if we're in browser
+    if (typeof window !== 'undefined' && !this.token) {
+      try {
+        this.token = localStorage.getItem('token');
+      } catch (error) {
+        console.warn('Could not access localStorage:', error);
+      }
+    }
     
     const config: RequestInit = {
       headers: {
@@ -409,6 +423,11 @@ class ApiClient {
     const queryString = new URLSearchParams(params).toString();
     return this.request(`/subjects?${queryString}`);
   }
+
+  // Student daily attendance
+  async getStudentDailyAttendance(date: string) {
+    return this.request(`/attendance/student/daily?date=${date}`);
+  }
 }
 
 // Create and export a singleton instance
@@ -475,7 +494,8 @@ export const {
   deleteQuestionBank,
   incrementDownloads,
   getAcademicYears,
-  getSubjects
+  getSubjects,
+  getStudentDailyAttendance
 } = apiClient;
 
 export default apiClient;

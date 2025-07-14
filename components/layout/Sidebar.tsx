@@ -33,12 +33,12 @@ interface SidebarProps {
 const roleMenus = {
   student: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/student' },
-    { icon: Calendar, label: 'Timetable', href: '/dashboard/student/timetable' },
-    { icon: FileText, label: 'Assignments', href: '/dashboard/student/assignments' },
-    { icon: Award, label: 'Certificates', href: '/dashboard/student/certificates' },
+    // { icon: Calendar, label: 'Timetable', href: '/dashboard/student/timetable' },
+    // { icon: FileText, label: 'Assignments', href: '/dashboard/student/assignments' },
+    // { icon: Award, label: 'Certificates', href: '/dashboard/student/certificates' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/student/attendance' },
-    { icon: MessageSquare, label: 'Feedback', href: '/dashboard/student/feedback' },
-    { icon: BookOpen, label: 'Question Banks', href: '/dashboard/student/question-banks' },
+    // { icon: MessageSquare, label: 'Feedback', href: '/dashboard/student/feedback' },
+    // { icon: BookOpen, label: 'Question Banks', href: '/dashboard/student/question-banks' },
   ],
   teacher: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/teacher' },

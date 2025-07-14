@@ -15,9 +15,11 @@ import {
   AlertCircle,
   BookOpen
 } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
+  const router = useRouter();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -112,14 +114,30 @@ export default function StudentDashboard() {
   return (
     <DashboardLayout role="student">
       <div className="p-4 lg:p-6 space-y-6">
+        
         {/* Welcome Header */}
         <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-lg p-4 lg:p-6 text-white">
-          <h1 className="text-xl lg:text-2xl font-bold mb-2">Welcome back, {user?.name?.split(' ')[0] || 'Student'}!</h1>
-          <p className="text-blue-100 text-sm lg:text-base">Here's what's happening with your academic journey today.</p>
+          <h1 className="text-xl lg:text-2xl font-bold mb-2">Welcome back, {user?.lastName || 'Student'}!</h1>
+          <p className="text-blue-100 text-sm lg:text-base">Check what's happening with your academic journey.</p>
+        </div>
+
+        <div className="max-w-md mx-auto">
+          <Card
+            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-gradient-to-r from-green-400 to-blue-400 text-white"
+            onClick={() => router.push('/dashboard/student/attendance')}
+          >
+            <CardContent className="flex items-center justify-between p-6">
+              <div>
+                <CardTitle className="text-xl font-bold mb-1">Attendance</CardTitle>
+                <CardDescription className="text-white/80">Check your attendance records</CardDescription>
+              </div>
+              <CheckCircle className="w-10 h-10 text-white" />
+            </CardContent>
+          </Card>
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
+        {/* <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6">
           {stats.map((stat, index) => (
             <Card key={index} className="hover:shadow-md transition-shadow duration-200">
               <CardContent className="p-4 lg:p-6">
@@ -136,11 +154,11 @@ export default function StudentDashboard() {
               </CardContent>
             </Card>
           ))}
-        </div>
+        </div> */}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Recent Activity */}
-          <Card className="lg:col-span-2">
+          {/* <Card className="lg:col-span-2">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-lg">
                 <Clock className="w-5 h-5" />
@@ -168,10 +186,10 @@ export default function StudentDashboard() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
 
           {/* Upcoming Deadlines */}
-          <Card>
+          {/* <Card>
             <CardHeader>
               <CardTitle className="flex items-center space-x-2 text-lg">
                 <AlertCircle className="w-5 h-5" />
@@ -201,12 +219,12 @@ export default function StudentDashboard() {
                 ))}
               </div>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">
-          <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer group">
+          {/* <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer group">
             <CardContent className="p-4 lg:p-6 text-center">
               <Calendar className="w-10 h-10 lg:w-12 lg:h-12 text-blue-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">View Timetable</h3>
@@ -228,7 +246,7 @@ export default function StudentDashboard() {
               <h3 className="font-semibold text-gray-900 dark:text-white mb-2">Question Banks</h3>
               <p className="text-sm text-gray-600 dark:text-gray-300">Access study materials</p>
             </CardContent>
-          </Card>
+          </Card> */}
         </div>
       </div>
     </DashboardLayout>

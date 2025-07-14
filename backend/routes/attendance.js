@@ -9,6 +9,13 @@ const { authenticate, requireTeacher } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Helper to normalize ObjectId or {$oid: ...} to string
+function getIdString(id) {
+  if (!id) return '';
+  if (typeof id === 'object' && id !== null && id.$oid) return id.$oid;
+  return id.toString();
+}
+
 // @route   GET /api/attendance
 // @desc    Get attendance records
 // @access  Private
@@ -298,6 +305,111 @@ router.get('/analytics/student/:studentId', authenticate, asyncHandler(async (re
     }
   }
   res.json({ success: true, data: analytics });
+}));
+
+// @route   GET /api/attendance/student/daily
+// @desc    Get student's attendance for a specific date (all 6 hours)
+// @access  Private (Student can only access their own data)
+router.get('/student/daily', [
+  authenticate,
+  query('date').isISO8601().withMessage('Valid date is required')
+], asyncHandler(async (req, res) => {
+  const { date } = req.query;
+  const studentId = req.user._id;
+
+  // Get student's details
+  const student = await User.findById(studentId);
+  if (!student) {
+    return res.status(404).json({
+      success: false,
+      message: 'Student not found'
+    });
+  }
+
+  // Build filter with fallback
+  const filter = {
+    academicYear: student.academicYear || student._doc?.academicYear || (student.get && student.get('academicYear')),
+    department: student.department,
+    year: student.year,
+    semester: student.currentSemester,
+    section: student.section,
+    date: date
+  };
+
+  // Find all attendance records for the student's section on the given date
+  const attendanceRecords = await Attendance.find(filter)
+    .populate('subject', 'name code')
+    .populate('markedBy', 'firstName lastName')
+    .sort({ hour: 1 });
+  console.log('[ATTENDANCE/STUDENT/DAILY] Records found:', attendanceRecords.length);
+
+  // Create a map for all 6 hours
+  const hourlyAttendance = {};
+  for (let hour = 1; hour <= 6; hour++) {
+    hourlyAttendance[hour] = {
+      hour,
+      subject: null,
+      status: 'not_marked',
+      markedBy: null,
+      timestamp: null
+    };
+  }
+
+  // Populate with actual attendance data
+  attendanceRecords.forEach(record => {
+    const studentRecord = record.students.find(s => 
+      getIdString(s.studentId) === getIdString(studentId)
+    );
+
+    if (studentRecord) {
+      hourlyAttendance[record.hour] = {
+        hour: record.hour,
+        subject: record.subject,
+        status: studentRecord.late ? 'late' : studentRecord.status,
+        markedBy: record.markedBy,
+        timestamp: record.lastEditedAt,
+        comments: studentRecord.comments || ''
+      };
+    } else {
+      // Record exists but student not marked
+      hourlyAttendance[record.hour] = {
+        hour: record.hour,
+        subject: record.subject,
+        status: 'not_marked',
+        markedBy: record.markedBy,
+        timestamp: record.lastEditedAt
+      };
+    }
+  });
+
+  // Calculate summary
+  const summary = {
+    total: 6,
+    present: 0,
+    absent: 0,
+    late: 0,
+    not_marked: 0
+  };
+
+  Object.values(hourlyAttendance).forEach(record => {
+    summary[record.status]++;
+  });
+
+  res.json({
+    success: true,
+    data: {
+      date,
+      student: {
+        name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+        rollNumber: student.rollNumber,
+        section: student.section,
+        year: student.year,
+        semester: student.currentSemester
+      },
+      summary,
+      attendance: Object.values(hourlyAttendance)
+    }
+  });
 }));
 
 module.exports = router;

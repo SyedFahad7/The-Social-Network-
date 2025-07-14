@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +19,38 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  // Redirect to dashboard if already logged in
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const token = localStorage.getItem('token');
+      const user = localStorage.getItem('user');
+      if (token && user) {
+        try {
+          const parsedUser = JSON.parse(user);
+          const userRole = parsedUser.role || role;
+          switch (userRole) {
+            case 'student':
+              router.replace('/dashboard/student');
+              break;
+            case 'teacher':
+              router.replace('/dashboard/teacher');
+              break;
+            case 'admin':
+              router.replace('/dashboard/admin');
+              break;
+            case 'super-admin':
+              router.replace('/dashboard/super-admin');
+              break;
+            default:
+              router.replace('/dashboard');
+          }
+        } catch {
+          router.replace('/dashboard');
+        }
+      }
+    }
+  }, [router]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
@@ -28,22 +60,22 @@ export default function LoginPage() {
       const response = await apiClient.login(email, password, role);
       
       if (response.success) {
-        // Redirect based on role
+        // Redirect based on role using replace
         switch (role) {
           case 'student':
-            router.push('/dashboard/student');
+            router.replace('/dashboard/student');
             break;
           case 'teacher':
-            router.push('/dashboard/teacher');
+            router.replace('/dashboard/teacher');
             break;
           case 'admin':
-            router.push('/dashboard/admin');
+            router.replace('/dashboard/admin');
             break;
           case 'super-admin':
-            router.push('/dashboard/super-admin');
+            router.replace('/dashboard/super-admin');
             break;
           default:
-            router.push('/dashboard');
+            router.replace('/dashboard');
         }
       }
     } catch (error: any) {
