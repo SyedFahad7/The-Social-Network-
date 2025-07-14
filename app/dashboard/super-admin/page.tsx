@@ -59,14 +59,6 @@ export default function SuperAdminDashboard() {
   const [systemStats, setSystemStats] = useState<any[]>([]);
   const [departmentStats, setDepartmentStats] = useState<DepartmentStats[]>([]);
 
-  useEffect(() => {
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
-    }
-    fetchDashboardData();
-  }, []);
-
   const fetchDashboardData = async () => {
     try {
       setLoading(true);
@@ -95,6 +87,14 @@ export default function SuperAdminDashboard() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+    fetchDashboardData();
+  }, []);
 
   const calculateSystemStats = () => {
     const totalUsers = users.length;

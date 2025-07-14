@@ -23,10 +23,7 @@ import {
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 import { 
-  UserCard, 
   StatsCard, 
-  StudentAnalytics, 
-  UserForm, 
   SearchAndFilter 
 } from '@/components/dashboard';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -357,7 +354,7 @@ export default function SuperAdminUsers() {
         />
 
         {/* User Tabs */}
-        <Tabs defaultValue="students" className="space-y-6">
+        {/* <Tabs defaultValue="students" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
             <TabsTrigger value="students" className="flex items-center space-x-2">
               <GraduationCap className="w-4 h-4" />
@@ -375,9 +372,9 @@ export default function SuperAdminUsers() {
               <Crown className="w-4 h-4" />
               <span>Super Admins ({superAdmins.length})</span>
             </TabsTrigger>
-          </TabsList>
+          </TabsList> */}
 
-          <TabsContent value="students">
+          {/* <TabsContent value="students">
             <div className="grid gap-4">
               {filteredUsers.filter(u => u.role === 'student').length === 0 ? (
                 <div className="text-center text-gray-500">No students found.</div>
@@ -398,9 +395,9 @@ export default function SuperAdminUsers() {
                 ))
               )}
             </div>
-          </TabsContent>
+          </TabsContent> */}
 
-          <TabsContent value="teachers">
+          {/* <TabsContent value="teachers">
             <div className="grid gap-4">
               {filteredUsers.filter(u => u.role === 'teacher').length === 0 ? (
                 <div className="text-center text-gray-500">No teachers found.</div>
@@ -420,9 +417,9 @@ export default function SuperAdminUsers() {
                 ))
               )}
             </div>
-          </TabsContent>
+          </TabsContent> */}
 
-          <TabsContent value="admins">
+          {/* <TabsContent value="admins">
             <div className="grid gap-4">
               {filteredUsers.filter(u => u.role === 'admin').length === 0 ? (
                 <div className="text-center text-gray-500">No admins found.</div>
@@ -442,9 +439,9 @@ export default function SuperAdminUsers() {
                 ))
               )}
             </div>
-          </TabsContent>
+          </TabsContent> */}
 
-          <TabsContent value="super-admins">
+          {/* <TabsContent value="super-admins">
             <div className="grid gap-4">
               {filteredUsers.filter(u => u.role === 'super-admin').length === 0 ? (
                 <div className="text-center text-gray-500">No super admins found.</div>
@@ -465,10 +462,10 @@ export default function SuperAdminUsers() {
               )}
             </div>
           </TabsContent>
-        </Tabs>
+        </Tabs> */}
 
         {/* User Form Dialog */}
-        {showUserForm && (
+        {/* {showUserForm && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-y-auto">
               <UserForm
@@ -485,10 +482,10 @@ export default function SuperAdminUsers() {
               />
             </div>
           </div>
-        )}
+        )} */}
 
         {/* Student Analytics Dialog */}
-        <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
+        {/* <Dialog open={showStudentDialog} onOpenChange={setShowStudentDialog}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto font-bold">
             <DialogHeader>
               <DialogTitle>Student Analytics</DialogTitle>
@@ -528,7 +525,7 @@ export default function SuperAdminUsers() {
               />
             )}
           </DialogContent>
-        </Dialog>
+        </Dialog> */}
       </div>
     </DashboardLayout>
   );
