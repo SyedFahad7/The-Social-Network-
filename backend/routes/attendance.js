@@ -44,7 +44,7 @@ router.get('/', [
 
   const records = await Attendance.find(filters)
       .populate('markedBy', 'firstName lastName email')
-    .populate('subject', 'name code')
+    .populate('subject', 'name code shortName')
     .populate('students.studentId', 'firstName lastName rollNumber');
   res.json({ success: true, data: records });
 }));

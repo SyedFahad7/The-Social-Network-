@@ -63,6 +63,8 @@ export default function TeacherAttendance() {
   const [viewAttendanceError, setViewAttendanceError] = useState('');
   // Add state to track which hours are already marked
   const [markedHours, setMarkedHours] = useState<number[]>([]);
+  // Add state to detect mobile/tablet width
+  const [isMobile, setIsMobile] = useState(false);
 
   // Auto-dismiss Mark Attendance messages
   useEffect(() => {
@@ -642,9 +644,11 @@ export default function TeacherAttendance() {
           const total = record.students.length;
           const present = record.students.filter((s: any) => s.status === 'present').length;
           const absent = record.students.filter((s: any) => s.status === 'absent').length;
-          results.push({ hour, total, present, absent });
+          const subject = record.subject?.name || record.subject?.code || 'N/A';
+          const shortName = record.subject?.shortName || subject.substring(0, 10); // Fallback to first 10 chars if no shortName
+          results.push({ hour, subject, shortName, total, present, absent });
         } else {
-          results.push({ hour, total: 0, present: 0, absent: 0 });
+          results.push({ hour, subject: 'N/A', shortName: 'N/A', total: 0, present: 0, absent: 0 });
         }
       }
       setViewAttendanceResults(results);
@@ -655,11 +659,19 @@ export default function TeacherAttendance() {
     }
   };
 
+  // Add state to detect mobile/tablet width
+  useEffect(() => {
+    const checkWidth = () => setIsMobile(window.innerWidth < 600);
+    checkWidth();
+    window.addEventListener('resize', checkWidth);
+    return () => window.removeEventListener('resize', checkWidth);
+  }, []);
+
   return (
     <DashboardLayout role="teacher">
       <div className="p-6 space-y-6">
         <Tabs value={tab} onValueChange={v => setTab(v as 'mark' | 'history' | 'view')}> 
-          <TabsList className="mb-4">
+          <TabsList className="md:mb-4 md:flex-row md:justify-start justify-start items-start flex flex-col mb-20">
             <TabsTrigger value="mark">Mark Attendance</TabsTrigger>
             <TabsTrigger value="history">Check History</TabsTrigger>
             <TabsTrigger value="view">View Attendance</TabsTrigger>
@@ -667,9 +679,9 @@ export default function TeacherAttendance() {
           <TabsContent value="mark">
           <h1 className="text-2xl font-bold text-gray-900">Mark Attendance</h1>
         <Card>
-          <CardHeader>
-                <CardTitle>Select Academic Year, Year, Semester, Section, Subject, Date & Hour</CardTitle>
-                <CardDescription>Choose all fields to mark or edit attendance</CardDescription>
+          <CardHeader >
+                <CardTitle className='text-sm md:text-lg'>Select Academic Year, Year, Semester, Section, Subject, Date & Hour.</CardTitle>
+                <CardDescription>Choose all fields to mark the attendance.</CardDescription>
           </CardHeader>
           <CardContent>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
@@ -882,7 +894,7 @@ export default function TeacherAttendance() {
             <h1 className="text-2xl font-bold text-gray-900">Check Attendance History</h1>
             <Card>
               <CardHeader>
-                <CardTitle>Select Academic Year, Year, Semester, Section, Date & Hour</CardTitle>
+                <CardTitle className='text-sm md:text-lg'>Select Academic Year, Year, Semester, Section, Date & Hour</CardTitle>
                 <CardDescription>Choose all fields to fetch and edit attendance records</CardDescription>
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-4">
                   <div>
@@ -1164,11 +1176,12 @@ export default function TeacherAttendance() {
                 </div>
                 {viewAttendanceError && <div className="text-red-600 font-medium mt-2">{viewAttendanceError}</div>}
                 {viewAttendanceResults.length > 0 && (
-                  <div className="mt-6">
-                    <table className="min-w-full border text-center">
+                  <div className="mt-6 overflow-x-auto w-full">
+                    <table className="min-w-full border text-center whitespace-nowrap">
                       <thead>
                         <tr className="bg-gray-100">
                           <th className="border px-4 py-2">Hour</th>
+                          <th className="border px-4 py-2">Subject</th>
                           <th className="border px-4 py-2">Total Students</th>
                           <th className="border px-4 py-2">Present</th>
                           <th className="border px-4 py-2">Absent</th>
@@ -1178,6 +1191,7 @@ export default function TeacherAttendance() {
                         {viewAttendanceResults.map(r => (
                           <tr key={r.hour}>
                             <td className="border px-4 py-2">{r.hour}</td>
+                            <td className="border px-4 py-2 max-w-[120px] truncate">{r.shortName}</td>
                             <td className="border px-4 py-2">{r.total}</td>
                             <td className="border px-4 py-2">{r.present}</td>
                             <td className="border px-4 py-2">{r.absent}</td>
@@ -1187,6 +1201,9 @@ export default function TeacherAttendance() {
                     </table>
                   </div>
                 )}
+                {isMobile && viewAttendanceResults.length > 0 && (
+  <div className="text-sm text-gray-500 mb-2">Swipe to see more &rarr;</div>
+)}
               </CardContent>
             </Card>
           </TabsContent>
