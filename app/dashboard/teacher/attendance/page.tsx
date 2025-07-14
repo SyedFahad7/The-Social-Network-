@@ -27,7 +27,7 @@ export default function TeacherAttendance() {
   const [subjects, setSubjects] = useState<any[]>([]);
   const [selectedSubject, setSelectedSubject] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
-  const [selectedHour, setSelectedHour] = useState<string>('');
+  const [selectedHours, setSelectedHours] = useState<string[]>([]);
   const [students, setStudents] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(false);
@@ -41,7 +41,7 @@ export default function TeacherAttendance() {
   const [commentDialog, setCommentDialog] = useState<{ open: boolean; studentId: string | null }>({ open: false, studentId: null });
   const [commentInput, setCommentInput] = useState('');
   const { toast } = useToast();
-  const [tab, setTab] = useState<'mark' | 'history'>('mark');
+  const [tab, setTab] = useState<'mark' | 'history' | 'view'>('mark');
   const [historyRecords, setHistoryRecords] = useState<any[]>([]);
   const [editingRecord, setEditingRecord] = useState<any | null>(null);
   const [editMarking, setEditMarking] = useState<Record<string, string>>({});
@@ -51,10 +51,16 @@ export default function TeacherAttendance() {
   const [historyLoading, setHistoryLoading] = useState(false);
   // Add filter state for history tab
   const [historyDate, setHistoryDate] = useState(selectedDate);
-  const [historyHour, setHistoryHour] = useState(selectedHour);
+  const [historyHour, setHistoryHour] = useState(selectedHours.length > 0 ? selectedHours[0] : '');
   const [historySuccess, setHistorySuccess] = useState('');
   const [historyError, setHistoryError] = useState('');
   const [attendanceAlreadyMarked, setAttendanceAlreadyMarked] = useState(false);
+  // Add state to store present/absent counts after submission
+  const [attendanceSummary, setAttendanceSummary] = useState<{ present: number; absent: number } | null>(null);
+  // Add state for view attendance
+  const [viewAttendanceLoading, setViewAttendanceLoading] = useState(false);
+  const [viewAttendanceResults, setViewAttendanceResults] = useState<any[]>([]);
+  const [viewAttendanceError, setViewAttendanceError] = useState('');
 
   // Auto-dismiss Mark Attendance messages
   useEffect(() => {
@@ -202,7 +208,7 @@ export default function TeacherAttendance() {
 
   // Fetch attendance if all selectors are chosen
   useEffect(() => {
-    if (selectedAcademicYear && selectedYear && selectedSemester && selectedSection && selectedSubject && selectedDate && selectedHour) {
+    if (selectedAcademicYear && selectedYear && selectedSemester && selectedSection && selectedSubject && selectedDate && selectedHours.length > 0) {
       setLoading(true);
       setAttendanceAlreadyMarked(false); // Reset state when filters change
       setShowStudents(false); // Reset showStudents when hour changes
@@ -216,7 +222,7 @@ export default function TeacherAttendance() {
         semester: selectedSemester,
         section: selectedSection,
         date: selectedDate,
-        hour: selectedHour
+        hours: selectedHours
       });
       
       // Check for ANY attendance for this hour/date/section combination (not just specific subject)
@@ -227,7 +233,7 @@ export default function TeacherAttendance() {
         semester: selectedSemester,
         section: selectedSection,
         date: selectedDate,
-        hour: selectedHour
+        hours: selectedHours
         // Note: Not including subjectId to check for ANY attendance in this slot
       }).then(res => {
         console.log('[ATTENDANCE] Attendance check response:', res);
@@ -255,7 +261,7 @@ export default function TeacherAttendance() {
       setAttendanceAlreadyMarked(false);
       setError('');
     }
-  }, [selectedAcademicYear, selectedYear, selectedSemester, selectedSection, selectedSubject, selectedDate, selectedHour]);
+  }, [selectedAcademicYear, selectedYear, selectedSemester, selectedSection, selectedSubject, selectedDate, selectedHours]);
 
   // Log allStudents and sections after fetching
   useEffect(() => {
@@ -296,23 +302,23 @@ export default function TeacherAttendance() {
   // Auto-show students when they are fetched and attendance is not already marked
   useEffect(() => {
     // Remove auto-show behavior - let user click "Fetch Students" button
-    if (students.length === 0 && !attendanceAlreadyMarked && selectedHour) {
+    if (students.length === 0 && !attendanceAlreadyMarked && selectedHours.length > 0) {
       console.log('[ATTENDANCE] No students found but attendance not marked, this might be an error');
     }
-  }, [students, attendanceAlreadyMarked, selectedHour]);
+  }, [students, attendanceAlreadyMarked, selectedHours]);
 
   // Ensure students are available when hour changes and attendance is not marked
   useEffect(() => {
     console.log('[ATTENDANCE] Students availability check:', {
-      selectedHour,
+      selectedHours,
       attendanceAlreadyMarked,
       studentsLength: students.length,
       hasAllFilters: !!(selectedAcademicYear && selectedYear && selectedSemester && selectedSection)
     });
     
-    if (selectedHour && !attendanceAlreadyMarked && students.length === 0 && 
+    if (selectedHours.length === 0 && !attendanceAlreadyMarked && students.length === 0 && 
         selectedAcademicYear && selectedYear && selectedSemester && selectedSection) {
-      console.log('[ATTENDANCE] Hour changed but no students available, refetching students');
+      console.log('[ATTENDANCE] Hours changed but no students available, refetching students');
       const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
       const department = user.department;
       
@@ -345,7 +351,7 @@ export default function TeacherAttendance() {
         setStudents([]);
       });
     }
-  }, [selectedHour, attendanceAlreadyMarked, students.length, selectedAcademicYear, selectedYear, selectedSemester, selectedSection]);
+  }, [selectedHours, attendanceAlreadyMarked, students.length, selectedAcademicYear, selectedYear, selectedSemester, selectedSection]);
 
   // Fetch history when tab is 'history' and filters are selected
   useEffect(() => {
@@ -370,7 +376,7 @@ export default function TeacherAttendance() {
     setSelectedSection('');
     setSelectedSubject('');
     setSelectedDate(new Date().toISOString().split('T')[0]);
-    setSelectedHour('');
+    setSelectedHours([]);
     setShowStudents(false);
     setStudents([]);
     setAttendance({});
@@ -382,6 +388,8 @@ export default function TeacherAttendance() {
     if (!error || !error.includes('already marked')) {
       setError('');
     }
+    // When resetting filters, also reset attendanceSummary
+    setAttendanceSummary(null);
   };
 
   // Handler for Fetch Students button
@@ -396,7 +404,7 @@ export default function TeacherAttendance() {
       selectedSection,
       selectedSubject,
       selectedDate,
-      selectedHour
+      selectedHours
     });
     
     // If attendance is already marked, do not show students
@@ -422,7 +430,7 @@ export default function TeacherAttendance() {
       const initialLate: Record<string, boolean> = {};
       const initialComments: Record<string, string> = {};
       students.forEach(s => {
-        initialMarking[s._id] = 'present';
+        initialMarking[s._id] = 'absent'; // Default to absent
         initialLate[s._id] = false;
         initialComments[s._id] = '';
       });
@@ -512,7 +520,7 @@ export default function TeacherAttendance() {
       section: selectedSection,
       subject: selectedSubject,
       date: selectedDate,
-      hour: selectedHour,
+      hours: selectedHours.map(Number),
       students: studentsData
     };
     setLoading(true);
@@ -521,6 +529,10 @@ export default function TeacherAttendance() {
       if (res?.success) {
         setSuccess('Attendance saved!');
         toast({ title: 'Attendance saved!', description: 'Attendance has been marked successfully.' });
+        // Count present/absent
+        const presentCount = studentsData.filter(s => s.status === 'present').length;
+        const absentCount = studentsData.filter(s => s.status === 'absent').length;
+        setAttendanceSummary({ present: presentCount, absent: absentCount });
         resetFilters();
         // Show success for 5s, then clear
         setTimeout(() => setSuccess(''), 5000);
@@ -591,7 +603,7 @@ export default function TeacherAttendance() {
         setSelectedSection('');
         setSelectedSubject('');
         setHistoryDate(new Date().toISOString().split('T')[0]);
-        setHistoryHour('');
+        setHistoryHour(selectedHours.length > 0 ? selectedHours[0] : '');
         setHistoryRecords([]);
         setEditMarking({});
         setEditLate({});
@@ -611,13 +623,53 @@ export default function TeacherAttendance() {
     }
   };
 
+  // Handler for View Attendance fetch
+  const handleViewAttendance = async () => {
+    setViewAttendanceLoading(true);
+    setViewAttendanceError('');
+    setViewAttendanceResults([]);
+    try {
+      const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
+      const department = user.department;
+      const hours = selectedHours.length > 0 ? selectedHours : (historyHour ? [historyHour] : []);
+      const results: any[] = [];
+      for (const hour of hours) {
+        const res = await apiClient.getAttendance?.({
+          academicYear: selectedAcademicYear,
+          department,
+          year: selectedYear,
+          semester: selectedSemester,
+          section: selectedSection,
+          subjectId: selectedSubject,
+          date: selectedDate,
+          hour: hour
+        });
+        if (res?.success && res.data.length > 0) {
+          const record = res.data[0];
+          const total = record.students.length;
+          const present = record.students.filter((s: any) => s.status === 'present').length;
+          const absent = record.students.filter((s: any) => s.status === 'absent').length;
+          results.push({ hour, total, present, absent });
+        } else {
+          results.push({ hour, total: 0, present: 0, absent: 0 });
+        }
+      }
+      setViewAttendanceResults(results);
+    } catch (e) {
+      setViewAttendanceError('Failed to fetch attendance records.');
+    } finally {
+      setViewAttendanceLoading(false);
+    }
+  };
+
   return (
     <DashboardLayout role="teacher">
       <div className="p-6 space-y-6">
-        <Tabs value={tab} onValueChange={v => setTab(v as 'mark' | 'history')}> 
+        <Tabs value={tab} onValueChange={v => setTab(v as 'mark' | 'history' | 'view')}> 
           <TabsList className="mb-4">
             <TabsTrigger value="mark">Mark Attendance</TabsTrigger>
             <TabsTrigger value="history">Check History</TabsTrigger>
+            <TabsTrigger value="view">View Attendance</TabsTrigger>
           </TabsList>
           <TabsContent value="mark">
           <h1 className="text-2xl font-bold text-gray-900">Mark Attendance</h1>
@@ -688,17 +740,24 @@ export default function TeacherAttendance() {
                     <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
                   </div>
                   <div>
-                    <label>Hour</label>
-                    <Select value={selectedHour} onValueChange={setSelectedHour}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                      <SelectContent>
-                        {[1,2,3,4,5,6].map(h => (
-                          <SelectItem key={h} value={h.toString()}>Hour {h}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-              </div>
-            </div>
+                    <label>Hours</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[1,2,3,4,5,6].map(h => (
+                        <label key={h} className="flex items-center gap-1">
+                          <Checkbox
+                            checked={selectedHours.includes(h.toString())}
+                            onCheckedChange={checked => {
+                              setSelectedHours(prev =>
+                                checked ? [...prev, h.toString()] : prev.filter(x => x !== h.toString())
+                              );
+                            }}
+                          />
+                          Hour {h}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 <div className="mt-4">
                   <Button
                     onClick={handleFetchStudents}
@@ -710,7 +769,7 @@ export default function TeacherAttendance() {
                       !selectedSection ||
                       !selectedSubject ||
                       !selectedDate ||
-                      !selectedHour ||
+                      selectedHours.length === 0 ||
                       attendanceAlreadyMarked
                     }
                   >
@@ -721,6 +780,11 @@ export default function TeacherAttendance() {
         </Card>
             {tab === 'mark' && error && <div className="text-red-600 font-medium">{error}</div>}
             {tab === 'mark' && success && <div className="text-green-600 font-medium">{success}</div>}
+            {tab === 'mark' && attendanceSummary && (
+  <div className="text-blue-700 font-medium mt-2">
+    Attendance Summary: {attendanceSummary.present} present, {attendanceSummary.absent} absent
+  </div>
+)}
             {/* Student List for Attendance Marking */}
             {showStudents && !attendanceAlreadyMarked && (
               <Card className="mt-6">
@@ -1015,6 +1079,127 @@ export default function TeacherAttendance() {
             </Card>
             {tab === 'history' && historyError && <div className="text-red-600 font-medium">{historyError}</div>}
             {tab === 'history' && historySuccess && <div className="text-green-600 font-medium">{historySuccess}</div>}
+          </TabsContent>
+          <TabsContent value="view">
+            <h1 className="text-2xl font-bold text-gray-900">View Attendance</h1>
+            <Card>
+              <CardHeader>
+                <CardTitle>Filters</CardTitle>
+                <CardDescription>Choose filters and click Fetch Attendance to view summary</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  {/* Academic Year, Year, Semester, Section, Subject, Date, Hours (reuse same filter UI as history/mark) */}
+                  <div>
+                    <label>Academic Year</label>
+                    <Select value={selectedAcademicYear} onValueChange={setSelectedAcademicYear}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {academicYears.map((y: any) => (
+                          <SelectItem key={y._id} value={y._id}>{y.yearLabel}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label>Year</label>
+                    <Select value={selectedYear} onValueChange={setSelectedYear}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {years.map(y => (
+                          <SelectItem key={y} value={y.toString()}>{y} Year</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label>Semester</label>
+                    <Select value={selectedSemester} onValueChange={setSelectedSemester}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {semesters.map(s => (
+                          <SelectItem key={s} value={s.toString()}>Sem {s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label>Section</label>
+                    <Select value={selectedSection} onValueChange={setSelectedSection}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                      <SelectContent>
+                        {sections.map(s => (
+                          <SelectItem key={s} value={s}>{s}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label>Subject</label>
+                    <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
+                  <SelectContent>
+                        {subjects.map((sub: any) => (
+                          <SelectItem key={sub._id} value={sub._id}>{sub.name} ({sub.code})</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+                  <div>
+                    <label>Date</label>
+                    <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
+                  </div>
+                  <div>
+                    <label>Hours</label>
+                    <div className="flex flex-wrap gap-2">
+                      {[1,2,3,4,5,6].map(h => (
+                        <label key={h} className="flex items-center gap-1">
+                          <Checkbox
+                            checked={selectedHours.includes(h.toString())}
+                            onCheckedChange={checked => {
+                              setSelectedHours(prev =>
+                                checked ? [...prev, h.toString()] : prev.filter(x => x !== h.toString())
+                              );
+                            }}
+                          />
+                          Hour {h}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <Button onClick={handleViewAttendance} disabled={viewAttendanceLoading || !selectedAcademicYear || !selectedYear || !selectedSemester || !selectedSection || !selectedSubject || !selectedDate || selectedHours.length === 0}>
+                    Fetch Attendance
+                  </Button>
+                </div>
+                {viewAttendanceError && <div className="text-red-600 font-medium mt-2">{viewAttendanceError}</div>}
+                {viewAttendanceResults.length > 0 && (
+                  <div className="mt-6">
+                    <table className="min-w-full border text-center">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="border px-4 py-2">Hour</th>
+                          <th className="border px-4 py-2">Total Students</th>
+                          <th className="border px-4 py-2">Present</th>
+                          <th className="border px-4 py-2">Absent</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {viewAttendanceResults.map(r => (
+                          <tr key={r.hour}>
+                            <td className="border px-4 py-2">{r.hour}</td>
+                            <td className="border px-4 py-2">{r.total}</td>
+                            <td className="border px-4 py-2">{r.present}</td>
+                            <td className="border px-4 py-2">{r.absent}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       </div>

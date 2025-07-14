@@ -61,7 +61,8 @@ router.post('/', [
   body('semester').isInt().withMessage('Semester is required'),
   body('section').isString().withMessage('Section is required'),
   body('date').isISO8601().withMessage('Valid date is required'),
-  body('hour').isInt({ min: 1, max: 12 }).withMessage('Hour is required'),
+  body('hour').optional().isInt({ min: 1, max: 12 }),
+  body('hours').optional().isArray(),
   body('students').isArray({ min: 1 }).withMessage('Students array is required'),
   body('students.*.studentId').isMongoId().withMessage('Valid student ID is required'),
   body('students.*.status').isIn(['present', 'absent', 'late']).withMessage('Valid status is required'),
@@ -77,81 +78,56 @@ router.post('/', [
     });
   }
 
-  const { academicYear, department, year, semester, section, subject, date, hour, students } = req.body;
-
-  // In POST/PUT, build students array as:
-  // { studentId, status: 'present' | 'absent', late: boolean, comments }
-  const studentsData = students.map(s => ({
-    studentId: s.studentId,
-    status: s.status === 'present' ? 'present' : 'absent',
-    late: !!s.late,
-    comments: s.comments || ''
-  }));
-  // Use studentsData in $set
-  const update = {
-    $set: {
-      students: studentsData,
-      lastEditedAt: new Date()
-    },
-    $setOnInsert: {
-      createdAt: new Date(),
-      markedBy: req.user._id,
-      subject
-    }
-  };
-
-  const filter = {
-    academicYear,
-    department,
-    year,
-    semester,
-    section,
-    subject,
-    date,
-    hour
-  };
-
-  const options = { new: true, upsert: true };
-
-  try {
-    const attendanceRecord = await Attendance.findOneAndUpdate(filter, update, options)
-      .populate('markedBy', 'firstName lastName email')
-      .populate('students.studentId', 'firstName lastName rollNumber');
-
-    res.status(201).json({
-      success: true,
-      message: 'Attendance saved',
-      data: attendanceRecord
-    });
-  } catch (error) {
-    if (error.code === 11000) {
-      // Handle duplicate key error - try to find existing record and update it
-      console.log('[ATTENDANCE] Duplicate key error, trying to find existing record');
-      const existingRecord = await Attendance.findOne(filter);
-      if (existingRecord) {
-        existingRecord.students = studentsData;
-        existingRecord.lastEditedAt = new Date();
-        await existingRecord.save();
-        
-        const updatedRecord = await Attendance.findById(existingRecord._id)
-          .populate('markedBy', 'firstName lastName email')
-          .populate('students.studentId', 'firstName lastName rollNumber');
-        
-        res.status(200).json({
-          success: true,
-          message: 'Attendance updated',
-          data: updatedRecord
-        });
-      } else {
-        res.status(400).json({
-          success: false,
-          message: 'Failed to save attendance due to duplicate constraint'
-        });
+  const { academicYear, department, year, semester, section, subject, date, students } = req.body;
+  const hours = req.body.hours || (req.body.hour ? [req.body.hour] : []);
+  if (!hours.length) {
+    return res.status(400).json({ success: false, message: 'At least one hour must be specified.' });
+  }
+  const results = [];
+  for (const hour of hours) {
+    const studentsData = students.map(s => ({
+      studentId: s.studentId,
+      status: s.status === 'present' ? 'present' : 'absent',
+      late: !!s.late,
+      comments: s.comments || ''
+    }));
+    const update = {
+      $set: {
+        students: studentsData,
+        lastEditedAt: new Date()
+      },
+      $setOnInsert: {
+        createdAt: new Date(),
+        markedBy: req.user._id,
+        subject
       }
-    } else {
-      throw error;
+    };
+    const filter = {
+      academicYear,
+      department,
+      year,
+      semester,
+      section,
+      subject,
+      date,
+      hour
+    };
+    const options = { new: true, upsert: true };
+    try {
+      const attendanceRecord = await Attendance.findOneAndUpdate(filter, update, options)
+        .populate('markedBy', 'firstName lastName email')
+        .populate('students.studentId', 'firstName lastName rollNumber');
+      results.push({ hour, success: true, data: attendanceRecord });
+    } catch (error) {
+      results.push({ hour, success: false, error: error.message });
     }
   }
+  const allSuccess = results.every(r => r.success);
+  res.status(allSuccess ? 201 : 207).json({
+    success: allSuccess,
+    message: allSuccess ? 'Attendance saved for all hours' : 'Some hours failed',
+    results
+  });
 }));
 
 // @route   GET /api/attendance/student/:studentId/stats
@@ -251,7 +227,8 @@ router.post('/mark', [
   body('section').notEmpty(),
   body('subject').notEmpty(),
   body('date').isISO8601(),
-  body('hour').isInt({ min: 1, max: 6 }),
+  body('hour').optional().isInt({ min: 1, max: 6 }),
+  body('hours').optional().isArray(),
   body('students').isArray({ min: 1 }),
   body('students.*.studentId').isMongoId(),
   body('students.*.status').isIn(['present', 'late', 'absent'])
@@ -260,30 +237,43 @@ router.post('/mark', [
   if (!errors.isEmpty()) {
     return res.status(400).json({ success: false, message: 'Validation failed', errors: errors.array() });
   }
-  const { academicYear, department, year, semester, section, subject, date, hour, students } = req.body;
-  let record = await Attendance.findOne({ subject, date, hour, section });
-  if (record) {
-    record.students = students.map(s => ({ ...s, updatedAt: new Date(), updatedBy: req.user._id }));
-    record.lastEditedAt = new Date();
-    await record.save();
-    return res.json({ success: true, message: 'Attendance updated', data: record });
-  } else {
-    record = await Attendance.create({
-      academicYear,
-      department,
-      year,
-      semester,
-      section,
-      subject,
-      date,
-      hour,
-      teacher: req.user._id,
-      students: students.map(s => ({ ...s, updatedAt: new Date(), updatedBy: req.user._id })),
-      createdAt: new Date(),
-      lastEditedAt: new Date()
-    });
-    return res.status(201).json({ success: true, message: 'Attendance marked', data: record });
+  const { academicYear, department, year, semester, section, subject, date, students } = req.body;
+  const hours = req.body.hours || (req.body.hour ? [req.body.hour] : []);
+  if (!hours.length) {
+    return res.status(400).json({ success: false, message: 'At least one hour must be specified.' });
   }
+  const results = [];
+  for (const hour of hours) {
+    let record = await Attendance.findOne({ subject, date, hour, section });
+    if (record) {
+      record.students = students.map(s => ({ ...s, updatedAt: new Date(), updatedBy: req.user._id }));
+      record.lastEditedAt = new Date();
+      await record.save();
+      results.push({ hour, success: true, data: record });
+    } else {
+      record = await Attendance.create({
+        academicYear,
+        department,
+        year,
+        semester,
+        section,
+        subject,
+        date,
+        hour,
+        teacher: req.user._id,
+        students: students.map(s => ({ ...s, updatedAt: new Date(), updatedBy: req.user._id })),
+        createdAt: new Date(),
+        lastEditedAt: new Date()
+      });
+      results.push({ hour, success: true, data: record });
+    }
+  }
+  const allSuccess = results.every(r => r.success);
+  res.status(allSuccess ? 201 : 207).json({
+    success: allSuccess,
+    message: allSuccess ? 'Attendance marked for all hours' : 'Some hours failed',
+    results
+  });
 }));
 
 // GET /api/attendance/analytics/student/:studentId
