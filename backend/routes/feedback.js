@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const { Feedback, FeedbackResponse } = require('../models/Feedback');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const { authenticate, requireSuperAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -76,10 +76,10 @@ router.get('/', [
 
 // @route   POST /api/feedback
 // @desc    Create feedback form
-// @access  Private (Admin+)
+// @access  Private (Super Admin only)
 router.post('/', [
   authenticate,
-  requireAdmin,
+  requireSuperAdmin,
   body('title').trim().isLength({ min: 1, max: 200 }).withMessage('Title is required and must be less than 200 characters'),
   body('feedbackType').isIn(['teacher-evaluation', 'course-feedback', 'general-feedback', 'suggestion']).withMessage('Valid feedback type is required'),
   body('targetRole').isIn(['student', 'teacher', 'all']).withMessage('Valid target role is required'),
@@ -209,10 +209,10 @@ router.post('/:id/response', [
 
 // @route   GET /api/feedback/:id/responses
 // @desc    Get feedback responses
-// @access  Private (Admin+)
+// @access  Private (Super Admin only)
 router.get('/:id/responses', [
   authenticate,
-  requireAdmin,
+  requireSuperAdmin,
   query('page').optional().isInt({ min: 1 }),
   query('limit').optional().isInt({ min: 1, max: 100 })
 ], asyncHandler(async (req, res) => {
@@ -257,10 +257,10 @@ router.get('/:id/responses', [
 
 // @route   PUT /api/feedback/:id/activate
 // @desc    Activate feedback form
-// @access  Private (Admin+)
+// @access  Private (Super Admin only)
 router.put('/:id/activate', [
   authenticate,
-  requireAdmin
+  requireSuperAdmin
 ], asyncHandler(async (req, res) => {
   const feedback = await Feedback.findById(req.params.id);
   if (!feedback) {

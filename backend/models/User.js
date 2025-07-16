@@ -44,8 +44,8 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Role is required'],
     enum: {
-      values: ['student', 'teacher', 'admin', 'super-admin'],
-      message: 'Role must be student, teacher, admin, or super-admin'
+      values: ['student', 'teacher', 'super-admin'],
+      message: 'Role must be student, teacher, or super-admin'
     }
   },
   department: {
@@ -205,6 +205,24 @@ const userSchema = new mongoose.Schema({
       year: { type: Number, required: true },
       section: { type: String, required: true }
     }
+  ],
+  // Faculty assignment fields
+  teachingAssignments: [
+    {
+      subject: { type: mongoose.Schema.Types.ObjectId, ref: 'Subject', required: true },
+      section: { type: String, required: true },
+      year: { type: Number, required: true },
+      semester: { type: Number, required: true },
+      academicYear: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicYear', required: true }
+    }
+  ],
+  classTeacherAssignments: [
+    {
+      section: { type: String, required: true },
+      year: { type: Number, required: true },
+      semester: { type: Number, required: true },
+      academicYear: { type: mongoose.Schema.Types.ObjectId, ref: 'AcademicYear', required: true }
+    }
   ]
 }, {
   timestamps: true, // Adds createdAt and updatedAt
@@ -286,7 +304,6 @@ userSchema.statics.getUserStats = async function() {
     total: 0,
     students: 0,
     teachers: 0,
-    admins: 0,
     superAdmins: 0
   };
   
@@ -298,9 +315,6 @@ userSchema.statics.getUserStats = async function() {
         break;
       case 'teacher':
         result.teachers = stat.count;
-        break;
-      case 'admin':
-        result.admins = stat.count;
         break;
       case 'super-admin':
         result.superAdmins = stat.count;

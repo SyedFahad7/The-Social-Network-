@@ -33,38 +33,21 @@ interface SidebarProps {
 const roleMenus = {
   student: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/student' },
-    // { icon: Calendar, label: 'Timetable', href: '/dashboard/student/timetable' },
-    // { icon: FileText, label: 'Assignments', href: '/dashboard/student/assignments' },
-    // { icon: Award, label: 'Certificates', href: '/dashboard/student/certificates' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/student/attendance' },
-    // { icon: MessageSquare, label: 'Feedback', href: '/dashboard/student/feedback' },
-    // { icon: BookOpen, label: 'Question Banks', href: '/dashboard/student/question-banks' },
   ],
   teacher: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/teacher' },
+    { icon: BookOpen, label: 'My Sections', href: '/dashboard/teacher/sections' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/teacher/attendance' },
-    // Commented out menu items:
-    // { icon: Users, label: 'My Sections', href: '/dashboard/teacher/sections' },
-    // { icon: FileText, label: 'Assignments', href: '/dashboard/teacher/assignments' },
-    // { icon: Calendar, label: 'Timetable', href: '/dashboard/teacher/timetable' },
-    // { icon: BookOpen, label: 'Question Banks', href: '/dashboard/teacher/question-banks' },
-    // { icon: MessageSquare, label: 'Feedback', href: '/dashboard/teacher/feedback' },
-  ],
-  admin: [
-    { icon: Home, label: 'Dashboard', href: '/dashboard/admin' },
-    { icon: Users, label: 'User Management', href: '/dashboard/admin/users' },
-    { icon: Shield, label: 'Moderations', href: '/dashboard/admin/moderations' },
-    { icon: Award, label: 'Certificates', href: '/dashboard/admin/certificates' },
-    { icon: FileText, label: 'Content Review', href: '/dashboard/admin/content' },
-    { icon: BarChart3, label: 'Analytics', href: '/dashboard/admin/analytics' },
-    { icon: Bell, label: 'Notifications', href: '/dashboard/admin/notifications' },
   ],
   'super-admin': [
     { icon: Home, label: 'Dashboard', href: '/dashboard/super-admin' },
-    { icon: Users, label: 'Sections Management', href: '/dashboard/super-admin/sections' },
-    { icon: BarChart3, label: 'Analytics', href: '/dashboard/super-admin/analytics' },
-    { icon: Users, label: 'All Users', href: '/dashboard/super-admin/users' },
-    { icon: Bell, label: 'Notifications', href: '/dashboard/super-admin/notifications' },
+    { icon: BookOpen, label: 'My Sections', href: '/dashboard/super-admin/my-sections' },
+    // { icon: Users, label: 'Sections Management', href: '/dashboard/super-admin/sections' },
+    // { icon: BarChart3, label: 'Analytics', href: '/dashboard/super-admin/analytics' },
+    // { icon: Users, label: 'All Users', href: '/dashboard/super-admin/users' },
+    // { icon: Bell, label: 'Notifications', href: '/dashboard/super-admin/notifications' },
+    {icon:Users, label:'My Faculty', href:'/dashboard/super-admin/my-faculty'}
   ],
 };
 
@@ -105,7 +88,6 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
     switch (role) {
       case 'student': return 'text-blue-600';
       case 'teacher': return 'text-green-600';
-      case 'admin': return 'text-orange-600';
       case 'super-admin': return 'text-purple-600';
       default: return 'text-gray-600 dark:text-gray-400';
     }
@@ -115,7 +97,6 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
     switch (role) {
       case 'student': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200';
       case 'teacher': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200';
-      case 'admin': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200';
       case 'super-admin': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200';
       default: return 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200';
     }

@@ -21,17 +21,6 @@ const isTeacher = (req, res, next) => {
   }
 };
 
-const isAdmin = (req, res, next) => {
-  if (req.user && (req.user.role === 'admin' || req.user.role === 'super-admin')) {
-    next();
-  } else {
-    res.status(403).json({
-      success: false,
-      message: 'Access denied. Admin role required.'
-    });
-  }
-};
-
 const isSuperAdmin = (req, res, next) => {
   if (req.user && req.user.role === 'super-admin') {
     next();
@@ -44,7 +33,7 @@ const isSuperAdmin = (req, res, next) => {
 };
 
 const isStaff = (req, res, next) => {
-  if (req.user && (req.user.role === 'teacher' || req.user.role === 'admin' || req.user.role === 'super-admin')) {
+  if (req.user && (req.user.role === 'teacher' || req.user.role === 'super-admin')) {
     next();
   } else {
     res.status(403).json({
@@ -89,8 +78,8 @@ const isOwnerOrAdmin = (req, res, next) => {
     return next(); // Super admin can access everything
   }
   
-  if (req.user.role === 'admin' && req.user.department) {
-    return next(); // Admin can access their department
+  if (req.user.role === 'teacher' && req.user.department) {
+    return next(); // Teacher can access their department
   }
   
   if (req.user._id.toString() === resourceUserId.toString()) {
@@ -106,7 +95,6 @@ const isOwnerOrAdmin = (req, res, next) => {
 module.exports = {
   isStudent,
   isTeacher,
-  isAdmin,
   isSuperAdmin,
   isStaff,
   isDepartmentMember,

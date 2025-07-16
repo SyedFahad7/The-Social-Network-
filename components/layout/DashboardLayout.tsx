@@ -102,29 +102,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
               <ThemeToggle />
               
               {/* Profile Avatar */}
-              <div className="flex items-center space-x-3">
-                <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center overflow-hidden">
-                  {user.profilePicture ? (
-                    <img 
-                      src={user.profilePicture} 
-                      alt="Profile" 
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                                      <span className="text-sm font-medium text-white">
-                    {user.firstName ? user.firstName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
-                  </span>
-                  )}
-                </div>
-                <div className="hidden md:block">
-                  <p className="text-sm font-medium text-gray-900 dark:text-white">
-                    {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.email}
-                  </p>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 capitalize">
-                    {user.role?.replace('-', ' ')}
-                  </p>
-                </div>
-              </div>
+              
             </div>
           </div>
 

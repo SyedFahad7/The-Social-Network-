@@ -65,6 +65,18 @@ export default function TeacherAttendance() {
   const [markedHours, setMarkedHours] = useState<number[]>([]);
   // Add state to detect mobile/tablet width
   const [isMobile, setIsMobile] = useState(false);
+  const [teachingAssignments, setTeachingAssignments] = useState<any[]>([]);
+  const [classTeacherAssignments, setClassTeacherAssignments] = useState<any[]>([]);
+  const [user, setUser] = useState<any>(null);
+  const [processLog, setProcessLog] = useState<string[]>([]);
+
+  // Helper to add to process log
+  const logProcess = (msg: string, data?: any) => {
+    setProcessLog(prev => [
+      `${new Date().toLocaleTimeString()} | ${msg}${data !== undefined ? ': ' + (typeof data === 'string' ? data : JSON.stringify(data)) : ''}`,
+      ...prev.slice(0, 49) // keep last 50 logs
+    ]);
+  };
 
   // Auto-dismiss Mark Attendance messages
   useEffect(() => {
@@ -100,23 +112,86 @@ export default function TeacherAttendance() {
     }
   }, [selectedAcademicYear, selectedYear, academicYears]);
 
-  // Fetch sections (assuming static for now, or fetch from backend if available)
+  // Fetch user from localStorage on mount
   useEffect(() => {
-    setSections(['A', 'B', 'C']);
+    if (typeof window !== 'undefined') {
+      let u = JSON.parse(localStorage.getItem('user') || '{}');
+      if (u.id && !u._id) u._id = u.id; // Patch: map id to _id if needed
+      setUser(u);
+      logProcess('Loaded user from localStorage', u);
+    }
   }, []);
 
-  // Fetch subjects when year/semester/academicYear changes
+  // Fetch teacher assignments after user is loaded
   useEffect(() => {
-    if (selectedAcademicYear && selectedYear && selectedSemester) {
-      apiClient.getSubjects?.({
-        academicYear: selectedAcademicYear,
-        year: selectedYear,
-        semester: selectedSemester
-      }).then(res => {
-        if (res?.success) setSubjects(res.data);
+    if (!user || !user._id) return;
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
+    const url = backendUrl
+      ? `${backendUrl}/api/users/${user._id}/assignments`
+      : `/api/users/${user._id}/assignments`;
+    fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    })
+      .then(res => res.json())
+      .then(data => {
+        setTeachingAssignments(data.teachingAssignments || []);
+        setClassTeacherAssignments(data.classTeacherAssignments || []);
+        logProcess('[ASSIGNMENTS ROUTE] teachingAssignments', data.teachingAssignments);
+        logProcess('[ASSIGNMENTS ROUTE] classTeacherAssignments', data.classTeacherAssignments);
+        logProcess('[ASSIGNMENTS ROUTE] Sending response', {
+          teachingAssignmentsLength: Array.isArray(data.teachingAssignments) ? data.teachingAssignments.length : 0,
+          classTeacherAssignmentsLength: Array.isArray(data.classTeacherAssignments) ? data.classTeacherAssignments.length : 0
+        });
+      })
+      .catch(err => {
+        logProcess('[ASSIGNMENTS ROUTE] ERROR', err?.message || err);
+        setTeachingAssignments([]);
+        setClassTeacherAssignments([]);
       });
+  }, [user]);
+
+  // Filter sections based on assignments and selected filters
+  useEffect(() => {
+    if (!selectedAcademicYear || !selectedYear || !selectedSemester) {
+      setSections([]);
+      setSelectedSection('');
+      return;
     }
-  }, [selectedAcademicYear, selectedYear, selectedSemester]);
+    // Only show sections the teacher is assigned to for the selected filters
+    const filtered = teachingAssignments.filter(a =>
+      String(a.academicYear?._id || a.academicYear) === String(selectedAcademicYear) &&
+      String(a.year) === String(selectedYear) &&
+      String(a.semester) === String(selectedSemester)
+    );
+    const uniqueSections = Array.from(new Set(filtered.map(a => a.section))).filter(Boolean);
+    setSections(uniqueSections);
+    // If current selectedSection is not in the new list, reset it
+    if (!uniqueSections.includes(selectedSection)) setSelectedSection('');
+  }, [teachingAssignments, selectedAcademicYear, selectedYear, selectedSemester]);
+
+  // Filter subjects based on assignments and selected section
+  useEffect(() => {
+    if (!selectedAcademicYear || !selectedYear || !selectedSemester || !selectedSection) {
+      setSubjects([]);
+      return;
+    }
+    // Only show subjects the teacher is assigned to for the selected section/year/semester/AY
+    const filteredAssignments = teachingAssignments.filter(a =>
+      String(a.section) === String(selectedSection) &&
+      String(a.year) === String(selectedYear) &&
+      String(a.semester) === String(selectedSemester) &&
+      (
+        String(a.academicYear?._id || a.academicYear) === String(selectedAcademicYear)
+      )
+    );
+    // Map to subject objects (populated from backend)
+    const uniqueSubjects = Array.from(
+      new Map(filteredAssignments.map(a => [a.subject._id, a.subject])).values()
+    );
+    setSubjects(uniqueSubjects);
+  }, [selectedAcademicYear, selectedYear, selectedSemester, selectedSection, teachingAssignments]);
 
   // Fetch all students for department and year (for sections dropdown)
   useEffect(() => {
@@ -150,7 +225,6 @@ export default function TeacherAttendance() {
   useEffect(() => {
     const uniqueSections = Array.from(new Set(allStudents.map(s => s.section))).filter(Boolean);
     setSections(uniqueSections);
-    console.log('[ATTENDANCE] sections:', uniqueSections);
     if (uniqueSections.length === 0) {
       console.warn('[ATTENDANCE] No sections found for selected year/department');
     }
@@ -158,13 +232,6 @@ export default function TeacherAttendance() {
 
   // Fetch students for attendance marking (with all filters)
   useEffect(() => {
-    console.log('[ATTENDANCE] Students fetching useEffect triggered with filters:', {
-      selectedAcademicYear,
-      selectedYear,
-      selectedSemester,
-      selectedSection
-    });
-    
     if (selectedAcademicYear && selectedYear && selectedSemester && selectedSection) {
       const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
       const department = user.department;
@@ -184,7 +251,6 @@ export default function TeacherAttendance() {
         section: selectedSection,
         limit: 1000 // Ensure all students are fetched
       }).then(res => {
-        console.log('[ATTENDANCE] attendance marking API response:', res);
         if (res?.success) {
           if (Array.isArray(res.data)) {
             console.log('[ATTENDANCE] Setting students from array:', res.data.length);
@@ -259,7 +325,7 @@ export default function TeacherAttendance() {
 
   // Log allStudents and sections after fetching
   useEffect(() => {
-    console.log('[ATTENDANCE] allStudents:', allStudents);
+    console.log('[ATTENDANCE] allStudents count:', allStudents.length);
     if (allStudents.length === 0) {
       console.warn('[ATTENDANCE] No students found for selected filters');
     }
@@ -303,16 +369,8 @@ export default function TeacherAttendance() {
 
   // Ensure students are available when hour changes and attendance is not marked
   useEffect(() => {
-    console.log('[ATTENDANCE] Students availability check:', {
-      selectedHours,
-      attendanceAlreadyMarked,
-      studentsLength: students.length,
-      hasAllFilters: !!(selectedAcademicYear && selectedYear && selectedSemester && selectedSection)
-    });
-    
     if (selectedHours.length === 0 && !attendanceAlreadyMarked && students.length === 0 && 
         selectedAcademicYear && selectedYear && selectedSemester && selectedSection) {
-      console.log('[ATTENDANCE] Hours changed but no students available, refetching students');
       const user = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user') || '{}') : {};
       const department = user.department;
       
@@ -324,7 +382,6 @@ export default function TeacherAttendance() {
         section: selectedSection,
         limit: 1000
       }).then(res => {
-        console.log('[ATTENDANCE] Refetch students response:', res);
         if (res?.success) {
           if (Array.isArray(res.data)) {
             console.log('[ATTENDANCE] Setting students from refetch array:', res.data.length);
@@ -667,6 +724,28 @@ export default function TeacherAttendance() {
     return () => window.removeEventListener('resize', checkWidth);
   }, []);
 
+  // Add a debug dump panel (only in development)
+  const isDev = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+
+  // Log dropdown selections
+  useEffect(() => {
+    if (selectedAcademicYear) logProcess('Selected Academic Year', selectedAcademicYear);
+  }, [selectedAcademicYear]);
+  useEffect(() => {
+    if (selectedYear) logProcess('Selected Year', selectedYear);
+  }, [selectedYear]);
+  useEffect(() => {
+    if (selectedSemester) logProcess('Selected Semester', selectedSemester);
+  }, [selectedSemester]);
+  useEffect(() => {
+    if (selectedSection) logProcess('Selected Section', selectedSection);
+  }, [selectedSection]);
+  useEffect(() => {
+    if (selectedSubject) logProcess('Selected Subject', selectedSubject);
+  }, [selectedSubject]);
+
+  const selectedSubjectObj = subjects.find((s: any) => s._id === selectedSubject);
+
   return (
     <DashboardLayout role="teacher">
       <div className="p-6 space-y-6">
@@ -732,14 +811,20 @@ export default function TeacherAttendance() {
                   <div>
                     <label>Subject</label>
                     <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-                      <SelectTrigger><SelectValue placeholder="Select" /></SelectTrigger>
-                  <SelectContent>
+                      <SelectTrigger className="text-left pl-3">
+                        <SelectValue placeholder="Select" >
+                          {selectedSubjectObj ? `${selectedSubjectObj.name}${selectedSubjectObj.code ? ` (${selectedSubjectObj.code})` : ''}` : ''}
+                        </SelectValue>
+                      </SelectTrigger>
+                      <SelectContent>
                         {subjects.map((sub: any) => (
-                          <SelectItem key={sub._id} value={sub._id}>{sub.name} ({sub.code})</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+                          <SelectItem key={sub._id} value={sub._id} className="text-left">
+                            {sub.name}{sub.code ? ` (${sub.code})` : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div>
                     <label>Date</label>
                     <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />

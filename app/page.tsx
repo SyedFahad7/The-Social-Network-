@@ -34,9 +34,6 @@ export default function Home() {
         case 'teacher':
           router.push('/dashboard/teacher');
           break;
-        case 'admin':
-          router.push('/dashboard/admin');
-          break;
         case 'super-admin':
           router.push('/dashboard/super-admin');
           break;
@@ -91,12 +88,6 @@ export default function Home() {
       description: 'Manage classes, create assignments, mark attendance, and upload resources.',
       color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200',
       features: ['Class Management', 'Assignment Creation', 'Attendance Marking', 'Resource Upload']
-    },
-    {
-      role: 'Admins',
-      description: 'Moderate content, manage users, approve submissions, and generate reports.',
-      color: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
-      features: ['User Management', 'Content Moderation', 'Approval Workflows', 'System Reports']
     },
     {
       role: 'HoD (Super Admin)',

@@ -13,7 +13,7 @@ interface Department {
   code: string;
 }
 
-type UserRole = 'student' | 'teacher' | 'admin' | 'super-admin';
+type UserRole = 'student' | 'teacher' | 'super-admin';
 
 interface UserFormProps {
   user?: {

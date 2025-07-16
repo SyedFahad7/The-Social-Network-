@@ -51,6 +51,44 @@ router.get('/teacher/:teacherId', authenticate, async (req, res) => {
 });
 
 // Get section by ID
+router.get('/unique', async (req, res) => {
+  try {
+    console.log('HIT /api/sections/unique');
+    const User = require('../models/User');
+    const studentCount = await User.countDocuments({ role: 'student' });
+    console.log('Student count:', studentCount);
+    const oneStudent = await User.findOne({ role: 'student' });
+    console.log('Sample student:', oneStudent);
+    const uniqueSections = await User.aggregate([
+      { $match: { role: 'student', year: { $exists: true }, section: { $exists: true }, academicYear: { $exists: true } } },
+      {
+        $group: {
+          _id: {
+            year: '$year',
+            section: '$section',
+            semester: { $ifNull: ['$currentSemester', '$semester'] },
+            academicYear: '$academicYear'
+          }
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          year: '$_id.year',
+          section: '$_id.section',
+          semester: '$_id.semester',
+          academicYear: '$_id.academicYear'
+        }
+      }
+    ]);
+    console.log('[DEBUG /api/sections/unique] uniqueSections:', uniqueSections);
+    res.json({ success: true, sections: uniqueSections });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
+// Get section by ID
 router.get('/:id', authenticate, async (req, res) => {
   try {
     const section = await Section.findById(req.params.id)

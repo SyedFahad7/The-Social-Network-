@@ -2,7 +2,7 @@ const express = require('express');
 const { body, validationResult, query } = require('express-validator');
 const Certificate = require('../models/Certificate');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { authenticate, requireAdmin } = require('../middleware/auth');
+const { authenticate, requireSuperAdmin } = require('../middleware/auth');
 
 const router = express.Router();
 
@@ -121,10 +121,10 @@ router.post('/', [
 
 // @route   PUT /api/certificates/:id/approve
 // @desc    Approve certificate
-// @access  Private (Admin+)
+// @access  Private (Super Admin only)
 router.put('/:id/approve', [
   authenticate,
-  requireAdmin,
+  requireSuperAdmin,
   body('points').optional().isFloat({ min: 0, max: 100 }).withMessage('Points must be between 0 and 100'),
   body('comments').optional().trim().isLength({ max: 500 }).withMessage('Comments cannot exceed 500 characters')
 ], asyncHandler(async (req, res) => {
@@ -158,10 +158,10 @@ router.put('/:id/approve', [
 
 // @route   PUT /api/certificates/:id/reject
 // @desc    Reject certificate
-// @access  Private (Admin+)
+// @access  Private (Super Admin only)
 router.put('/:id/reject', [
   authenticate,
-  requireAdmin,
+  requireSuperAdmin,
   body('comments').trim().isLength({ min: 1, max: 500 }).withMessage('Rejection reason is required and cannot exceed 500 characters')
 ], asyncHandler(async (req, res) => {
   const { comments } = req.body;
@@ -194,10 +194,10 @@ router.put('/:id/reject', [
 
 // @route   GET /api/certificates/stats
 // @desc    Get certificate statistics
-// @access  Private (Admin+)
+// @access  Private (Super Admin only)
 router.get('/stats', [
   authenticate,
-  requireAdmin
+  requireSuperAdmin
 ], asyncHandler(async (req, res) => {
   const stats = await Certificate.getStats();
   

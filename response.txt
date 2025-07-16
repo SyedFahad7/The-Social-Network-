@@ -1,0 +1,1246 @@
+RAW departmentsResponse: {
+  "success": true,
+  "data": [
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66f",
+      "name": "Civil Engineering",
+      "code": "CE",
+      "description": "Civil Engineering Department",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf671",
+      "name": "Computer Science Engineering",
+      "code": "CSE",
+      "description": "Computer Science Engineering Core",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66c",
+      "name": "Computer Science in Data Science",
+      "code": "CSD",
+      "description": "Computer Science with specialization in Data Science",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf672",
+      "name": "Computer Science in Machine Learning",
+      "code": "CSM",
+      "description": "Computer Science with specialization in Machine Learning",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66e",
+      "name": "Electronics & Communication Engineering",
+      "code": "ECE",
+      "description": "Electronics and Communication Engineering Department",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66d",
+      "name": "Information Technology",
+      "code": "IT",
+      "description": "Information Technology Department",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf670",
+      "name": "Mechanical Engineering",
+      "code": "ME",
+      "description": "Mechanical Engineering Department",
+      "isActive": true
+    }
+  ]
+}
+page.tsx:81 RAW usersResponse: {
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "_id": "6876e455e4d1e2242c03be80",
+        "email": "syedmushtaq@lords.ac.in",
+        "firstName": "Syed",
+        "lastName": "Mushtaq Ali",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP002",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be7f",
+        "email": "moksud@lords.ac.in",
+        "firstName": "Moksud",
+        "lastName": "Alam Malik",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP001",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be83",
+        "email": "nagma@lords.ac.in",
+        "firstName": "Mohammad",
+        "lastName": "Nagma Arshin",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP005",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be81",
+        "email": "feroz@lords.ac.in",
+        "firstName": "Feroz",
+        "lastName": "Amer",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP003",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be85",
+        "email": "ashique@lords.ac.in",
+        "firstName": "Md",
+        "lastName": "Ashique Hussain",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP007",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be82",
+        "email": "shakuntala@lords.ac.in",
+        "firstName": "Y",
+        "lastName": "Shakuntala",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP004",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be88",
+        "email": "asif@lords.ac.in",
+        "firstName": "Asif",
+        "lastName": "Ahmad",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP010",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be87",
+        "email": "tarique@lords.ac.in",
+        "firstName": "Mohd",
+        "lastName": "Tarique Khan",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP009",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be86",
+        "email": "adeeba@lords.ac.in",
+        "firstName": "Adeeba",
+        "lastName": "Anjum",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP008",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be84",
+        "email": "aqeel@lords.ac.in",
+        "firstName": "Aqeel",
+        "lastName": "Haider Shams",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP006",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 35,
+      "totalUsers": 348,
+      "hasNextPage": true,
+      "hasPrevPage": false,
+      "limit": 10
+    }
+  }
+}
+page.tsx:82 RAW attendanceResponse: {
+  "success": true,
+  "data": [
+    {
+      "_id": "6874b040e4d1e2242c03acea",
+      "year": 4,
+      "semester": 7,
+      "section": "A",
+      "date": "2025-07-14",
+      "hour": 1,
+      "academicYear": "6867050340150fc76c1cf688",
+      "department": "6866e33640150fc76c1cf66c",
+      "subject": {
+        "_id": "687460a6cf75310e216e1f59",
+        "name": "Data Handling and Data Visualization Lab",
+        "shortName": "DH&DV Lab",
+        "code": "U21CD7L1"
+      },
+      "__v": 4,
+      "createdAt": "2025-07-14T07:22:40.544Z",
+      "lastEditedAt": "2025-07-15T21:57:09.390Z",
+      "markedBy": {
+        "_id": "6866ec218d8410ac99150b3f",
+        "email": "faculty@lords.ac.in",
+        "firstName": "Demo",
+        "lastName": "Teacher"
+      },
+      "students": [
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab23",
+            "firstName": "Venkatesh",
+            "lastName": "Bhandari",
+            "rollNumber": "160922750001"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ea"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab24",
+            "firstName": "Syed Sirajul",
+            "lastName": "Altamash",
+            "rollNumber": "160922750002"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963eb"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab25",
+            "firstName": "Mohammed Abdul Raqeeb",
+            "lastName": "Sher",
+            "rollNumber": "160922750003"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ec"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab26",
+            "firstName": "Shaik Hamza",
+            "lastName": "Saifuddin",
+            "rollNumber": "160922750004"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ed"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab27",
+            "firstName": "Mufassal Mohiuddin",
+            "lastName": "Areeb",
+            "rollNumber": "160922750005"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ee"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab28",
+            "firstName": "Mohammed",
+            "lastName": "Salahuddin",
+            "rollNumber": "160922750006"
+          },
+          "status": "present",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ef"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab29",
+            "firstName": "Nasr",
+            "lastName": "Ahmed",
+            "rollNumber": "160922750007"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f0"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2a",
+            "firstName": "Mohd",
+            "lastName": "Irfan",
+            "rollNumber": "160922750009"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f1"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2b",
+            "firstName": "Mohammed Abdul",
+            "lastName": "Muqueet",
+            "rollNumber": "160922750010"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f2"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2c",
+            "firstName": "Syeda Daniya",
+            "lastName": "Faizah",
+            "rollNumber": "160922750011"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f3"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2d",
+            "firstName": "Wasiya",
+            "lastName": "Shireen",
+            "rollNumber": "160922750012"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f4"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2e",
+            "firstName": "Mohammed Islamul",
+            "lastName": "Haq",
+            "rollNumber": "160922750013"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f5"
+        },
+        {
+          "studentId": {
+            "_id": "68747
+page.tsx:91 Processed departments: 
+Array(7)
+page.tsx:100 Processed users: 
+Array(10)
+page.tsx:109 Processed attendanceRecords: 
+Array(19)
+page.tsx:133 Calculating system stats with: 
+Object
+page.tsx:184 System stats calculated: 
+Array(5)
+page.tsx:205 Department stats calculated: 
+Array(0)
+page.tsx:80 RAW departmentsResponse: {
+  "success": true,
+  "data": [
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66f",
+      "name": "Civil Engineering",
+      "code": "CE",
+      "description": "Civil Engineering Department",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf671",
+      "name": "Computer Science Engineering",
+      "code": "CSE",
+      "description": "Computer Science Engineering Core",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66c",
+      "name": "Computer Science in Data Science",
+      "code": "CSD",
+      "description": "Computer Science with specialization in Data Science",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf672",
+      "name": "Computer Science in Machine Learning",
+      "code": "CSM",
+      "description": "Computer Science with specialization in Machine Learning",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66e",
+      "name": "Electronics & Communication Engineering",
+      "code": "ECE",
+      "description": "Electronics and Communication Engineering Department",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf66d",
+      "name": "Information Technology",
+      "code": "IT",
+      "description": "Information Technology Department",
+      "isActive": true
+    },
+    {
+      "hod": null,
+      "totalStudents": 0,
+      "totalTeachers": 0,
+      "totalAdmins": 0,
+      "_id": "6866e33640150fc76c1cf670",
+      "name": "Mechanical Engineering",
+      "code": "ME",
+      "description": "Mechanical Engineering Department",
+      "isActive": true
+    }
+  ]
+}
+page.tsx:81 RAW usersResponse: {
+  "success": true,
+  "data": {
+    "users": [
+      {
+        "_id": "6876e455e4d1e2242c03be80",
+        "email": "syedmushtaq@lords.ac.in",
+        "firstName": "Syed",
+        "lastName": "Mushtaq Ali",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP002",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be7f",
+        "email": "moksud@lords.ac.in",
+        "firstName": "Moksud",
+        "lastName": "Alam Malik",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP001",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be83",
+        "email": "nagma@lords.ac.in",
+        "firstName": "Mohammad",
+        "lastName": "Nagma Arshin",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP005",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be81",
+        "email": "feroz@lords.ac.in",
+        "firstName": "Feroz",
+        "lastName": "Amer",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP003",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be85",
+        "email": "ashique@lords.ac.in",
+        "firstName": "Md",
+        "lastName": "Ashique Hussain",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP007",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be82",
+        "email": "shakuntala@lords.ac.in",
+        "firstName": "Y",
+        "lastName": "Shakuntala",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP004",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be88",
+        "email": "asif@lords.ac.in",
+        "firstName": "Asif",
+        "lastName": "Ahmad",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP010",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be87",
+        "email": "tarique@lords.ac.in",
+        "firstName": "Mohd",
+        "lastName": "Tarique Khan",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP009",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be86",
+        "email": "adeeba@lords.ac.in",
+        "firstName": "Adeeba",
+        "lastName": "Anjum",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP008",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      },
+      {
+        "_id": "6876e455e4d1e2242c03be84",
+        "email": "aqeel@lords.ac.in",
+        "firstName": "Aqeel",
+        "lastName": "Haider Shams",
+        "role": "teacher",
+        "department": "6866e33640150fc76c1cf66c",
+        "employeeId": "EMP006",
+        "profilePicture": null,
+        "isActive": true,
+        "isEmailVerified": true,
+        "pendingEmail": null,
+        "emailChangeOTPExpires": null,
+        "resetPasswordExpires": null,
+        "lastLogin": null,
+        "createdBy": {
+          "_id": "6861a3e8d989366a1e90b512",
+          "email": "syedmushtaq.hod@lords.ac.in",
+          "firstName": "Dr. Syed",
+          "lastName": "Mushtaq Ali"
+        },
+        "createdAt": "2025-07-15T07:20:00.000Z",
+        "updatedAt": "2025-07-15T07:20:00.000Z",
+        "__v": 0,
+        "semesterHistory": [],
+        "classTeacherAssignments": [],
+        "teachingAssignments": []
+      }
+    ],
+    "pagination": {
+      "currentPage": 1,
+      "totalPages": 35,
+      "totalUsers": 348,
+      "hasNextPage": true,
+      "hasPrevPage": false,
+      "limit": 10
+    }
+  }
+}
+page.tsx:82 RAW attendanceResponse: {
+  "success": true,
+  "data": [
+    {
+      "_id": "6874b040e4d1e2242c03acea",
+      "year": 4,
+      "semester": 7,
+      "section": "A",
+      "date": "2025-07-14",
+      "hour": 1,
+      "academicYear": "6867050340150fc76c1cf688",
+      "department": "6866e33640150fc76c1cf66c",
+      "subject": {
+        "_id": "687460a6cf75310e216e1f59",
+        "name": "Data Handling and Data Visualization Lab",
+        "shortName": "DH&DV Lab",
+        "code": "U21CD7L1"
+      },
+      "__v": 4,
+      "createdAt": "2025-07-14T07:22:40.544Z",
+      "lastEditedAt": "2025-07-15T21:57:09.390Z",
+      "markedBy": {
+        "_id": "6866ec218d8410ac99150b3f",
+        "email": "faculty@lords.ac.in",
+        "firstName": "Demo",
+        "lastName": "Teacher"
+      },
+      "students": [
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab23",
+            "firstName": "Venkatesh",
+            "lastName": "Bhandari",
+            "rollNumber": "160922750001"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ea"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab24",
+            "firstName": "Syed Sirajul",
+            "lastName": "Altamash",
+            "rollNumber": "160922750002"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963eb"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab25",
+            "firstName": "Mohammed Abdul Raqeeb",
+            "lastName": "Sher",
+            "rollNumber": "160922750003"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ec"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab26",
+            "firstName": "Shaik Hamza",
+            "lastName": "Saifuddin",
+            "rollNumber": "160922750004"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ed"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab27",
+            "firstName": "Mufassal Mohiuddin",
+            "lastName": "Areeb",
+            "rollNumber": "160922750005"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ee"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab28",
+            "firstName": "Mohammed",
+            "lastName": "Salahuddin",
+            "rollNumber": "160922750006"
+          },
+          "status": "present",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963ef"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab29",
+            "firstName": "Nasr",
+            "lastName": "Ahmed",
+            "rollNumber": "160922750007"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f0"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2a",
+            "firstName": "Mohd",
+            "lastName": "Irfan",
+            "rollNumber": "160922750009"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f1"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2b",
+            "firstName": "Mohammed Abdul",
+            "lastName": "Muqueet",
+            "rollNumber": "160922750010"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f2"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2c",
+            "firstName": "Syeda Daniya",
+            "lastName": "Faizah",
+            "rollNumber": "160922750011"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f3"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2d",
+            "firstName": "Wasiya",
+            "lastName": "Shireen",
+            "rollNumber": "160922750012"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f4"
+        },
+        {
+          "studentId": {
+            "_id": "68747741e4d1e2242c03ab2e",
+            "firstName": "Mohammed Islamul",
+            "lastName": "Haq",
+            "rollNumber": "160922750013"
+          },
+          "status": "absent",
+          "late": false,
+          "comments": "",
+          "_id": "6876ceb5b35dd82c742963f5"
+        },
+        {
+          "studentId": {
+            "_id": "68747
+page.tsx:91 Processed departments: 
+Array(7)
+page.tsx:100 Processed users: 
+Array(10)
+0
+: 
+{_id: '6876e455e4d1e2242c03be80', email: 'syedmushtaq@lords.ac.in', firstName: 'Syed', lastName: 'Mushtaq Ali', role: 'teacher', …}
+1
+: 
+{_id: '6876e455e4d1e2242c03be7f', email: 'moksud@lords.ac.in', firstName: 'Moksud', lastName: 'Alam Malik', role: 'teacher', …}
+2
+: 
+{_id: '6876e455e4d1e2242c03be83', email: 'nagma@lords.ac.in', firstName: 'Mohammad', lastName: 'Nagma Arshin', role: 'teacher', …}
+3
+: 
+{_id: '6876e455e4d1e2242c03be81', email: 'feroz@lords.ac.in', firstName: 'Feroz', lastName: 'Amer', role: 'teacher', …}
+4
+: 
+{_id: '6876e455e4d1e2242c03be85', email: 'ashique@lords.ac.in', firstName: 'Md', lastName: 'Ashique Hussain', role: 'teacher', …}
+5
+: 
+{_id: '6876e455e4d1e2242c03be82', email: 'shakuntala@lords.ac.in', firstName: 'Y', lastName: 'Shakuntala', role: 'teacher', …}
+6
+: 
+{_id: '6876e455e4d1e2242c03be88', email: 'asif@lords.ac.in', firstName: 'Asif', lastName: 'Ahmad', role: 'teacher', …}
+7
+: 
+{_id: '6876e455e4d1e2242c03be87', email: 'tarique@lords.ac.in', firstName: 'Mohd', lastName: 'Tarique Khan', role: 'teacher', …}
+8
+: 
+{_id: '6876e455e4d1e2242c03be86', email: 'adeeba@lords.ac.in', firstName: 'Adeeba', lastName: 'Anjum', role: 'teacher', …}
+9
+: 
+{_id: '6876e455e4d1e2242c03be84', email: 'aqeel@lords.ac.in', firstName: 'Aqeel', lastName: 'Haider Shams', role: 'teacher', …}
+length
+: 
+10
+[[Prototype]]
+: 
+Array(0)
+page.tsx:109 Processed attendanceRecords: 
+Array(19)
+0
+: 
+{_id: '6874b040e4d1e2242c03acea', year: 4, semester: 7, section: 'A', date: '2025-07-14', …}
+1
+: 
+{_id: '6874b827e4d1e2242c03acec', department: '6866e33640150fc76c1cf66c', academicYear: '6867050340150fc76c1cf688', subject: {…}, date: '2025-07-14', …}
+2
+: 
+{_id: '6874b8ede4d1e2242c03aced', section: 'A', date: '2025-07-14', hour: 3, semester: 7, …}
+3
+: 
+{_id: '68767899e4d1e2242c03b030', hour: 1, year: 4, semester: 7, department: '6866e33640150fc76c1cf66c', …}
+4
+: 
+{_id: '6876789ae4d1e2242c03b031', date: '2025-07-13', semester: 7, year: 4, academicYear: '6867050340150fc76c1cf688', …}
+5
+: 
+{_id: '6876789ae4d1e2242c03b032', hour: 3, year: 4, semester: 7, department: '6866e33640150fc76c1cf66c', …}
+6
+: 
+{_id: '6876789ae4d1e2242c03b033', hour: 4, date: '2025-07-13', section: 'C', department: '6866e33640150fc76c1cf66c', …}
+7
+: 
+{_id: '6876789ae4d1e2242c03b034', hour: 5, date: '2025-07-13', section: 'C', department: '6866e33640150fc76c1cf66c', …}
+8
+: 
+{_id: '6876789ae4d1e2242c03b035', year: 4, semester: 7, date: '2025-07-13', section: 'C', …}
+9
+: 
+{_id: '68767e76e4d1e2242c03b064', section: 'C', semester: 7, year: 4, department: '6866e33640150fc76c1cf66c', …}
+10
+: 
+{_id: '68767e76e4d1e2242c03b065', date: '2025-07-14', section: 'C', hour: 2, department: '6866e33640150fc76c1cf66c', …}
+11
+: 
+{_id: '68767e76e4d1e2242c03b066', department: '6866e33640150fc76c1cf66c', subject: {…}, semester: 7, year: 4, …}
+12
+: 
+{_id: '68767e76e4d1e2242c03b067', section: 'C', semester: 7, year: 4, department: '6866e33640150fc76c1cf66c', …}
+13
+: 
+{_id: '68768ebbe4d1e2242c03b06a', academicYear: '6867050340150fc76c1cf688', department: '6866e33640150fc76c1cf66c', subject: {…}, section: 'C', …}
+14
+: 
+{_id: '68768ebbe4d1e2242c03b06b', hour: 3, year: 4, semester: 7, department: '6866e33640150fc76c1cf66c', …}
+15
+: 
+{_id: '68768ebbe4d1e2242c03b06c', hour: 2, year: 4, section: 'C', date: '2025-07-15', …}
+16
+: 
+{_id: '68768ebbe4d1e2242c03b06d', hour: 6, year: 4, semester: 7, department: '6866e33640150fc76c1cf66c', …}
+17
+: 
+{_id: '68768ebce4d1e2242c03b06e', date: '2025-07-15', section: 'C', hour: 5, department: '6866e33640150fc76c1cf66c', …}
+18
+: 
+{_id: '68768ebce4d1e2242c03b06f', hour: 4, year: 4, semester: 7, department: '6866e33640150fc76c1cf66c', …}
+length
+: 
+19
+[[Prototype]]
+: 
+Array(0)
+page.tsx:133 Calculating system stats with: 
+Object
+page.tsx:184 System stats calculated: 
+Array(5)
+0
+: 
+{title: 'Total Users', value: '0', change: '0 active', icon: {…}, color: 'text-blue-600', …}
+1
+: 
+{title: 'Students', value: '0', change: '0% of total', icon: {…}, color: 'text-green-600', …}
+2
+: 
+{title: 'Teachers', value: '0', change: '0% of total', icon: {…}, color: 'text-purple-600', …}
+3
+: 
+{title: 'Admins', value: '0', change: '0 departments', icon: {…}, color: 'text-orange-600', …}
+4
+: 
+{title: 'Attendance Records', value: '0', change: '', icon: {…}, color: 'text-yellow-600', …}
+length
+: 
+5
+[[Prototype]]
+: 
+Array(0)

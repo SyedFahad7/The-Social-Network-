@@ -6,6 +6,10 @@ const Subject = require('../models/Subject');
 const AcademicYear = require('../models/AcademicYear');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticate, requireTeacher } = require('../middleware/auth');
+const PDFDocument = require('pdfkit');
+const stream = require('stream');
+const mongoose = require('mongoose');
+const puppeteer = require('puppeteer');
 
 const router = express.Router();
 
@@ -297,6 +301,268 @@ router.get('/analytics/student/:studentId', authenticate, asyncHandler(async (re
   res.json({ success: true, data: analytics });
 }));
 
+// @route   GET /api/attendance/summary
+// @desc    Get attendance summary for a section/year/academicYear and date range
+// @access  Private (Teacher or Super-admin)
+router.get('/summary', authenticate, asyncHandler(async (req, res) => {
+  const { section, year, academicYear, startDate, endDate } = req.query;
+  if (!section || !year || !academicYear || !startDate || !endDate) {
+    return res.status(400).json({ success: false, message: 'Missing required query parameters.' });
+  }
+  const User = require('../models/User');
+  const Subject = require('../models/Subject');
+  // Force academicYear to ObjectId
+  const academicYearId = new mongoose.Types.ObjectId(academicYear);
+  // 1. Get all students in section/year/academicYear
+  const students = await User.find({
+    role: 'student',
+    section,
+    year: Number(year),
+    academicYear: academicYearId,
+    isActive: true
+  }).select('_id firstName lastName rollNumber department');
+  console.log('[SUMMARY] students:', students.length, students.map(s => s._id.toString()));
+  // 2. Get all subjects for section/year/academicYear (by department)
+  const firstStudent = students[0];
+  if (!firstStudent) {
+    console.log('[SUMMARY] No students found.');
+    return res.json({ success: true, subjects: [], students: [], totalClasses: 0 });
+  }
+  const department = firstStudent.department;
+  const subjects = await Subject.find({
+    department,
+    year: Number(year),
+    academicYear: academicYearId
+  }).select('_id name shortName');
+  console.log('[SUMMARY] subjects:', subjects.length, subjects.map(s => s._id.toString()));
+  // 3. Get all attendance records for section/year/academicYear/date range
+  const Attendance = require('../models/Attendance');
+  const records = await Attendance.find({
+    section,
+    year: Number(year),
+    academicYear: academicYearId,
+    date: { $gte: startDate, $lte: endDate }
+  });
+  console.log('[SUMMARY] attendance records:', records.length);
+  // 4. Aggregate: for each subject, count total classes conducted
+  const subjectTotals = {};
+  subjects.forEach(subj => { subjectTotals[subj._id.toString()] = 0; });
+  records.forEach(rec => {
+    const subjId = rec.subject.toString();
+    if (subjectTotals[subjId] !== undefined) {
+      subjectTotals[subjId]++;
+    }
+  });
+  // 5. For each student, for each subject, count attended
+  const studentRows = students.map(stu => {
+    const attended = {};
+    let total = 0;
+    subjects.forEach(subj => {
+      const subjId = subj._id.toString();
+      // Find all records for this subject
+      const subjRecords = records.filter(r => r.subject.toString() === subjId);
+      // Count presents/lates
+      let attendedCount = 0;
+      subjRecords.forEach(r => {
+        const s = r.students.find(s2 => s2.studentId.toString() === stu._id.toString());
+        if (s && (s.status === 'present' || s.late)) attendedCount++;
+      });
+      attended[subjId] = attendedCount;
+      total += attendedCount;
+    });
+    // Total classes conducted for this student (sum of subjectTotals)
+    const totalConducted = Object.values(subjectTotals).reduce((a, b) => a + b, 0);
+    const percent = totalConducted > 0 ? (total / totalConducted) * 100 : 0;
+    return {
+      _id: stu._id,
+      name: `${stu.firstName || ''} ${stu.lastName || ''}`.trim(),
+      rollNumber: stu.rollNumber,
+      attended,
+      total,
+      percent: Number(percent.toFixed(1))
+    };
+  });
+  // 6. Format subjects with totalConducted
+  const subjectsOut = subjects.map(subj => ({
+    _id: subj._id,
+    name: subj.name,
+    shortName: subj.shortName,
+    totalConducted: subjectTotals[subj._id.toString()] || 0
+  }));
+  const totalClasses = Object.values(subjectTotals).reduce((a, b) => a + b, 0);
+  res.json({
+    success: true,
+    subjects: subjectsOut,
+    students: studentRows,
+    totalClasses
+  });
+}));
+
+// Extract summary aggregation logic to a helper function
+async function getAttendanceSummary({ section, year, academicYear, startDate, endDate }) {
+  const mongoose = require('mongoose');
+  const User = require('../models/User');
+  const Subject = require('../models/Subject');
+  const Attendance = require('../models/Attendance');
+  // Force academicYear to ObjectId
+  const academicYearId = new mongoose.Types.ObjectId(academicYear);
+  // 1. Get all students in section/year/academicYear
+  const students = await User.find({
+    role: 'student',
+    section,
+    year: Number(year),
+    academicYear: academicYearId,
+    isActive: true
+  }).select('_id firstName lastName rollNumber department');
+  // 2. Get all subjects for section/year/academicYear (by department)
+  const firstStudent = students[0];
+  if (!firstStudent) {
+    return { students: [], subjects: [], totalClasses: 0 };
+  }
+  const department = firstStudent.department;
+  const subjects = await Subject.find({
+    department,
+    year: Number(year),
+    academicYear: academicYearId
+  }).select('_id name shortName');
+  // 3. Get all attendance records for section/year/academicYear/date range
+  const records = await Attendance.find({
+    section,
+    year: Number(year),
+    academicYear: academicYearId,
+    date: { $gte: startDate, $lte: endDate }
+  });
+  // 4. Aggregate: for each subject, count total classes conducted
+  const subjectTotals = {};
+  subjects.forEach(subj => { subjectTotals[subj._id.toString()] = 0; });
+  records.forEach(rec => {
+    const subjId = rec.subject.toString();
+    if (subjectTotals[subjId] !== undefined) {
+      subjectTotals[subjId]++;
+    }
+  });
+  // 5. For each student, for each subject, count attended
+  const studentRows = students.map(stu => {
+    const attended = {};
+    let total = 0;
+    subjects.forEach(subj => {
+      const subjId = subj._id.toString();
+      // Find all records for this subject
+      const subjRecords = records.filter(r => r.subject.toString() === subjId);
+      // Count presents/lates
+      let attendedCount = 0;
+      subjRecords.forEach(r => {
+        const s = r.students.find(s2 => s2.studentId.toString() === stu._id.toString());
+        if (s && (s.status === 'present' || s.late)) attendedCount++;
+      });
+      attended[subjId] = attendedCount;
+      total += attendedCount;
+    });
+    // Total classes conducted for this student (sum of subjectTotals)
+    const totalConducted = Object.values(subjectTotals).reduce((a, b) => a + b, 0);
+    const percent = totalConducted > 0 ? (total / totalConducted) * 100 : 0;
+    return {
+      _id: stu._id,
+      name: `${stu.firstName || ''} ${stu.lastName || ''}`.trim(),
+      rollNumber: stu.rollNumber,
+      attended,
+      total,
+      percent: Number(percent.toFixed(1))
+    };
+  });
+  // 6. Format subjects with totalConducted
+  const subjectsOut = subjects.map(subj => ({
+    _id: subj._id,
+    name: subj.name,
+    shortName: subj.shortName,
+    totalConducted: subjectTotals[subj._id.toString()] || 0
+  }));
+  const totalClasses = Object.values(subjectTotals).reduce((a, b) => a + b, 0);
+  return { students: studentRows, subjects: subjectsOut, totalClasses };
+}
+
+// @route   GET /api/attendance/summary/pdf
+// @desc    Download attendance summary as PDF for a section/year/academicYear and date range
+// @access  Private (Teacher or Super-admin)
+router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
+  const { section, year, academicYear, startDate, endDate } = req.query;
+  if (!section || !year || !academicYear || !startDate || !endDate) {
+    return res.status(400).json({ success: false, message: 'Missing required query parameters.' });
+  }
+  const AcademicYear = require('../models/AcademicYear');
+  // Fetch academic year label
+  const academicYearDoc = await AcademicYear.findById(academicYear);
+  const academicYearLabel = academicYearDoc?.yearLabel || academicYearDoc?.name || academicYear;
+  // Use the same aggregation as /summary
+  const { students, subjects, totalClasses } = await getAttendanceSummary({ section, year, academicYear, startDate, endDate });
+
+  // --- HTML Table Generation ---
+  const tableHeaders = ['S. No.', 'Student Name', 'Roll Number', ...subjects.map(s => s.shortName || s.name), 'Total', 'Percent'];
+  const tableHeaderTotals = ['', '', '', ...subjects.map(s => s.totalConducted?.toString() || '0'), totalClasses, ''];
+  const html = `
+  <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Attendance Summary</title>
+    <style>
+      body { font-family: Arial, sans-serif; font-size: 9px; margin: 24px; }
+      h1 { text-align: center; font-size: 20px; margin-bottom: 8px; }
+      .meta { margin-bottom: 12px; text-align: left; font-size: 11px; }
+      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
+      th, td { border: 1px solid #888; padding: 2px 4px; text-align: center; font-size: 8px; word-break: break-all; }
+      th { background: #f0f0f0; font-weight: bold; }
+      tr:nth-child(even) { background: #fafbfc; }
+      .left { text-align: left; }
+      .right { text-align: right; }
+    </style>
+  </head>
+  <body>
+    <h1>Attendance Summary</h1>
+    <div class="meta">
+      <div>Section: <b>${section}</b> | Year: <b>${year}</b> | Academic Year: <b>${academicYearLabel}</b></div>
+      <div>Date Range: <b>${startDate}</b> to <b>${endDate}</b></div>
+    </div>
+    <table>
+      <thead>
+        <tr>${tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>
+        <tr>${tableHeaderTotals.map(h => `<th>${h}</th>`).join('')}</tr>
+      </thead>
+      <tbody>
+        ${students.map((stu, idx) => `
+          <tr>
+            <td>${idx + 1}</td>
+            <td class="left">${stu.name}</td>
+            <td>${stu.rollNumber ? String(stu.rollNumber).slice(-3) : ''}</td>
+            ${subjects.map(subj => `<td>${stu.attended[subj._id.toString()] || 0}</td>`).join('')}
+            <td>${stu.total}</td>
+            <td>${stu.percent.toFixed(1)}%</td>
+          </tr>
+        `).join('')}
+      </tbody>
+    </table>
+  </body>
+  </html>
+  `;
+
+  // --- Puppeteer PDF Generation ---
+  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--font-render-hinting=none'] });
+  const page = await browser.newPage();
+  await page.setContent(html, { waitUntil: 'networkidle0' });
+  const pdfBuffer = await page.pdf({
+    format: 'A4',
+    landscape: true,
+    printBackground: true,
+    margin: { top: 20, bottom: 20, left: 20, right: 20 }
+  });
+  await browser.close();
+
+  let filename = `Attendance_Summary_${section}_${year}_${academicYearLabel}_${startDate}_to_${endDate}.pdf`;
+  filename = encodeURIComponent(filename);
+  res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
+  res.setHeader('Content-type', 'application/pdf');
+  res.send(pdfBuffer);
+}));
+
 // @route   GET /api/attendance/student/daily
 // @desc    Get student's attendance for a specific date (all 6 hours)
 // @access  Private (Student can only access their own data)
@@ -400,6 +666,31 @@ router.get('/student/daily', [
       attendance: Object.values(hourlyAttendance)
     }
   });
+}));
+
+// @route   GET /api/attendance/overview
+// @desc    Get attendance overview for today (present, absent, late counts)
+// @access  Private (Super Admin only)
+router.get('/overview', authenticate, asyncHandler(async (req, res) => {
+  if (req.user.role !== 'super-admin') {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+  const today = new Date();
+  const yyyy = today.getFullYear();
+  const mm = String(today.getMonth() + 1).padStart(2, '0');
+  const dd = String(today.getDate()).padStart(2, '0');
+  const todayStr = `${yyyy}-${mm}-${dd}`;
+  const Attendance = require('../models/Attendance');
+  const records = await Attendance.find({ date: todayStr });
+  let present = 0, absent = 0, late = 0;
+  for (const rec of records) {
+    for (const stu of rec.students) {
+      if (stu.status === 'present') present++;
+      else if (stu.status === 'absent') absent++;
+      else if (stu.status === 'late') late++;
+    }
+  }
+  res.json({ success: true, data: { date: todayStr, present, absent, late } });
 }));
 
 module.exports = router;

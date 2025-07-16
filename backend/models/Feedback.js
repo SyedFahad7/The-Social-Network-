@@ -207,7 +207,7 @@ feedbackSchema.statics.getActiveForUser = function(user) {
   };
   
   // Filter by role
-  if (user.role !== 'admin' && user.role !== 'super-admin') {
+  if (user.role !== 'super-admin') {
     query.targetRole = { $in: [user.role, 'all'] };
   }
   

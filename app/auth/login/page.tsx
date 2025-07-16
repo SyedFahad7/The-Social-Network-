@@ -35,9 +35,6 @@ export default function LoginPage() {
             case 'teacher':
               router.replace('/dashboard/teacher');
               break;
-            case 'admin':
-              router.replace('/dashboard/admin');
-              break;
             case 'super-admin':
               router.replace('/dashboard/super-admin');
               break;
@@ -67,9 +64,6 @@ export default function LoginPage() {
             break;
           case 'teacher':
             router.replace('/dashboard/teacher');
-            break;
-          case 'admin':
-            router.replace('/dashboard/admin');
             break;
           case 'super-admin':
             router.replace('/dashboard/super-admin');
@@ -150,7 +144,6 @@ export default function LoginPage() {
                 <SelectContent>
                   <SelectItem value="student">Student</SelectItem>
                   <SelectItem value="teacher">Teacher</SelectItem>
-                  <SelectItem value="admin">Admin</SelectItem>
                   <SelectItem value="super-admin">Super Admin (HoD)</SelectItem>
                 </SelectContent>
               </Select>

@@ -195,6 +195,15 @@ class ApiClient {
     });
   }
 
+  // Attendance summary (public)
+  async getAttendanceSummary(params: { section: string, year: string|number, academicYear: string, startDate: string, endDate: string }) {
+    const queryString = new URLSearchParams(params as any).toString();
+    return this.request(`/attendance/summary?${queryString}`);
+  }
+  getBaseUrl() {
+    return this.baseURL;
+  }
+
   // Timetable methods
   async getTimetable(params: any = {}) {
     const queryString = new URLSearchParams(params).toString();
@@ -428,6 +437,39 @@ class ApiClient {
   async getStudentDailyAttendance(date: string) {
     return this.request(`/attendance/student/daily?date=${date}`);
   }
+
+  // Faculty Assignment methods
+  async getTeacherAssignments(teacherId: string) {
+    return this.request(`/users/${teacherId}/assignments`);
+  }
+  async addTeachingAssignment(teacherId: string, assignment: any) {
+    return this.request(`/users/${teacherId}/teaching-assignment`, {
+      method: 'POST',
+      body: JSON.stringify(assignment),
+    });
+  }
+  async removeTeachingAssignment(teacherId: string, assignment: any) {
+    return this.request(`/users/${teacherId}/teaching-assignment`, {
+      method: 'DELETE',
+      body: JSON.stringify(assignment),
+    });
+  }
+  async addClassTeacherAssignment(teacherId: string, assignment: any) {
+    return this.request(`/users/${teacherId}/class-teacher-assignment`, {
+      method: 'POST',
+      body: JSON.stringify(assignment),
+    });
+  }
+  async removeClassTeacherAssignment(teacherId: string, assignment: any) {
+    return this.request(`/users/${teacherId}/class-teacher-assignment`, {
+      method: 'DELETE',
+      body: JSON.stringify(assignment),
+    });
+  }
+  async classTeacherExists(params: { section: string; year: string | number; semester: string | number; academicYear: string }) {
+    const query = new URLSearchParams(params as any).toString();
+    return fetch(`${this.baseURL}/users/class-teacher-exists?${query}`).then((res) => res.json());
+  }
 }
 
 // Create and export a singleton instance
@@ -456,6 +498,8 @@ export const {
   getStudentAttendanceStats,
   updateAttendance,
   finalizeAttendance,
+  getAttendanceSummary,
+  getBaseUrl,
   getTimetable,
   createTimetableSlot,
   updateTimetableSlot,
@@ -495,7 +539,28 @@ export const {
   incrementDownloads,
   getAcademicYears,
   getSubjects,
-  getStudentDailyAttendance
+  getStudentDailyAttendance,
+  getTeacherAssignments,
+  addTeachingAssignment,
+  removeTeachingAssignment,
+  addClassTeacherAssignment,
+  removeClassTeacherAssignment,
+  classTeacherExists
 } = apiClient;
 
 export default apiClient;
+
+export async function getUserAssignments(userId: string) {
+  const url = `/api/users/${userId}/assignments`;
+  console.log('DEBUG getUserAssignments: fetching', url);
+  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  const res = await fetch(url, {
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      'Content-Type': 'application/json',
+    },
+  });
+  console.log('DEBUG getUserAssignments: response status', res.status);
+  if (!res.ok) throw new Error('Failed to fetch user assignments');
+  return res.json();
+}

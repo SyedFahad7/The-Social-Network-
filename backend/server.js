@@ -61,6 +61,16 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 // Request logging
 app.use(requestLogger);
 
+// GLOBAL REQUEST LOGGER - logs every request
+app.use((req, res, next) => {
+  console.log('[GLOBAL LOGGER]', req.method, req.originalUrl, {
+    params: req.params,
+    query: req.query,
+    body: req.body
+  });
+  next();
+});
+
 // Health check endpoint
 app.get('/api/health', (req, res) => {
   res.json({ 

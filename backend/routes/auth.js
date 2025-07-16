@@ -26,7 +26,7 @@ router.post('/login', [
     .notEmpty()
     .withMessage('Password is required'),
   body('role')
-    .isIn(['student', 'teacher', 'admin', 'super-admin'])
+    .isIn(['student', 'teacher', 'super-admin'])
     .withMessage('Please select a valid role')
 ], asyncHandler(async (req, res) => {
   // Check for validation errors

@@ -45,6 +45,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     }
   }, [theme, themeLoaded]);
 
+  // Force light mode on initial load
+  useEffect(() => {
+    // Force light mode on initial load
+    document.documentElement.classList.remove('dark');
+    document.documentElement.classList.add('light');
+    localStorage.setItem('theme', 'light');
+  }, []);
+
   // Don't render children until theme is loaded
   if (!themeLoaded) return null;
 

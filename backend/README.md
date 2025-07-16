@@ -5,7 +5,7 @@ A comprehensive backend API for the Social Network Academic Management System bu
 ## 🚀 Features
 
 - **Authentication & Authorization**: JWT-based auth with role-based access control
-- **User Management**: Complete CRUD operations for students, teachers, admins
+- **User Management**: Complete CRUD operations for students, teachers, super-admins
 - **Assignment System**: Upload, manage, and grade assignments and tests
 - **Attendance Tracking**: Digital attendance with statistics and reporting
 - **Timetable Management**: Dynamic class scheduling system
@@ -125,11 +125,11 @@ backend/
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
-| GET | `/api/users` | Get all users | Admin+ |
+| GET | `/api/users` | Get all users | Super Admin |
 | POST | `/api/users` | Create new user | Super Admin |
-| GET | `/api/users/stats` | Get user statistics | Admin+ |
-| GET | `/api/users/:id` | Get user by ID | Owner/Admin+ |
-| PUT | `/api/users/:id` | Update user | Owner/Admin+ |
+| GET | `/api/users/stats` | Get user statistics | Super Admin |
+| GET | `/api/users/:id` | Get user by ID | Owner/Super Admin |
+| PUT | `/api/users/:id` | Update user | Owner/Super Admin |
 | DELETE | `/api/users/:id` | Delete user | Super Admin |
 
 ### Assignment Management
@@ -168,19 +168,19 @@ backend/
 |--------|----------|-------------|---------|
 | GET | `/api/certificates` | Get certificates | Private |
 | POST | `/api/certificates` | Upload certificate | Student |
-| PUT | `/api/certificates/:id/approve` | Approve certificate | Admin+ |
-| PUT | `/api/certificates/:id/reject` | Reject certificate | Admin+ |
-| GET | `/api/certificates/stats` | Get certificate stats | Admin+ |
+| PUT | `/api/certificates/:id/approve` | Approve certificate | Super Admin |
+| PUT | `/api/certificates/:id/reject` | Reject certificate | Super Admin |
+| GET | `/api/certificates/stats` | Get certificate stats | Super Admin |
 
 ### Feedback Management
 
 | Method | Endpoint | Description | Access |
 |--------|----------|-------------|---------|
 | GET | `/api/feedback` | Get feedback forms | Private |
-| POST | `/api/feedback` | Create feedback form | Admin+ |
+| POST | `/api/feedback` | Create feedback form | Super Admin |
 | POST | `/api/feedback/:id/response` | Submit response | Student |
-| GET | `/api/feedback/:id/responses` | Get responses | Admin+ |
-| PUT | `/api/feedback/:id/activate` | Activate feedback | Admin+ |
+| GET | `/api/feedback/:id/responses` | Get responses | Super Admin |
+| PUT | `/api/feedback/:id/activate` | Activate feedback | Super Admin |
 
 ## 🔐 Authentication & Authorization
 
@@ -196,7 +196,6 @@ backend/
 ### Role Hierarchy
 - **Student**: Basic access to own data
 - **Teacher**: Manage classes, assignments, attendance
-- **Admin**: User management, content moderation
 - **Super Admin**: Full system access, audit logs
 
 ### Protected Routes
@@ -211,7 +210,7 @@ All routes except `/api/auth/login` and `/api/health` require authentication.
   password: String (hashed),
   firstName: String,
   lastName: String,
-  role: Enum ['student', 'teacher', 'admin', 'super-admin'],
+  role: Enum ['student', 'teacher', 'super-admin'],
   department: String,
   rollNumber: String (students only),
   section: String (students only),

@@ -56,4 +56,23 @@ const attendanceSchema = new mongoose.Schema({
 // Indexes
 attendanceSchema.index({ academicYear: 1, department: 1, year: 1, semester: 1, section: 1, date: 1, hour: 1 }, { unique: true });
 
+attendanceSchema.statics.getStudentAttendanceStats = async function(studentId) {
+  const records = await this.find({ 'students.studentId': studentId });
+  let present = 0, absent = 0, late = 0, not_marked = 0, total = 0;
+  for (const rec of records) {
+    const stu = rec.students.find(s => s.studentId.toString() === studentId.toString());
+    if (stu) {
+      total++;
+      if (stu.status === 'present') present++;
+      if (stu.status === 'absent') absent++;
+      if (stu.late) late++;
+    } else {
+      not_marked++;
+      total++;
+    }
+  }
+  const totalPercent = total > 0 ? ((present + late) / total) * 100 : 0;
+  return { present, absent, late, not_marked, total, totalPercent };
+};
+
 module.exports = mongoose.model('Attendance', attendanceSchema);

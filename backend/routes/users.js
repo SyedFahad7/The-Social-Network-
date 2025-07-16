@@ -8,6 +8,8 @@ const mongoose = require('mongoose');
 
 const router = express.Router();
 
+console.log('[USERS ROUTES] users.js loaded');
+
 // @route   GET /api/users
 // @desc    Get all users (with filtering and pagination)
 // @access  Private (Admin/Super Admin)
@@ -15,7 +17,7 @@ router.get('/', [
   authenticate,
   query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
   query('limit').optional().isInt({ min: 1, max: 1000 }).withMessage('Limit must be between 1 and 1000'),
-  query('role').optional().isIn(['student', 'teacher', 'admin', 'super-admin']).withMessage('Invalid role'),
+  query('role').optional().isIn(['student', 'teacher', 'super-admin']).withMessage('Invalid role'),
   query('department').optional().notEmpty().withMessage('Department cannot be empty'),
   query('search').optional().isLength({ min: 1 }).withMessage('Search term cannot be empty'),
   query('academicYear').optional().notEmpty(),
@@ -59,7 +61,7 @@ router.get('/', [
     if (section) query.section = section;
     // Debug logging
     console.log('[USERS API] teacher query:', query);
-  } else if (req.user.role === 'admin' || req.user.role === 'super-admin') {
+  } else if (req.user.role === 'super-admin') {
     if (role) query.role = role;
     if (department) query.department = new mongoose.Types.ObjectId(department);
     if (academicYear) query.academicYear = new mongoose.Types.ObjectId(academicYear);
@@ -75,11 +77,11 @@ router.get('/', [
     ];
     }
     // Debug logging
-    console.log('[USERS API] admin/super-admin query:', query);
+    console.log('[USERS API] super-admin query:', query);
   } else {
     // Debug logging
     console.log('[USERS API] Access denied for role:', req.user.role);
-    return res.status(403).json({ success: false, message: 'Access denied. Required role: admin, super-admin, or teacher.' });
+    return res.status(403).json({ success: false, message: 'Access denied. Required role: super-admin or teacher.' });
   }
 
   // Calculate pagination
@@ -143,7 +145,7 @@ router.post('/', [
     .isLength({ min: 1, max: 50 })
     .withMessage('Last name is required and must be less than 50 characters'),
   body('role')
-    .isIn(['student', 'teacher', 'admin', 'super-admin'])
+    .isIn(['student', 'teacher', 'super-admin'])
     .withMessage('Please select a valid role'),
   body('department')
     .notEmpty()
@@ -251,16 +253,90 @@ router.post('/', [
 
 // @route   GET /api/users/stats
 // @desc    Get user statistics
-// @access  Private (Admin/Super Admin)
+// @access  Private (Super Admin only)
 router.get('/stats', [
   authenticate,
-  requireAdmin
+  requireSuperAdmin
 ], asyncHandler(async (req, res) => {
   const stats = await User.getUserStats();
   
   res.json({
     success: true,
     data: { stats }
+  });
+}));
+
+// Check if a class teacher assignment exists for a section/year/semester/academicYear
+router.get('/class-teacher-exists', [authenticate, requireSuperAdmin], asyncHandler(async (req, res) => {
+  const { section, year, semester, academicYear } = req.query;
+  if (!section || !year || !semester || !academicYear) {
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
+  const teacher = await User.findOne({
+    role: 'teacher',
+    classTeacherAssignments: {
+      $elemMatch: {
+        section,
+        year: parseInt(year),
+        semester: parseInt(semester),
+        academicYear
+      }
+    }
+  });
+  res.json({ exists: !!teacher, teacher });
+}));
+
+// Check if a subject assignment exists for a section/year/semester/academicYear/subject
+router.get('/subject-assigned-exists', [authenticate, requireSuperAdmin], asyncHandler(async (req, res) => {
+  const { section, year, semester, academicYear, subject } = req.query;
+  if (!section || !year || !semester || !academicYear || !subject) {
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
+  const teacher = await User.findOne({
+    role: 'teacher',
+    teachingAssignments: {
+      $elemMatch: {
+        section,
+        year: parseInt(year),
+        semester: parseInt(semester),
+        academicYear,
+        subject
+      }
+    }
+  });
+  res.json({ exists: !!teacher, teacher });
+}));
+
+// Get all assignments for a teacher
+router.get('/:id/assignments', [authenticate], asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  console.log('[ASSIGNMENTS ROUTE] Request for assignments of user:', id);
+  console.debug('[ASSIGNMENTS ROUTE] Request for assignments of user:', id);
+  console.log('[ASSIGNMENTS ROUTE] Authenticated user:', req.user ? req.user._id : 'none', 'Role:', req.user ? req.user.role : 'none');
+  console.debug('[ASSIGNMENTS ROUTE] Authenticated user:', req.user ? req.user._id : 'none', 'Role:', req.user ? req.user.role : 'none');
+  // Only allow super-admins or the teacher themselves
+  if (req.user.role !== 'super-admin' && req.user._id.toString() !== id) {
+    console.log('[ASSIGNMENTS ROUTE] Access denied for user:', req.user._id, 'on target:', id);
+    console.debug('[ASSIGNMENTS ROUTE] Access denied for user:', req.user._id, 'on target:', id);
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+  const user = await User.findById(id)
+    .populate('teachingAssignments.subject', 'name shortName')
+    .populate('teachingAssignments.academicYear', 'name yearLabel')
+    .populate('classTeacherAssignments.academicYear', 'name yearLabel');
+  console.log('[ASSIGNMENTS ROUTE] Raw user document:', JSON.stringify(user, null, 2));
+  let teachingAssignments = [];
+  let classTeacherAssignments = [];
+  if (user && user.role === 'teacher') {
+    teachingAssignments = user.teachingAssignments || [];
+    classTeacherAssignments = user.classTeacherAssignments || [];
+  }
+  console.log('[ASSIGNMENTS ROUTE] teachingAssignments:', JSON.stringify(teachingAssignments, null, 2));
+  console.log('[ASSIGNMENTS ROUTE] classTeacherAssignments:', JSON.stringify(classTeacherAssignments, null, 2));
+  console.log('[ASSIGNMENTS ROUTE] Sending response:', { teachingAssignmentsLength: teachingAssignments.length, classTeacherAssignmentsLength: classTeacherAssignments.length });
+  res.json({
+    teachingAssignments,
+    classTeacherAssignments
   });
 }));
 
@@ -274,7 +350,6 @@ router.get('/:id', [
   
   // Check if user can access this profile
   if (req.user._id.toString() !== id && 
-      req.user.role !== 'admin' && 
       req.user.role !== 'super-admin') {
     return res.status(403).json({
       success: false,
@@ -316,7 +391,7 @@ router.put('/:id', [
     .withMessage('Last name must be less than 50 characters'),
   body('role')
     .optional()
-    .isIn(['student', 'teacher', 'admin', 'super-admin'])
+    .isIn(['student', 'teacher', 'super-admin'])
     .withMessage('Please select a valid role'),
   body('department')
     .optional()
@@ -373,7 +448,6 @@ router.put('/:id', [
   
   // Check if user can update this profile
   if (req.user._id.toString() !== id && 
-      req.user.role !== 'admin' && 
       req.user.role !== 'super-admin') {
     console.log('Access denied - user role:', req.user.role, 'user ID:', req.user._id, 'target ID:', id);
     return res.status(403).json({
@@ -526,6 +600,139 @@ router.delete('/:id', [
   });
 }));
 
+// --- Faculty Assignment Endpoints ---
+
+// Add a teaching assignment to a teacher
+router.post('/:id/teaching-assignment', [authenticate, requireSuperAdmin], asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { subject, section, year, semester, academicYear } = req.body;
+  if (!subject || !section || !year || !semester || !academicYear) {
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
+  // Prevent another teacher from being assigned the same subject/section/year/semester/AY
+  const assignedToAnother = await User.findOne({
+    _id: { $ne: id },
+    role: 'teacher',
+    teachingAssignments: {
+      $elemMatch: {
+        subject,
+        section,
+        year,
+        semester,
+        academicYear
+      }
+    }
+  });
+  if (assignedToAnother) {
+    return res.status(400).json({ success: false, message: `This subject is already assigned to ${assignedToAnother.firstName} ${assignedToAnother.lastName}.` });
+  }
+  const user = await User.findById(id);
+  if (!user || user.role !== 'teacher') {
+    return res.status(404).json({ success: false, message: 'Teacher not found.' });
+  }
+  // Prevent duplicate assignment for the same teacher
+  const exists = user.teachingAssignments.some(a =>
+    a.subject.toString() === subject &&
+    a.section === section &&
+    a.year === year &&
+    a.semester === semester &&
+    a.academicYear.toString() === academicYear
+  );
+  if (exists) {
+    return res.status(400).json({ success: false, message: 'Assignment already exists.' });
+  }
+  user.teachingAssignments.push({ subject, section, year, semester, academicYear });
+  await user.save();
+  res.json({ success: true, message: 'Teaching assignment added.', data: user.teachingAssignments });
+}));
+
+// Remove a teaching assignment from a teacher
+router.delete('/:id/teaching-assignment', [authenticate, requireSuperAdmin], asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { subject, section, year, semester, academicYear } = req.body;
+  const user = await User.findById(id);
+  if (!user || user.role !== 'teacher') {
+    return res.status(404).json({ success: false, message: 'Teacher not found.' });
+  }
+  user.teachingAssignments = user.teachingAssignments.filter(a =>
+    !(a.subject.toString() === subject &&
+      a.section === section &&
+      a.year === year &&
+      a.semester === semester &&
+      a.academicYear.toString() === academicYear)
+  );
+  await user.save();
+  res.json({ success: true, message: 'Teaching assignment removed.', data: user.teachingAssignments });
+}));
+
+// Add a class teacher assignment
+router.post('/:id/class-teacher-assignment', [authenticate, requireSuperAdmin], asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  let { section, year, semester, academicYear } = req.body;
+  // Convert year and semester to numbers for all logic
+  const yearNum = Number(year);
+  const semesterNum = Number(semester);
+  if (!section || !yearNum || !semesterNum || !academicYear) {
+    console.log('[ASSIGN CT] Missing required fields', { section, year, semester, academicYear });
+    return res.status(400).json({ success: false, message: 'All fields are required.' });
+  }
+
+  // 1. Check if a CT already exists for this section/year/semester/academicYear
+  const existingCT = await User.findOne({
+    'classTeacherAssignments.section': section,
+    'classTeacherAssignments.year': yearNum,
+    'classTeacherAssignments.semester': semesterNum,
+    'classTeacherAssignments.academicYear': academicYear
+  });
+  if (existingCT) {
+    return res.status(400).json({ success: false, message: `A class teacher is already assigned for Section ${section}, Year ${yearNum}, Semester ${semesterNum}, Academic Year ${academicYear}.` });
+  }
+
+  // 2. Check if this teacher is already CT for any section in the same year
+  const teacher = await User.findById(id);
+  if (!teacher) {
+    return res.status(404).json({ success: false, message: 'Teacher not found.' });
+  }
+  const alreadyCTForYear = teacher.classTeacherAssignments?.find(a => a.year === yearNum);
+  if (alreadyCTForYear) {
+    return res.status(400).json({ success: false, message: `This teacher is already class teacher for Section ${alreadyCTForYear.section}, Year ${yearNum}.` });
+  }
+
+  // Prevent duplicate assignment for the same teacher/section
+  const exists = teacher.classTeacherAssignments.some(a =>
+    a.section === section &&
+    a.year === yearNum &&
+    a.semester === semesterNum &&
+    a.academicYear.toString() === academicYear
+  );
+  if (exists) {
+    console.log('[ASSIGN CT] Assignment already exists for this teacher/section/year/semester/academicYear');
+    return res.status(400).json({ success: false, message: 'Assignment already exists.' });
+  }
+  teacher.classTeacherAssignments.push({ section, year: yearNum, semester: semesterNum, academicYear });
+  await teacher.save();
+  console.log('[ASSIGN CT] Class teacher assignment added successfully');
+  res.json({ success: true, message: 'Class teacher assignment added.', data: teacher.classTeacherAssignments });
+}));
+
+// Remove a class teacher assignment
+router.delete('/:id/class-teacher-assignment', [authenticate, requireSuperAdmin], asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { section, year, semester, academicYear } = req.body;
+  const user = await User.findById(id);
+  if (!user || user.role !== 'teacher') {
+    return res.status(404).json({ success: false, message: 'Teacher not found.' });
+  }
+  user.classTeacherAssignments = user.classTeacherAssignments.filter(a =>
+    !(a.section === section &&
+      a.year === year &&
+      a.semester === semester &&
+      a.academicYear.toString() === academicYear)
+  );
+  await user.save();
+  res.json({ success: true, message: 'Class teacher assignment removed.', data: user.classTeacherAssignments });
+}));
+
 // @route   GET /api/users/debug/department/:id
 // @desc    Debug endpoint to check if department exists
 // @access  Private (Super Admin only)
@@ -586,6 +793,24 @@ router.post('/migrate-departments-to-objectid', async (req, res) => {
     console.error('Migration error:', err);
     res.status(500).json({ success: false, message: 'Migration failed', error: err.message });
   }
+});
+
+// Add this to backend/routes/users.js for debugging
+router.get('/debug/students', async (req, res) => {
+  const students = await User.find({
+    role: 'student',
+    department: new mongoose.Types.ObjectId('6866e33640150fc76c1cf66c'),
+    academicYear: new mongoose.Types.ObjectId('6867050340150fc76c1cf688'),
+    year: 4,
+    section: 'C',
+    isActive: true
+  });
+  res.json({ count: students.length, students });
+});
+
+router.use((req, res, next) => {
+  console.log('[USERS ROUTES] Unmatched route:', req.method, req.originalUrl);
+  next();
 });
 
 module.exports = router;
