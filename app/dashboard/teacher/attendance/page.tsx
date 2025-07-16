@@ -816,15 +816,15 @@ export default function TeacherAttendance() {
                           {selectedSubjectObj ? `${selectedSubjectObj.name}${selectedSubjectObj.code ? ` (${selectedSubjectObj.code})` : ''}` : ''}
                         </SelectValue>
                       </SelectTrigger>
-                      <SelectContent>
+                  <SelectContent>
                         {subjects.map((sub: any) => (
                           <SelectItem key={sub._id} value={sub._id} className="text-left">
                             {sub.name}{sub.code ? ` (${sub.code})` : ''}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
                   <div>
                     <label>Date</label>
                     <Input type="date" value={selectedDate} onChange={e => setSelectedDate(e.target.value)} />
