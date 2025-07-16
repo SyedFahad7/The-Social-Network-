@@ -9,7 +9,6 @@ const { authenticate, requireTeacher } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 const stream = require('stream');
 const mongoose = require('mongoose');
-const puppeteer = require('puppeteer');
 
 const router = express.Router();
 
@@ -489,78 +488,204 @@ router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
   if (!section || !year || !academicYear || !startDate || !endDate) {
     return res.status(400).json({ success: false, message: 'Missing required query parameters.' });
   }
+  
   const AcademicYear = require('../models/AcademicYear');
   // Fetch academic year label
   const academicYearDoc = await AcademicYear.findById(academicYear);
   const academicYearLabel = academicYearDoc?.yearLabel || academicYearDoc?.name || academicYear;
+  
   // Use the same aggregation as /summary
-  const { students, subjects, totalClasses } = await getAttendanceSummary({ section, year, academicYear, startDate, endDate });
-
-  // --- HTML Table Generation ---
-  const tableHeaders = ['S. No.', 'Student Name', 'Roll Number', ...subjects.map(s => s.shortName || s.name), 'Total', 'Percent'];
-  const tableHeaderTotals = ['', '', '', ...subjects.map(s => s.totalConducted?.toString() || '0'), totalClasses, ''];
-  const html = `
-  <html>
-  <head>
-    <meta charset="utf-8" />
-    <title>Attendance Summary</title>
-    <style>
-      body { font-family: Arial, sans-serif; font-size: 9px; margin: 24px; }
-      h1 { text-align: center; font-size: 20px; margin-bottom: 8px; }
-      .meta { margin-bottom: 12px; text-align: left; font-size: 11px; }
-      table { border-collapse: collapse; width: 100%; table-layout: fixed; }
-      th, td { border: 1px solid #888; padding: 2px 4px; text-align: center; font-size: 8px; word-break: break-all; }
-      th { background: #f0f0f0; font-weight: bold; }
-      tr:nth-child(even) { background: #fafbfc; }
-      .left { text-align: left; }
-      .right { text-align: right; }
-    </style>
-  </head>
-  <body>
-    <h1>Attendance Summary</h1>
-    <div class="meta">
-      <div>Section: <b>${section}</b> | Year: <b>${year}</b> | Academic Year: <b>${academicYearLabel}</b></div>
-      <div>Date Range: <b>${startDate}</b> to <b>${endDate}</b></div>
-    </div>
-    <table>
-      <thead>
-        <tr>${tableHeaders.map(h => `<th>${h}</th>`).join('')}</tr>
-        <tr>${tableHeaderTotals.map(h => `<th>${h}</th>`).join('')}</tr>
-      </thead>
-      <tbody>
-        ${students.map((stu, idx) => `
-          <tr>
-            <td>${idx + 1}</td>
-            <td class="left">${stu.name}</td>
-            <td>${stu.rollNumber ? String(stu.rollNumber).slice(-3) : ''}</td>
-            ${subjects.map(subj => `<td>${stu.attended[subj._id.toString()] || 0}</td>`).join('')}
-            <td>${stu.total}</td>
-            <td>${stu.percent.toFixed(1)}%</td>
-          </tr>
-        `).join('')}
-      </tbody>
-    </table>
-  </body>
-  </html>
-  `;
-
-  // --- Puppeteer PDF Generation ---
-  const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--font-render-hinting=none'] });
-  const page = await browser.newPage();
-  await page.setContent(html, { waitUntil: 'networkidle0' });
-  const pdfBuffer = await page.pdf({
-    format: 'A4',
-    landscape: true,
-    printBackground: true,
-    margin: { top: 20, bottom: 20, left: 20, right: 20 }
+  const { students, subjects, totalClasses } = await getAttendanceSummary({ 
+    section, year, academicYear, startDate, endDate 
   });
-  await browser.close();
+
+  // --- PDFKit PDF Generation ---
+  const PDFDocument = require('pdfkit');
+  
+  // Create PDF in A4 portrait with proper margins
+  const doc = new PDFDocument({ 
+    size: 'A4', 
+    layout: 'portrait',  // Changed from landscape to portrait
+    margin: { top: 30, bottom: 30, left: 5, right: 5 }
+  });
 
   let filename = `Attendance_Summary_${section}_${year}_${academicYearLabel}_${startDate}_to_${endDate}.pdf`;
   filename = encodeURIComponent(filename);
   res.setHeader('Content-disposition', `attachment; filename="${filename}"`);
   res.setHeader('Content-type', 'application/pdf');
-  res.send(pdfBuffer);
+
+  // Pipe PDF to response
+  doc.pipe(res);
+
+  // Title and Header Info
+  doc.fontSize(16).font('Helvetica-Bold').text('Attendance Summary', { align: 'center' });
+  doc.moveDown(0.5);
+  doc.fontSize(10).font('Helvetica')
+    .text(`Section: ${section}   Year: ${year}   Academic Year: ${academicYearLabel}`, { align: 'center' });
+  doc.text(`Date Range: ${startDate} to ${endDate}`, { align: 'center' });
+  doc.moveDown(1);
+
+  // Table headers with full subject names (no truncation)
+  const tableHeaders = [
+    'S. No.',
+    'Student Name',
+    'Roll Number',
+    ...subjects.map(s => s.shortName || s.name),
+    'Total',
+    'Percent'
+  ];
+
+  const tableHeaderTotals = [
+    '',
+    '',
+    '',
+    ...subjects.map(s => s.totalConducted?.toString() || '0'),
+    totalClasses.toString(),
+    ''
+  ];
+
+  // Column widths: auto-shrink subject columns to fit page, with a minimum width
+  const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
+  const minSubjectColWidth = 40;
+  let baseNameColWidth = 100;
+  let baseRollColWidth = 60;
+  let baseTotalColWidth = 40;
+  let basePercentColWidth = 50;
+  let baseSnoColWidth = 30;
+  let subjectColWidth = 80;
+
+  // Calculate initial widths
+  let fixedColsWidth = baseSnoColWidth + baseNameColWidth + baseRollColWidth + baseTotalColWidth + basePercentColWidth;
+  let availableForSubjects = pageWidth - fixedColsWidth;
+  subjectColWidth = subjects.length > 0 ? availableForSubjects / subjects.length : 80;
+
+  // If subjectColWidth is less than min, shrink name column to compensate
+  if (subjectColWidth < minSubjectColWidth) {
+    subjectColWidth = minSubjectColWidth;
+    // Recalculate available width for name column
+    const totalSubjectsWidth = subjectColWidth * subjects.length;
+    let remainingWidth = pageWidth - (baseSnoColWidth + baseRollColWidth + baseTotalColWidth + basePercentColWidth + totalSubjectsWidth);
+    baseNameColWidth = Math.max(60, remainingWidth); // Don't let name column go below 60
+  }
+
+  const colWidths = [
+    baseSnoColWidth,    // S.No
+    baseNameColWidth,   // Student Name
+    baseRollColWidth,   // Roll Number
+    ...subjects.map(() => subjectColWidth), // Subject columns
+    baseTotalColWidth,  // Total
+    basePercentColWidth // Percent
+  ];
+
+  const startX = doc.page.margins.left;
+  let y = doc.y;
+
+  // Helper to wrap text for headers
+  function wrapHeaderText(text, width, fontSize, font) {
+    doc.font(font).fontSize(fontSize);
+    const words = text.split(' ');
+    let lines = [];
+    let currentLine = '';
+    words.forEach(word => {
+      const testLine = currentLine ? currentLine + ' ' + word : word;
+      const testWidth = doc.widthOfString(testLine);
+      if (testWidth > width - 4 && currentLine) {
+        lines.push(currentLine);
+        currentLine = word;
+      } else {
+        currentLine = testLine;
+      }
+    });
+    if (currentLine) lines.push(currentLine);
+    return lines;
+  }
+
+  // Function to draw table row (header supports wrapping)
+  function drawTableRow(data, y, isHeader = false, isTotalRow = false) {
+    let x = startX;
+    let rowHeight = isHeader ? 25 : isTotalRow ? 20 : 18;
+    const fontSize = isHeader ? 8 : isTotalRow ? 7 : 7;
+    const font = isHeader ? 'Helvetica-Bold' : 'Helvetica';
+    doc.font(font).fontSize(fontSize);
+
+    // For header, calculate max height needed for wrapped text
+    let headerLineCounts = [];
+    if (isHeader) {
+      for (let i = 0; i < data.length; i++) {
+        const lines = wrapHeaderText(data[i], colWidths[i], fontSize, font);
+        headerLineCounts[i] = lines.length;
+      }
+      rowHeight = Math.max(...headerLineCounts) * (fontSize + 2) + 6;
+    }
+
+    data.forEach((cell, i) => {
+      const bgColor = isHeader ? '#e8e8e8' : isTotalRow ? '#f5f5f5' : '#ffffff';
+      doc.rect(x, y, colWidths[i], rowHeight).fillAndStroke(bgColor, '#666666');
+      doc.fillColor('#000000');
+      const textY = y + 4;
+      if (isHeader) {
+        // Wrap header text
+        const lines = wrapHeaderText(cell, colWidths[i], fontSize, font);
+        lines.forEach((line, idx) => {
+          doc.text(line, x + 2, textY + idx * (fontSize + 2), {
+            width: colWidths[i] - 4,
+            align: 'center',
+            ellipsis: true
+          });
+        });
+      } else if (i === 1) {
+        // Student name column - left align
+        doc.text(cell, x + 2, textY, {
+          width: colWidths[i] - 4,
+          align: 'left',
+          ellipsis: true
+        });
+      } else {
+        // All other columns - center align
+        doc.text(cell, x + 2, textY, {
+          width: colWidths[i] - 4,
+          align: 'center',
+          ellipsis: true
+        });
+      }
+      x += colWidths[i];
+    });
+    return y + rowHeight;
+  }
+
+  // Draw table headers
+  y = drawTableRow(tableHeaders, y, true);
+  // Draw totals row
+  y = drawTableRow(tableHeaderTotals, y, false, true);
+
+  // Draw student rows
+  students.forEach((stu, idx) => {
+    // Check if we need a new page
+    if (y > doc.page.height - 60) {
+      doc.addPage({ size: 'A4', layout: 'portrait' });
+      y = doc.page.margins.top;
+      y = drawTableRow(tableHeaders, y, true);
+      y = drawTableRow(tableHeaderTotals, y, false, true);
+    }
+    const row = [
+      (idx + 1).toString(),
+      stu.name || '',
+      stu.rollNumber ? String(stu.rollNumber).slice(-3) : '',
+      ...subjects.map(subj => (stu.attended[subj._id.toString()] || 0).toString()),
+      stu.total.toString(),
+      `${stu.percent.toFixed(1)}%`
+    ];
+    y = drawTableRow(row, y);
+  });
+
+  // Add footer with generation timestamp
+  doc.fontSize(8).font('Helvetica')
+    .text(`Generated on: ${new Date().toLocaleString()}`, 
+          doc.page.margins.left, 
+          doc.page.height - 30, 
+          { align: 'center' });
+
+  doc.end();
 }));
 
 // @route   GET /api/attendance/student/daily

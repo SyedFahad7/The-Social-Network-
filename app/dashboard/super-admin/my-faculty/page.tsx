@@ -682,26 +682,26 @@ export default function MyFacultyPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">S.No</th>
-                          <th className="text-left border px-2 py-1">Name</th>
-                          <th className="text-left border px-2 py-1">Email</th>
-                          <th className="text-center border px-2 py-1">View</th>
-                        </tr>
-                      </thead>
+                        <th className="text-left border px-2 py-1">Name</th>
+                        <th className="text-left border px-2 py-1">Email</th>
+                        <th className="text-center border px-2 py-1">View</th>
+                      </tr>
+                    </thead>
                       <tbody className="divide-y divide-gray-100">
                         {filteredTeachers.map((teacher: User, idx: number) => (
                           <tr key={teacher._id} className="hover:bg-blue-50 transition">
                             <td className="px-4 py-2 text-sm text-gray-700">{idx + 1}</td>
                             <td className="border px-2 py-1">{teacher.firstName} {teacher.lastName}</td>
                             <td className="border px-2 py-1">{teacher.email}</td>
-                            <td className="border px-2 py-1 text-center">
+                          <td className="border px-2 py-1 text-center">
                               <Button size="icon" variant="ghost" onClick={async () => { setSelectedTeacher(teacher); await fetchAssignments(teacher); setShowTeacherModal(true); }}>
                                 <Eye className="w-4 h-4 text-blue-600" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                   </div>
                 </div>
                 {/* Teacher details modal */}
@@ -774,12 +774,12 @@ export default function MyFacultyPage() {
                       <thead className="bg-gray-50">
                         <tr>
                           <th className="px-4 py-2 text-left text-xs font-semibold text-gray-700">S.No</th>
-                          <th className="text-left border px-2 py-1">Name</th>
-                          <th className="text-left border px-2 py-1">Email</th>
-                          <th className="text-left border px-2 py-1">Department</th>
+                        <th className="text-left border px-2 py-1">Name</th>
+                        <th className="text-left border px-2 py-1">Email</th>
+                        <th className="text-left border px-2 py-1">Department</th>
                           <th className="text-center border px-2 py-1">Edit</th>
-                        </tr>
-                      </thead>
+                      </tr>
+                    </thead>
                       <tbody className="divide-y divide-gray-100">
                         {filteredTeachers.map((teacher: User, idx: number) => (
                           <tr key={teacher._id} className="hover:bg-blue-50 transition">
@@ -787,15 +787,15 @@ export default function MyFacultyPage() {
                             <td className="border px-2 py-1">{teacher.firstName} {teacher.lastName}</td>
                             <td className="border px-2 py-1">{teacher.email}</td>
                             <td className="border px-2 py-1">{departments.find(d => d._id === teacher.department)?.name || teacher.department}</td>
-                            <td className="border px-2 py-1 text-center">
+                          <td className="border px-2 py-1 text-center">
                               <Button size="icon" variant="ghost" onClick={async () => { setSelectedTeacher(teacher); await fetchAssignments(teacher); setShowEditModal(true); }}>
                                 <Edit className="w-4 h-4 text-blue-600" />
-                              </Button>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
                   </div>
                 </div>
                 {/* Edit assignments modal */}
