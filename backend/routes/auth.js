@@ -4,6 +4,7 @@ const { body, validationResult } = require('express-validator');
 const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticate } = require('../middleware/auth');
+const { client: redisClient, connectRedis } = require('../lib/redisClient');
 
 const router = express.Router();
 
@@ -76,6 +77,11 @@ router.post('/login', [
     // Generate token
     const token = generateToken(user._id);
 
+    // --- Redis: Mark user as live ---
+    await connectRedis();
+    await redisClient.sAdd('live_users', user._id.toString());
+    await redisClient.set(`user_last_seen:${user._id}`, Date.now());
+
     // Send response
     res.json({
       success: true,
@@ -124,8 +130,12 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
 // @desc    Logout user (client-side token removal)
 // @access  Private
 router.post('/logout', authenticate, asyncHandler(async (req, res) => {
-  // In a more advanced setup, you might want to blacklist the token
-  // For now, we'll just send a success response
+  // --- Redis: Remove user from live set ---
+  await connectRedis();
+  if (req.user && req.user._id) {
+    await redisClient.sRem('live_users', req.user._id.toString());
+    await redisClient.del(`user_last_seen:${req.user._id}`);
+  }
   res.json({
     success: true,
     message: 'Logged out successfully'
@@ -179,6 +189,27 @@ router.post('/change-password', [
   res.json({
     success: true,
     message: 'Password changed successfully'
+  });
+}));
+
+// @route   GET /api/auth/live-users
+// @desc    Get list and count of currently live users (active in last 5 minutes)
+// @access  Private (Admin/Super Admin)
+router.get('/live-users', authenticate, asyncHandler(async (req, res) => {
+  await connectRedis();
+  const userIds = await redisClient.sMembers('live_users');
+  const now = Date.now();
+  const activeUserIds = [];
+  for (const id of userIds) {
+    const lastSeen = await redisClient.get(`user_last_seen:${id}`);
+    if (lastSeen && now - Number(lastSeen) < 5 * 60 * 1000) { // 5 minutes
+      activeUserIds.push(id);
+    }
+  }
+  res.json({
+    success: true,
+    count: activeUserIds.length,
+    userIds: activeUserIds
   });
 }));
 

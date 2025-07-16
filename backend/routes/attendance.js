@@ -677,14 +677,6 @@ router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
     ];
     y = drawTableRow(row, y);
   });
-
-  // Add footer with generation timestamp
-  doc.fontSize(8).font('Helvetica')
-    .text(`Generated on: ${new Date().toLocaleString()}`, 
-          doc.page.margins.left, 
-          doc.page.height - 30, 
-          { align: 'center' });
-
   doc.end();
 }));
 

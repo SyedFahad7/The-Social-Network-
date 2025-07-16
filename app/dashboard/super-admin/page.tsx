@@ -55,6 +55,131 @@ interface DepartmentStats {
   trend: 'up' | 'down';
 }
 
+function LiveUsersWidget() {
+  const [liveUsers, setLiveUsers] = useState<{ count: number; userIds: string[] } | null>(null);
+  const [userDetails, setUserDetails] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLiveUsers = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const res = await apiClient.getLiveUsers();
+      setLiveUsers(res);
+      
+      // Fetch user details for the live user IDs
+      if (res.userIds && res.userIds.length > 0) {
+        const userPromises = res.userIds.map(async (userId: string) => {
+          try {
+            const userRes = await apiClient.getUserById(userId);
+            return userRes.data?.user || { _id: userId, firstName: 'Unknown', lastName: 'User', role: 'unknown' };
+          } catch (err) {
+            return { _id: userId, firstName: 'Unknown', lastName: 'User', role: 'unknown' };
+          }
+        });
+        const users = await Promise.all(userPromises);
+        setUserDetails(users);
+      } else {
+        setUserDetails([]);
+      }
+    } catch (err: any) {
+      setError(err.message || 'Failed to fetch live users');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchLiveUsers();
+    const interval = setInterval(fetchLiveUsers, 10000); // Poll every 10s
+    return () => clearInterval(interval);
+  }, []);
+
+  const getRoleColor = (role: string) => {
+    switch (role) {
+      case 'student':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'teacher':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'super-admin':
+        return 'bg-purple-100 text-purple-800 border-purple-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getRoleDisplayName = (role: string) => {
+    switch (role) {
+      case 'student':
+        return 'Student';
+      case 'teacher':
+        return 'Teacher';
+      case 'super-admin':
+        return 'Admin';
+      default:
+        return 'Unknown';
+    }
+  };
+
+  return (
+    <Card className="mb-4 w-full max-w-md">
+      <CardHeader className="flex flex-row items-center gap-2">
+        <Activity className="w-5 h-5 text-green-600" />
+        <CardTitle className="text-lg">Live Users</CardTitle>
+      </CardHeader>
+      <CardContent>
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-8">
+            {/* Modern Circular Progress */}
+            <div className="relative w-12 h-12 mb-4">
+              <div className="absolute inset-0 rounded-full border-4 border-gray-200"></div>
+              <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-green-600 animate-spin"></div>
+            </div>
+            <div className="text-sm text-gray-500">Fetching live users...</div>
+          </div>
+        ) : error ? (
+          <div className="text-red-600 text-center py-4">{error}</div>
+        ) : liveUsers ? (
+          <div>
+            <div className="text-2xl font-bold text-green-700 mb-2">{liveUsers.count}</div>
+            <div className="text-xs text-gray-500 mb-3">user(s) active now:</div>
+            <div className="space-y-2 max-h-48 overflow-y-auto">
+              {userDetails.length === 0 ? (
+                <div className="text-center py-4 text-gray-500">
+                  <Users className="w-8 h-8 mx-auto mb-2 opacity-50" />
+                  <div>No users online</div>
+                </div>
+              ) : (
+                userDetails.map((user) => (
+                  <div key={user._id} className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <div className="w-8 h-8 bg-gray-200 rounded-full flex items-center justify-center text-xs font-medium">
+                        {user.firstName?.charAt(0) || 'U'}
+                      </div>
+                      <div>
+                        <div className="text-sm font-medium">
+                          {user.firstName} {user.lastName}
+                        </div>
+                        <div className="text-xs text-gray-500">
+                          {user.email}
+                        </div>
+                      </div>
+                    </div>
+                    <span className={`px-2 py-1 text-xs font-medium rounded-full border ${getRoleColor(user.role)}`}>
+                      {getRoleDisplayName(user.role)}
+                    </span>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        ) : null}
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SuperAdminDashboard() {
   const [user, setUser] = useState<any>(null);
   const [departments, setDepartments] = useState<Department[]>([]);
@@ -263,105 +388,99 @@ export default function SuperAdminDashboard() {
 
   return (
     <DashboardLayout role="super-admin">
-      <div className="space-y-6">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-600 rounded-lg p-6 text-white">
-          <div className="flex items-center space-x-3">
-            <Crown className="h-8 w-8" />
-            <div>
-              <h1 className="text-2xl font-bold">Super Admin Dashboard</h1>
-              <p className="text-purple-100">Complete system oversight and control panel for Head of Department.</p>
+      <div className="container mx-auto py-8 px-4">
+        <div className="flex flex-col md:flex-row md:items-start md:gap-8">
+          <div className="flex-1">
+            {/* Live Users Widget */}
+            <LiveUsersWidget />
+            {/* System Stats Cards */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+              {systemStats.map((stat, idx) => (
+                <StatsCard key={idx} {...stat} />
+              ))}
             </div>
+            {/* Main Content Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              {/* Attendance Overview */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <BarChart3 className="h-5 w-5" />
+                    <span>Attendance Overview</span>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <AttendanceOverview />
+                </CardContent>
+              </Card>
+
+              {/* Quick Actions */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <Settings className="h-5 w-5" />
+                    <span>Quick Actions</span>
+                  </CardTitle>
+                  <CardDescription>Common administrative tasks</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  <Button variant="outline" className="w-full justify-start">
+                    <Users className="h-4 w-4 mr-2" />
+                    Manage Users
+                  </Button>
+                  <Button variant="outline" className="w-full justify-start">
+                    <Activity className="h-4 w-4 mr-2" />
+                    Attendance Reports
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Recent Activity */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <Activity className="h-5 w-5" />
+                  <span>Recent Activity</span>
+                </CardTitle>
+                <CardDescription>Latest student logins</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {students.filter(u => u.lastLogin).length === 0 ? (
+                  <div className="text-center py-8 text-gray-500">
+                    <Server className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p>No recent student logins to display</p>
+                  </div>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-sm border">
+                      <thead>
+                        <tr className="bg-gray-100">
+                          <th className="px-4 py-2 border">Name</th>
+                          <th className="px-4 py-2 border">Roll Number</th>
+                          <th className="px-4 py-2 border">Last Login</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {students
+                          .filter(u => u.lastLogin)
+                          .sort((a, b) => new Date(b.lastLogin as any).getTime() - new Date(a.lastLogin as any).getTime())
+                          .slice(0, 5)
+                          .map((u, idx) => (
+                            <tr key={u._id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                              <td className="px-4 py-2 border">{u.firstName} {u.lastName}</td>
+                              <td className="px-4 py-2 border">{(u as any).rollNumber || '-'}</td>
+                              <td className="px-4 py-2 border">{formatDateTime((u as any).lastLogin)}</td>
+                            </tr>
+                          ))}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        {/* System Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-          {systemStats.map((stat, index) => (
-            <StatsCard key={index} {...stat} />
-          ))}
-        </div>
-
-        {/* Main Content Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Attendance Overview */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" />
-                <span>Attendance Overview</span>
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <AttendanceOverview />
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
-                <span>Quick Actions</span>
-              </CardTitle>
-              <CardDescription>Common administrative tasks</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <Button variant="outline" className="w-full justify-start">
-                <Users className="h-4 w-4 mr-2" />
-                Manage Users
-              </Button>
-              <Button variant="outline" className="w-full justify-start">
-                <Activity className="h-4 w-4 mr-2" />
-                Attendance Reports
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Recent Activity */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center space-x-2">
-              <Activity className="h-5 w-5" />
-              <span>Recent Activity</span>
-            </CardTitle>
-            <CardDescription>Latest student logins</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {students.filter(u => u.lastLogin).length === 0 ? (
-              <div className="text-center py-8 text-gray-500">
-                <Server className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>No recent student logins to display</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <table className="min-w-full text-sm border">
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="px-4 py-2 border">Name</th>
-                      <th className="px-4 py-2 border">Roll Number</th>
-                      <th className="px-4 py-2 border">Last Login</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students
-                      .filter(u => u.lastLogin)
-                      .sort((a, b) => new Date(b.lastLogin as any).getTime() - new Date(a.lastLogin as any).getTime())
-                      .slice(0, 5)
-                      .map((u, idx) => (
-                        <tr key={u._id} className={idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                          <td className="px-4 py-2 border">{u.firstName} {u.lastName}</td>
-                          <td className="px-4 py-2 border">{(u as any).rollNumber || '-'}</td>
-                          <td className="px-4 py-2 border">{formatDateTime((u as any).lastLogin)}</td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
     </DashboardLayout>
   );

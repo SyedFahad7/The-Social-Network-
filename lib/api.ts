@@ -470,6 +470,11 @@ class ApiClient {
     const query = new URLSearchParams(params as any).toString();
     return fetch(`${this.baseURL}/users/class-teacher-exists?${query}`).then((res) => res.json());
   }
+
+  // Live users (super-admin)
+  async getLiveUsers() {
+    return this.request('/auth/live-users');
+  }
 }
 
 // Create and export a singleton instance
@@ -545,7 +550,8 @@ export const {
   removeTeachingAssignment,
   addClassTeacherAssignment,
   removeClassTeacherAssignment,
-  classTeacherExists
+  classTeacherExists,
+  getLiveUsers
 } = apiClient;
 
 export default apiClient;

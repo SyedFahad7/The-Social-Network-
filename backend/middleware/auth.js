@@ -1,5 +1,6 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { client: redisClient, connectRedis } = require('../lib/redisClient');
 
 // Verify JWT token
 const authenticate = async (req, res, next) => {
@@ -31,6 +32,9 @@ const authenticate = async (req, res, next) => {
     }
     
     req.user = user;
+    // --- Redis: Update last seen timestamp ---
+    await connectRedis();
+    await redisClient.set(`user_last_seen:${user._id}`, Date.now());
     next();
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
