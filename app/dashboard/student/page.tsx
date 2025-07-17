@@ -5,6 +5,7 @@ import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import PushNotificationSetup from '@/components/notifications/PushNotificationSetup';
 import { 
   Calendar, 
   FileText, 
@@ -13,7 +14,8 @@ import {
   TrendingUp, 
   CheckCircle,
   AlertCircle,
-  BookOpen
+  BookOpen,
+  Bell
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
@@ -121,7 +123,8 @@ export default function StudentDashboard() {
           <p className="text-blue-100 text-sm lg:text-base">Check what's happening with your academic journey.</p>
         </div>
 
-        <div className="max-w-md mx-auto">
+        {/* Attendance & Notifications Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
           <Card
             className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-gradient-to-r from-green-400 to-blue-400 text-white"
             onClick={() => router.push('/dashboard/student/attendance')}
@@ -132,6 +135,18 @@ export default function StudentDashboard() {
                 <CardDescription className="text-white/80">Check your attendance records</CardDescription>
               </div>
               <CheckCircle className="w-10 h-10 text-white" />
+            </CardContent>
+          </Card>
+          <Card
+            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-gradient-to-r from-blue-400 to-purple-400 text-white"
+            onClick={() => router.push('/dashboard/student/notifications')}
+          >
+            <CardContent className="flex items-center justify-between p-6">
+              <div>
+                <CardTitle className="text-xl font-bold mb-1">Notifications</CardTitle>
+                <CardDescription className="text-white/80">View your latest notifications</CardDescription>
+              </div>
+              <Bell className="w-10 h-10 text-white" />
             </CardContent>
           </Card>
         </div>

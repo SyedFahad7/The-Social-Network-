@@ -194,6 +194,17 @@ const userSchema = new mongoose.Schema({
     ref: 'User',
     default: null
   },
+  
+  // Mobile Push Notifications
+  fcmToken: {
+    type: String,
+    default: null
+  },
+  pushNotificationsEnabled: {
+    type: Boolean,
+    default: true
+  },
+  
   currentSemester: {
     type: Number,
     required: function() { return this.role === 'student'; }

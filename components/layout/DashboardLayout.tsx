@@ -1,12 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Sidebar from './Sidebar';
-import { Bell, Search, Menu, X } from 'lucide-react';
+import { Bell, Search, Menu, X, Inbox } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/ui/theme-toggle';
+import apiClient from '@/lib/api';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [notifOpen, setNotifOpen] = useState(false);
+  const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
+  const [notifUnread, setNotifUnread] = useState(false);
+  const notifRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,6 +34,31 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
     }
     setCheckingAuth(false);
   }, [router]);
+
+  useEffect(() => {
+    if (!user) return;
+    // Fetch recent notifications
+    apiClient.getNotifications({ limit: 5 }).then(res => {
+      const notifs = res.data?.notifications || res.notifications || [];
+      setRecentNotifications(notifs);
+      setNotifUnread(notifs.some((n: any) => !n.isRead));
+    });
+  }, [user, notifOpen]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+        setNotifOpen(false);
+      }
+    }
+    if (notifOpen) {
+      document.addEventListener('mousedown', handleClick);
+    } else {
+      document.removeEventListener('mousedown', handleClick);
+    }
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [notifOpen]);
 
   if (checkingAuth) {
     return (
@@ -93,14 +123,66 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
               </Button>
 
               {/* Notifications */}
-              <Button variant="ghost" size="sm" className="relative">
-                <Bell className="w-5 h-5" />
-                <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>
-              </Button>
-
+              <div className="relative">
+                <Button ref={notifRef} variant="ghost" size="sm" className="relative" onClick={() => setNotifOpen(v => !v)} aria-label="Notifications">
+                  <Bell className="w-5 h-5" />
+                  {notifUnread && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>}
+                </Button>
+                {notifOpen && (
+                  <div className="absolute right-0 mt-2 w-80 max-w-xs bg-white dark:bg-gray-800 shadow-lg rounded-lg z-50 border border-gray-200 dark:border-gray-700 animate-fade-in flex flex-col"
+                    style={{ minWidth: '18rem' }}>
+                    <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
+                      <span className="font-semibold text-gray-900 dark:text-white">Notifications</span>
+                      <Button variant="ghost" size="sm" onClick={() => setNotifOpen(false)} aria-label="Close"><X className="w-4 h-4" /></Button>
+                    </div>
+                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                      {recentNotifications.length === 0 ? (
+                        <div className="p-4 text-center text-gray-500 flex flex-col items-center">
+                          <Inbox className="w-8 h-8 mb-2" />
+                          No notifications
+                        </div>
+                      ) : recentNotifications.map((notif, idx) => (
+                        <button
+                          key={notif._id || idx}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none ${!notif.isRead ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
+                          onClick={() => {
+                            setNotifOpen(false);
+                            if (role === 'student') {
+                              window.location.href = '/dashboard/student/notifications';
+                            } else if (role === 'teacher') {
+                              window.location.href = '/dashboard/teacher/notifications?tab=received';
+                            } else if (role === 'super-admin') {
+                              window.location.href = '/dashboard/super-admin/notifications?tab=received';
+                            }
+                          }}
+                        >
+                          <div className="flex items-center justify-between">
+                            <span className="font-medium text-gray-900 dark:text-white truncate">{notif.title}</span>
+                            <span className="text-xs text-gray-500 ml-2">{new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                          </div>
+                          <div className="text-xs text-gray-500 truncate">From: {notif.senderName || 'System'}</div>
+                        </button>
+                      ))}
+                    </div>
+                    <div className="p-2 border-t border-gray-100 dark:border-gray-700 text-center">
+                      <Button variant="link" size="sm" className="w-full" onClick={() => {
+                        setNotifOpen(false);
+                        if (role === 'student') {
+                          window.location.href = '/dashboard/student/notifications';
+                        } else if (role === 'teacher') {
+                          window.location.href = '/dashboard/teacher/notifications?tab=received';
+                        } else if (role === 'super-admin') {
+                          window.location.href = '/dashboard/super-admin/notifications?tab=received';
+                        }
+                      }}>
+                        View all notifications
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
               {/* Theme Toggle */}
               <ThemeToggle />
-              
               {/* Profile Avatar */}
               
             </div>

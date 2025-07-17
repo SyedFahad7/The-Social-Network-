@@ -21,6 +21,7 @@ const feedbackRoutes = require('./routes/feedback');
 const sectionRoutes = require('./routes/sections');
 const subjectRoutes = require('./routes/subjects');
 const academicYearRoutes = require('./routes/academic-years');
+const notificationRoutes = require('./routes/notifications');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -38,6 +39,8 @@ app.use(cors({
     const allowedOrigins = [
       'http://localhost:3000',
       'http://localhost:3001',
+      'http://192.168.1.218:3000',
+      'http://192.168.1.218:5000',
       'http://localhost:3002',
       'http://localhost:3003',
       'http://localhost:3004',
@@ -93,6 +96,7 @@ app.use('/api/feedback', feedbackRoutes);
 app.use('/api/sections', sectionRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/academic-years', academicYearRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
@@ -114,10 +118,11 @@ mongoose.connect(process.env.MONGODB_URI, {
   console.log('✅ Connected to MongoDB');
   
   // Start server only after DB connection
-  app.listen(PORT, () => {
+  app.listen(PORT, '0.0.0.0', () => {
     console.log(`🚀 Server running on port ${PORT}`);
     console.log(`📊 Environment: ${process.env.NODE_ENV}`);
     console.log(`🌐 API Health: http://localhost:${PORT}/api/health`);
+    console.log(`🌐 API Health (Network): http://0.0.0.0:${PORT}/api/health`);
   });
 })
 .catch((error) => {

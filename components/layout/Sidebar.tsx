@@ -34,19 +34,18 @@ const roleMenus = {
   student: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/student' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/student/attendance' },
+    { icon: Bell, label: 'Notifications', href: '/dashboard/student/notifications' },
   ],
   teacher: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/teacher' },
     { icon: BookOpen, label: 'My Sections', href: '/dashboard/teacher/sections' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/teacher/attendance' },
+    { icon: Bell, label: 'Send Notifications', href: '/dashboard/teacher/notifications' },
   ],
   'super-admin': [
     { icon: Home, label: 'Dashboard', href: '/dashboard/super-admin' },
     { icon: BookOpen, label: 'My Sections', href: '/dashboard/super-admin/my-sections' },
-    // { icon: Users, label: 'Sections Management', href: '/dashboard/super-admin/sections' },
-    // { icon: BarChart3, label: 'Analytics', href: '/dashboard/super-admin/analytics' },
-    // { icon: Users, label: 'All Users', href: '/dashboard/super-admin/users' },
-    // { icon: Bell, label: 'Notifications', href: '/dashboard/super-admin/notifications' },
+    { icon: Bell, label: 'Send Notifications', href: '/dashboard/super-admin/notifications' },
     {icon:Users, label:'My Faculty', href:'/dashboard/super-admin/my-faculty'}
   ],
 };

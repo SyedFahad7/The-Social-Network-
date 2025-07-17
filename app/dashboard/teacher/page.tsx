@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
-  Users
+  Users, Bell
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 
@@ -104,13 +104,27 @@ export default function TeacherDashboard() {
           <p className="text-green-100">Manage your classes and track student progress effectively.</p>
         </div>
 
-        {/* Quick Actions - Only Mark Attendance */}
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
+        {/* Responsive Quick Actions */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
           <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer group" onClick={() => window.location.href = '/dashboard/teacher/attendance'}>
             <CardContent className="p-6 text-center">
               <Users className="w-12 h-12 text-green-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold text-gray-900 mb-2">Mark Attendance</h3>
               <p className="text-sm text-gray-600">Record class attendance</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer group" onClick={() => window.location.href = '/dashboard/teacher/notifications'}>
+            <CardContent className="p-6 text-center">
+              <Bell className="w-12 h-12 text-blue-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-gray-900 mb-2">Notifications</h3>
+              <p className="text-sm text-gray-600">View your notifications</p>
+            </CardContent>
+          </Card>
+          <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer group" onClick={() => window.location.href = '/dashboard/teacher/my-sections'}>
+            <CardContent className="p-6 text-center">
+              <Users className="w-12 h-12 text-purple-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
+              <h3 className="font-semibold text-gray-900 mb-2">My Sections</h3>
+              <p className="text-sm text-gray-600">View and manage your sections</p>
             </CardContent>
           </Card>
         </div>

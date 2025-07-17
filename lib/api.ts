@@ -1,5 +1,17 @@
 // API configuration for the Social Network frontend
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// Detect if we're on mobile and use IP address instead of localhost
+const getApiBaseUrl = () => {
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    // If accessing via IP address, use IP for API too
+    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
+      return `http://${hostname}:5000/api`;
+    }
+  }
+  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+};
+
+const API_BASE_URL = getApiBaseUrl();
 
 // API client with authentication
 class ApiClient {
@@ -475,6 +487,59 @@ class ApiClient {
   async getLiveUsers() {
     return this.request('/auth/live-users');
   }
+
+  // Notification methods
+  async sendNotification(notificationData: any) {
+    return this.request('/notifications', {
+      method: 'POST',
+      body: JSON.stringify(notificationData),
+    });
+  }
+
+  async getNotifications(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/notifications?${queryString}`);
+  }
+
+  async getUnreadNotificationCount() {
+    return this.request('/notifications/unread-count');
+  }
+
+  async markNotificationAsRead(notificationId: string) {
+    return this.request(`/notifications/${notificationId}/read`, {
+      method: 'PUT',
+    });
+  }
+
+  async markAllNotificationsAsRead() {
+    return this.request('/notifications/read-all', {
+      method: 'PUT',
+    });
+  }
+
+  async getSentNotifications(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/notifications/sent?${queryString}`);
+  }
+
+  async getNotificationStats() {
+    return this.request('/notifications/stats');
+  }
+
+  // FCM Token Management
+  async updateFCMToken(fcmToken: string) {
+    return this.request('/notifications/fcm-token', {
+      method: 'POST',
+      body: JSON.stringify({ fcmToken }),
+    });
+  }
+
+  async updatePushSettings(enabled: boolean) {
+    return this.request('/notifications/push-settings', {
+      method: 'PUT',
+      body: JSON.stringify({ enabled }),
+    });
+  }
 }
 
 // Create and export a singleton instance
@@ -551,7 +616,16 @@ export const {
   addClassTeacherAssignment,
   removeClassTeacherAssignment,
   classTeacherExists,
-  getLiveUsers
+  getLiveUsers,
+  sendNotification,
+  getNotifications,
+  getUnreadNotificationCount,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  getSentNotifications,
+  getNotificationStats,
+  updateFCMToken,
+  updatePushSettings
 } = apiClient;
 
 export default apiClient;
