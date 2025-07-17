@@ -18,9 +18,9 @@ export default function SuperAdminMySections() {
   useEffect(() => {
     setLoading(true);
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : '';
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || (typeof window !== 'undefined' && window.location.hostname === 'localhost' ? 'http://localhost:5000' : '');
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
     Promise.all([
-      fetch(`${backendUrl}/api/sections/unique`, {
+      fetch(`${backendUrl}/sections/unique`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

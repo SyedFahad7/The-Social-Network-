@@ -125,10 +125,8 @@ export default function TeacherAttendance() {
   // Fetch teacher assignments after user is loaded
   useEffect(() => {
     if (!user || !user._id) return;
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
-    const url = backendUrl
-      ? `${backendUrl}/api/users/${user._id}/assignments`
-      : `/api/users/${user._id}/assignments`;
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL;
+    const url = `${backendUrl}/users/${user._id}/assignments`;
     fetch(url, {
       headers: {
         'Authorization': `Bearer ${localStorage.getItem('token')}`

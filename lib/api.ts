@@ -1,17 +1,6 @@
 // API configuration for the Social Network frontend
-// Detect if we're on mobile and use IP address instead of localhost
-const getApiBaseUrl = () => {
-  if (typeof window !== 'undefined') {
-    const hostname = window.location.hostname;
-    // If accessing via IP address, use IP for API too
-    if (hostname !== 'localhost' && hostname !== '127.0.0.1') {
-      return `http://${hostname}:5000/api`;
-    }
-  }
-  return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
-};
-
-const API_BASE_URL = getApiBaseUrl();
+// Always use the environment variable for API base URL
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL!;
 
 // API client with authentication
 class ApiClient {
@@ -631,7 +620,7 @@ export const {
 export default apiClient;
 
 export async function getUserAssignments(userId: string) {
-  const url = `/api/users/${userId}/assignments`;
+  const url = `${API_BASE_URL}/users/${userId}/assignments`;
   console.log('DEBUG getUserAssignments: fetching', url);
   const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
   const res = await fetch(url, {

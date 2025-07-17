@@ -1,6 +1,6 @@
 // Service Worker for Push Notifications
 const CACHE_NAME = 'academic-portal-v1';
-const API_BASE_URL = 'http://192.168.1.218:5000';
+const API_BASE_URL = 'https://social-network-bwsf.onrender.com';
 
 // Store VAPID key (will be set by main app)
 let vapidPublicKey = null;
