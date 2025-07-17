@@ -18,6 +18,9 @@ import {
   Bell
 } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { getFirebaseApp } from '@/lib/firebase';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import apiClient from '@/lib/api';
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);
@@ -29,6 +32,55 @@ export default function StudentDashboard() {
       setUser(JSON.parse(userData));
     }
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    // Only run in browser
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+    // Only prompt if not already granted or denied
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then(async (permission) => {
+        if (permission === 'granted') {
+          try {
+            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            if (!vapidKey) return;
+            const app = getFirebaseApp();
+            const messaging = getMessaging(app);
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            const token = await getToken(messaging, {
+              vapidKey,
+              serviceWorkerRegistration: registration,
+            });
+            if (token) {
+              await apiClient.updateFCMToken(token);
+            }
+          } catch (err) {
+            // Silent fail
+          }
+        }
+      });
+    } else if (Notification.permission === 'granted') {
+      // Already granted, ensure FCM token is registered
+      (async () => {
+        try {
+          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+          if (!vapidKey) return;
+          const app = getFirebaseApp();
+          const messaging = getMessaging(app);
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          const token = await getToken(messaging, {
+            vapidKey,
+            serviceWorkerRegistration: registration,
+          });
+          if (token) {
+            await apiClient.updateFCMToken(token);
+          }
+        } catch (err) {
+          // Silent fail
+        }
+      })();
+    }
+  }, [user]);
 
   const stats = [
     {

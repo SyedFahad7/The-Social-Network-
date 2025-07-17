@@ -15,6 +15,9 @@ import {
   ArrowRight,
   CheckCircle
 } from 'lucide-react';
+import { getFirebaseApp } from '@/lib/firebase';
+import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import apiClient from '@/lib/api';
 
 export default function Home() {
   const router = useRouter();
@@ -42,6 +45,47 @@ export default function Home() {
       }
     }
   }, [router]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) return;
+    if (Notification.permission === 'default') {
+      Notification.requestPermission().then(async (permission) => {
+        if (permission === 'granted') {
+          try {
+            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+            if (!vapidKey) return;
+            const app = getFirebaseApp();
+            const messaging = getMessaging(app);
+            const registration = await navigator.serviceWorker.register('/sw.js');
+            const token = await getToken(messaging, {
+              vapidKey,
+              serviceWorkerRegistration: registration,
+            });
+            if (token) {
+              await apiClient.updateFCMToken(token);
+            }
+          } catch (err) {}
+        }
+      });
+    } else if (Notification.permission === 'granted') {
+      (async () => {
+        try {
+          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
+          if (!vapidKey) return;
+          const app = getFirebaseApp();
+          const messaging = getMessaging(app);
+          const registration = await navigator.serviceWorker.register('/sw.js');
+          const token = await getToken(messaging, {
+            vapidKey,
+            serviceWorkerRegistration: registration,
+          });
+          if (token) {
+            await apiClient.updateFCMToken(token);
+          }
+        } catch (err) {}
+      })();
+    }
+  }, []);
 
   const features = [
     {
