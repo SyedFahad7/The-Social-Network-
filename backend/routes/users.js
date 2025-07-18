@@ -5,10 +5,62 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticate, requireSuperAdmin, requireAdmin } = require('../middleware/auth');
 const Department = require('../models/Department');
 const mongoose = require('mongoose');
+const multer = require('multer');
+// const upload = multer({ dest: 'uploads/' }); // or use cloud storage
+const bcrypt = require('bcryptjs');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../lib/cloudinary');
 
 const router = express.Router();
 
 console.log('[USERS ROUTES] users.js loaded');
+
+// Cloudinary storage with overwrite logic
+const storage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    // Use user ID as public_id to overwrite on re-upload
+    return {
+      folder: 'profile_pictures',
+      public_id: req.user._id.toString(),
+      overwrite: true,
+      resource_type: 'image',
+      allowed_formats: ['jpg', 'jpeg', 'png'],
+    };
+  },
+});
+const upload = multer({ storage });
+
+// POST /api/users/upload-profile-picture
+router.post('/upload-profile-picture', authenticate, upload.single('picture'), async (req, res) => {
+  try {
+    if (!req.file || !req.file.path) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+    // Save Cloudinary URL in user profile
+    const user = await User.findById(req.user._id);
+    user.profile = user.profile || {};
+    user.profile.picture = req.file.path;
+    await user.save();
+    res.json({ success: true, url: req.file.path });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Upload failed', error: err.message });
+  }
+});
+
+// POST /api/users/update-profile
+router.post('/update-profile', authenticate, async (req, res) => {
+  try {
+    const { bio, status } = req.body;
+    const user = await User.findById(req.user._id);
+    if (bio !== undefined) user.profile.bio = bio;
+    if (status && typeof status === 'object') user.profile.status = status;
+    await user.save();
+    res.json({ success: true, bio: user.profile.bio, status: user.profile.status });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Profile update failed', error: err.message });
+  }
+});
 
 // @route   GET /api/users
 // @desc    Get all users (with filtering and pagination)

@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Inbox, Check } from 'lucide-react';
 import apiClient from '@/lib/api';
+import PushNotificationSetup from '@/components/notifications/PushNotificationSetup';
 
 export default function StudentNotificationsPage() {
   const [user, setUser] = useState<any>(null);
@@ -111,6 +112,7 @@ export default function StudentNotificationsPage() {
 
   return (
     <DashboardLayout role="student">
+      <PushNotificationSetup userId={user?._id || ''} />
       <div className="container mx-auto py-8 px-4">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">Notifications</h1>

@@ -9,6 +9,7 @@ import { Bell, Inbox, Send, Settings, Check, AlertCircle, CheckCircle } from 'lu
 import apiClient from '@/lib/api';
 import SendNotificationForm from '@/components/notifications/SendNotificationForm';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
+import PushNotificationSetup from '@/components/notifications/PushNotificationSetup';
 
 export default function TeacherNotificationsPage() {
   const [user, setUser] = useState<any>(null);
@@ -142,6 +143,7 @@ export default function TeacherNotificationsPage() {
 
   return (
     <DashboardLayout role="teacher">
+      <PushNotificationSetup userId={user?._id || ''} />
       <div className="container mx-auto py-8 px-4">
         <div className="mb-6">
           <h1 className="text-3xl font-bold text-gray-900">

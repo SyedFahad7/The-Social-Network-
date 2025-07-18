@@ -22,8 +22,13 @@ export default function PushNotificationSetup({ userId }: PushNotificationSetupP
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [hide, setHide] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('dontAskNotifications') === 'true';
+    }
+    return false;
+  });
 
-  // NEW: Use Firebase Messaging to get FCM token (browser only)
   const getFCMToken = async () => {
     try {
       setLoading(true);
@@ -84,19 +89,40 @@ export default function PushNotificationSetup({ userId }: PushNotificationSetupP
     }
   };
 
+  // Only update hide state if dontAskNotifications is set, otherwise follow permission
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      // Check if browser supports notifications
+      const dontAsk = localStorage.getItem('dontAskNotifications');
+      if (dontAsk === 'true') {
+        setHide(true);
+      } else if (Notification.permission === 'granted') {
+        setHide(true);
+      } else {
+        setHide(false);
+      }
+    }
+  }, [permission]);
+
+  // Hide if not supported
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
       if ('Notification' in window) {
         setIsSupported(true);
         setPermission(Notification.permission);
       }
-      // Check if service worker is supported
       if ('serviceWorker' in navigator) {
         initializePushNotifications();
       }
     }
   }, []);
+
+  // Hide if permission becomes granted
+  // useEffect(() => {
+  //   if (permission === 'granted') setHide(true);
+  //   else if (permission === 'denied' || permission === 'default') setHide(false);
+  // }, [permission]);
+
+  if (hide) return null;
 
   const togglePushNotifications = async (enabled: boolean) => {
     try {
@@ -181,7 +207,7 @@ export default function PushNotificationSetup({ userId }: PushNotificationSetupP
           <Switch
             checked={isEnabled && permission === 'granted' && !!fcmToken}
             onCheckedChange={togglePushNotifications}
-            disabled={loading}
+            disabled={loading || permission === 'denied'}
           />
         </div>
         <div className="flex items-center justify-between">
@@ -218,6 +244,18 @@ export default function PushNotificationSetup({ userId }: PushNotificationSetupP
             Updating settings...
           </div>
         )}
+        <div className="flex justify-end">
+          <Button
+            variant="link"
+            className="text-xs text-gray-500 mt-2"
+            onClick={() => {
+              localStorage.setItem('dontAskNotifications', 'true');
+              setHide(true);
+            }}
+          >
+            Don't ask again
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

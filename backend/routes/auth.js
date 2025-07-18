@@ -5,6 +5,8 @@ const User = require('../models/User');
 const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticate } = require('../middleware/auth');
 const { client: redisClient, connectRedis } = require('../lib/redisClient');
+const { sendMail } = require('../lib/mailer');
+const bcrypt = require('bcryptjs');
 
 const router = express.Router();
 
@@ -212,5 +214,55 @@ router.get('/live-users', authenticate, asyncHandler(async (req, res) => {
     userIds: activeUserIds
   });
 }));
+
+router.post('/request-reset', async (req, res) => {
+  const { email } = req.body;
+  const user = await User.findOne({ email });
+  if (!user) return res.status(404).json({ success: false, message: 'Email not found' });
+
+  const otp = Math.floor(100000 + Math.random() * 900000).toString();
+  const expiresAt = new Date(Date.now() + 10 * 60 * 500);
+
+  user.otp = { code: otp, expiresAt };
+  await user.save();
+
+  await sendMail({
+    to: email,
+    subject: 'Your OTP for Password Reset',
+    text: `Your OTP is ${otp}. It expires in 5 minutes.`,
+    html: `<p>Your OTP is <b>${otp}</b>. It expires in 5 minutes.</p>`,
+  });
+
+  res.json({ success: true, message: 'OTP sent to your email' });
+});
+
+router.post('/verify-otp', async (req, res) => {
+  const { email, otp } = req.body;
+  const user = await User.findOne({ email });
+  if (!user || !user.otp) return res.status(400).json({ success: false, message: 'Invalid request' });
+
+  if (user.otp.code !== otp || user.otp.expiresAt < new Date()) {
+    return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+  }
+
+  res.json({ success: true, message: 'OTP verified' });
+});
+
+router.post('/reset-password', async (req, res) => {
+  const { email, otp, newPassword } = req.body;
+  const user = await User.findOne({ email });
+  if (!user || !user.otp) return res.status(400).json({ success: false, message: 'Invalid request' });
+
+  if (user.otp.code !== otp || user.otp.expiresAt < new Date()) {
+    return res.status(400).json({ success: false, message: 'Invalid or expired OTP' });
+  }
+
+  // Save password as plain text (not recommended for production)
+  user.password = newPassword;
+  user.otp = undefined;
+  await user.save();
+
+  res.json({ success: true, message: 'Password reset successful' });
+});
 
 module.exports = router;

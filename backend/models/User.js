@@ -149,6 +149,7 @@ const userSchema = new mongoose.Schema({
     type: String, // URL to image
     default: null
   },
+
   
   // Account Status
   isActive: {
@@ -193,6 +194,20 @@ const userSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     default: null
+  },
+
+  otp: {
+    code: String,
+    expiresAt: Date,
+  },
+
+  profile: {
+    bio: { type: String, default: '' },
+    picture: { type: String, default: 'https://imgs.search.brave.com/ato5dhMnOquUUR0B3NGkFp454zzJDhEsayJhUO1H44I/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAyLzE1Lzg0LzQz/LzM2MF9GXzIxNTg0/NDMyNV90dFg5WWlJ/SXllYVI3TmU2RWFM/TGpNQW15NEd2UEM2/OS5qcGc' },
+    status: {
+      emoji: { type: String, default: '💬' },
+      text: { type: String, default: 'Available' }
+    }
   },
   
   // Mobile Push Notifications

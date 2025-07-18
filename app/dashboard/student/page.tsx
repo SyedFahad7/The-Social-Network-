@@ -21,6 +21,9 @@ import { useRouter } from 'next/navigation';
 import { getFirebaseApp } from '@/lib/firebase';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
 import apiClient from '@/lib/api';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 export default function StudentDashboard() {
   const [user, setUser] = useState<any>(null);

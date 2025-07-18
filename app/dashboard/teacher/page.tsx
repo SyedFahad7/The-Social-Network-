@@ -144,7 +144,7 @@ export default function TeacherDashboard() {
       <div className="p-6 space-y-6">
         {/* Header with Theme Toggle */}
         <div className="bg-gradient-to-r from-green-600 to-teal-600 rounded-lg p-6 text-white">
-          <h1 className="text-2xl font-bold mb-2">Good morning, Prof. {user?.firstName || 'Teacher'}!</h1>
+          <h1 className="text-2xl font-bold mb-2">Welcome back, Prof. {user?.firstName || 'Teacher'}!</h1>
           <p className="text-green-100">Manage your classes and track student progress effectively.</p>
         </div>
 

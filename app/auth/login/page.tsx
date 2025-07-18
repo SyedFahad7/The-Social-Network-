@@ -19,6 +19,88 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const router = useRouter();
 
+  const [showForgotModal, setShowForgotModal] = useState(false);
+  const [forgotStep, setForgotStep] = useState(1); // 1: email, 2: otp, 3: new password
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotNewPassword, setForgotNewPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
+  const [forgotError, setForgotError] = useState('');
+  const [forgotSuccess, setForgotSuccess] = useState('');
+
+  const resetForgotState = () => {
+    setForgotStep(1);
+    setForgotEmail('');
+    setForgotOtp('');
+    setForgotNewPassword('');
+    setForgotLoading(false);
+    setForgotError('');
+    setForgotSuccess('');
+  };
+
+  const handleRequestOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    setForgotSuccess('');
+    try {
+      const res = await apiClient.requestPasswordReset(forgotEmail);
+      if (res.success) {
+        setForgotStep(2);
+        setForgotSuccess('OTP sent to your email.');
+      } else {
+        setForgotError(res.message || 'Failed to send OTP.');
+      }
+    } catch (err: any) {
+      setForgotError(err.message || 'Failed to send OTP.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    setForgotSuccess('');
+    try {
+      const res = await apiClient.verifyOtp(forgotEmail, forgotOtp);
+      if (res.success) {
+        setForgotStep(3);
+        setForgotSuccess('OTP verified. Please enter your new password.');
+      } else {
+        setForgotError(res.message || 'Invalid or expired OTP.');
+      }
+    } catch (err: any) {
+      setForgotError(err.message || 'Invalid or expired OTP.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setForgotLoading(true);
+    setForgotError('');
+    setForgotSuccess('');
+    try {
+      const res = await apiClient.resetPassword(forgotEmail, forgotOtp, forgotNewPassword);
+      if (res.success) {
+        setForgotSuccess('Password reset successful! You can now log in.');
+        setTimeout(() => {
+          setShowForgotModal(false);
+          resetForgotState();
+        }, 2000);
+      } else {
+        setForgotError(res.message || 'Failed to reset password.');
+      }
+    } catch (err: any) {
+      setForgotError(err.message || 'Failed to reset password.');
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
   // Redirect to dashboard if already logged in
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -70,6 +152,13 @@ export default function LoginPage() {
             break;
           default:
             router.replace('/dashboard');
+        }
+      } else {
+        // Show backend error message or validation errors
+        if (response.errors && Array.isArray(response.errors) && response.errors.length > 0) {
+          setError(response.errors.map((e: any) => e.msg).join(', '));
+        } else {
+          setError(response.message || 'Login failed. Please try again.');
         }
       }
     } catch (error: any) {
@@ -157,6 +246,84 @@ export default function LoginPage() {
               {isLoading ? 'Signing In...' : 'Sign In'}
             </Button>
           </form>
+
+          {/* Forgot Password Link and Modal */}
+          <div className="mt-4 text-center">
+            <button
+              type="button"
+              className="text-blue-600 hover:underline text-sm font-medium focus:outline-none"
+              onClick={() => setShowForgotModal(true)}
+            >
+              Forgot Password?
+            </button>
+          </div>
+
+          {showForgotModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
+              <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-sm mx-2 p-6 relative">
+                <button
+                  className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                  onClick={() => { setShowForgotModal(false); resetForgotState(); }}
+                  aria-label="Close"
+                >
+                  &times;
+                </button>
+                <h2 className="text-lg font-bold mb-2 text-center">Reset Password</h2>
+                {forgotStep === 1 && (
+                  <form onSubmit={handleRequestOtp} className="space-y-4">
+                    <div>
+                      <Label htmlFor="forgot-email">College Email</Label>
+                      <Input
+                        id="forgot-email"
+                        type="email"
+                        placeholder="your.roll@lords.ac.in"
+                        value={forgotEmail}
+                        onChange={e => setForgotEmail(e.target.value)}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={forgotLoading}>{forgotLoading ? 'Sending OTP...' : 'Send OTP'}</Button>
+                  </form>
+                )}
+                {forgotStep === 2 && (
+                  <form onSubmit={handleVerifyOtp} className="space-y-4">
+                    <div>
+                      <Label htmlFor="otp">Enter OTP</Label>
+                      <Input
+                        id="otp"
+                        type="text"
+                        maxLength={6}
+                        value={forgotOtp}
+                        onChange={e => setForgotOtp(e.target.value)}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={forgotLoading}>{forgotLoading ? 'Verifying...' : 'Verify OTP'}</Button>
+                  </form>
+                )}
+                {forgotStep === 3 && (
+                  <form onSubmit={handleResetPassword} className="space-y-4">
+                    <div>
+                      <Label htmlFor="new-password">New Password</Label>
+                      <Input
+                        id="new-password"
+                        type="password"
+                        value={forgotNewPassword}
+                        onChange={e => setForgotNewPassword(e.target.value)}
+                        required
+                        className="mt-1"
+                      />
+                    </div>
+                    <Button type="submit" className="w-full" disabled={forgotLoading}>{forgotLoading ? 'Resetting...' : 'Reset Password'}</Button>
+                  </form>
+                )}
+                {forgotError && <div className="mt-2 text-red-600 text-sm text-center">{forgotError}</div>}
+                {forgotSuccess && <div className="mt-2 text-green-600 text-sm text-center">{forgotSuccess}</div>}
+              </div>
+            </div>
+          )}
 
           <div className="mt-6 text-center">
             <p className="text-sm text-gray-600 dark:text-gray-300">

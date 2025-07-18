@@ -46,12 +46,13 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.message || 'API request failed');
+        // Instead of throwing, return a consistent error object
+        return { success: false, ...data };
       }
 
       return data;
     } catch (error) {
-      console.error('API Error:', error);
+      // Only throw for network errors
       throw error;
     }
   }
@@ -92,6 +93,28 @@ class ApiClient {
     return this.request('/auth/change-password', {
       method: 'POST',
       body: JSON.stringify({ currentPassword, newPassword, confirmPassword }),
+    });
+  }
+
+  // Password reset (forgot password) methods
+  async requestPasswordReset(email: string) {
+    return this.request('/auth/request-reset', {
+      method: 'POST',
+      body: JSON.stringify({ email }),
+    });
+  }
+
+  async verifyOtp(email: string, otp: string) {
+    return this.request('/auth/verify-otp', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp }),
+    });
+  }
+
+  async resetPassword(email: string, otp: string, newPassword: string) {
+    return this.request('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, newPassword }),
     });
   }
 
@@ -529,6 +552,27 @@ class ApiClient {
       body: JSON.stringify({ enabled }),
     });
   }
+
+  // Profile picture upload
+  async uploadProfilePicture(file: File) {
+    const formData = new FormData();
+    formData.append('picture', file);
+    return fetch(`${this.baseURL}/users/upload-profile-picture`, {
+      method: 'POST',
+      headers: {
+        ...(this.token && { Authorization: `Bearer ${this.token}` })
+      },
+      body: formData,
+    }).then(res => res.json());
+  }
+
+  // Update bio and status
+  async updateProfile(bio: string, status?: { emoji: string, text: string }) {
+    return this.request('/users/update-profile', {
+      method: 'POST',
+      body: JSON.stringify(status ? { bio, status } : { bio }),
+    });
+  }
 }
 
 // Create and export a singleton instance
@@ -614,7 +658,12 @@ export const {
   getSentNotifications,
   getNotificationStats,
   updateFCMToken,
-  updatePushSettings
+  updatePushSettings,
+  requestPasswordReset,
+  verifyOtp,
+  resetPassword,
+  uploadProfilePicture,
+  updateProfile
 } = apiClient;
 
 export default apiClient;

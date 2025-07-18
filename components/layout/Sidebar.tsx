@@ -46,7 +46,7 @@ const roleMenus = {
     { icon: Home, label: 'Dashboard', href: '/dashboard/super-admin' },
     { icon: BookOpen, label: 'My Sections', href: '/dashboard/super-admin/my-sections' },
     { icon: Bell, label: 'Send Notifications', href: '/dashboard/super-admin/notifications' },
-    {icon:Users, label:'My Faculty', href:'/dashboard/super-admin/my-faculty'}
+    {icon:Users, label:'My Faculty', href:'/dashboard/super-admin/my-faculty'},
   ],
 };
 
@@ -129,12 +129,8 @@ export default function Sidebar({ role, onClose }: SidebarProps) {
         <div className="p-4 border-b border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-700/50">
           <div className="flex items-center space-x-3">
             <div className="w-10 h-10 bg-gray-300 dark:bg-gray-600 rounded-full flex items-center justify-center overflow-hidden">
-              {user.profilePicture ? (
-                <img 
-                  src={user.profilePicture} 
-                  alt="Profile" 
-                  className="w-full h-full object-cover"
-                />
+              {user.profile?.picture ? (
+                <img src={user.profile.picture} alt="Profile" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                   {user.firstName ? user.firstName.charAt(0).toUpperCase() : user.email.charAt(0).toUpperCase()}
