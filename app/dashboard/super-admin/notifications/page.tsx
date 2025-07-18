@@ -241,7 +241,13 @@ export default function SuperAdminNotificationsPage() {
                               </div>
                               <p className="text-gray-600 mb-2">{notification.message}</p>
                               <div className="flex items-center justify-between text-sm text-gray-500">
-                                <span>From: {notification.senderName}</span>
+                                <span>
+                                  From: {notification.senderName}
+                                  {(() => {
+                                    const role = notification.senderRole || (notification.sender && notification.sender.role) || 'Unknown';
+                                    return ` (${role === 'super-admin' ? 'HoD' : role.charAt(0).toUpperCase() + role.slice(1)})`;
+                                  })()}
+                                </span>
                                 <span>{formatDate(notification.createdAt)}</span>
                               </div>
                             </div>

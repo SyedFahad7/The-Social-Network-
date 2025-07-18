@@ -63,7 +63,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
     { emoji: '🏠', text: 'Working from home' },
     { emoji: '🎯', text: 'Focusing' },
   ];
-  const emojiOptions = ['💬','🏝️','🤒','🏠','🎯','😃','😎','🚀','🎉','🧑‍💻','📚','📝','🕹️','','🍕','☕','❤️','👨‍🏫','👩‍🏫','👨‍🎓','👩‍🎓','👨‍💼','👩‍💼','👥','👤','🧑‍🎓','👨‍🔬','👩‍🔬' ,'🎓','🏆','🥇','🥈','🥉','🏅','📊','📈','📉','💡','🔬','🧪','🔭','🗓️','⏰','⏱️','⏲️','🕐','🍎','🥨','🧃','🥤','🍵','🥛','🍪','🍰','🧁','🍯','🥯','🍞'];
+  const emojiOptions = ['💬', '🏝️', '🤒', '🏠', '🎯', '😃', '😎', '🚀', '🎉', '🧑‍💻', '📚', '📝', '🕹️', '', '🍕', '☕', '❤️', '👨‍🏫', '👩‍🏫', '👨‍🎓', '👩‍🎓', '👨‍💼', '👩‍💼', '👥', '👤', '🧑‍🎓', '👨‍🔬', '👩‍🔬', '🎓', '🏆', '🥇', '🥈', '🥉', '🏅', '📊', '📈', '📉', '💡', '🔬', '🧪', '🔭', '🗓️', '⏰', '⏱️', '⏲️', '🕐', '🍎', '🥨', '🧃', '🥤', '🍵', '🥛', '🍪', '🍰', '🧁', '🍯', '🥯', '🍞'];
   // Remove separate status state
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
 
@@ -341,7 +341,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div 
+        <div
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -357,7 +357,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
           onClose={() => setSidebarOpen(false)}
         />
       </div>
-      
+
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navigation */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 lg:px-6 py-4">
@@ -391,8 +391,14 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                   {notifUnread && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>}
                 </Button>
                 {notifOpen && (
-                  <div className="absolute right-0 mt-2 w-80 max-w-xs bg-white dark:bg-gray-800 shadow-lg rounded-lg z-50 border border-gray-200 dark:border-gray-700 animate-fade-in flex flex-col"
-                    style={{ minWidth: '18rem' }}>
+                  <div
+                    className={
+                      `absolute z-50 mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 animate-fade-in flex flex-col ` +
+                      `max-w-xs w-80 right-0 sm:left-auto sm:right-0 sm:w-80 sm:max-w-xs ` +
+                      `w-screen left-0 right-0 mx-auto sm:w-80 sm:left-auto sm:right-0 sm:mx-0`
+                    }
+                    style={{ minWidth: '18rem', width: '100%', maxWidth: '20rem' }}
+                  >
                     <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
                       <span className="font-semibold text-gray-900 dark:text-white">Notifications</span>
                       <Button variant="ghost" size="sm" onClick={() => setNotifOpen(false)} aria-label="Close"><X className="w-4 h-4" /></Button>
@@ -446,9 +452,9 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
               {/* Theme Toggle */}
               <ThemeToggle />
               {/* Status in header (right side, desktop only) */}
-              <span className="lg:flex items-center gap-1 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-sm font-medium border border-gray-200 dark:border-gray-700">
-                <span className="text-xs md:text-xl">{user?.profile?.status?.emoji || '💬'}</span>
-                <span>{user?.profile?.status?.text || 'Available'}</span>
+              <span className="lg:flex flex justify-center items-center gap-1 bg-gray-100 dark:bg-gray-800 px-3 py-1 rounded-full text-sm font-medium border border-gray-200 dark:border-gray-700">
+                <span className="text-xs md:text-sm">{user?.profile?.status?.emoji || '💬'}</span>
+                <span className='text-xs md:text-sm'>{user?.profile?.status?.text || 'Available'}</span>
               </span>
               {/* Profile Avatar */}
               <div className="relative">
@@ -465,12 +471,13 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                   <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40">
                     <div className="bg-white dark:bg-gray-900 rounded-lg shadow-lg w-full max-w-sm mx-2 p-0 relative flex flex-col items-center" style={{ maxHeight: '90vh', margin: '3vh 0' }}>
                       <button
-                        className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
+                        className="absolute top-2 right-4 w-10 h-10 text-3xl bg-black/10 rounded-full flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"
                         onClick={handleCloseSettings}
                         aria-label="Close"
                       >
                         &times;
                       </button>
+
                       <div className="w-full overflow-y-auto p-6" style={{ maxHeight: '80vh' }}>
                         <h2 className="text-lg font-bold mb-2 text-center">Profile Settings</h2>
                         <form onSubmit={handleProfileUpdate} className="space-y-4">
@@ -553,7 +560,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                         </form>
                       </div>
                     </div>
-                </div>
+                  </div>
                 )}
               </div>
             </div>

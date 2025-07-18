@@ -8,6 +8,7 @@ const { authenticate, requireTeacher, requireSuperAdmin } = require('../middlewa
 const { client: redisClient, connectRedis } = require('../lib/redisClient');
 const { sendPushNotification, sendPushNotificationToMultiple } = require('../lib/firebase');
 const mongoose = require('mongoose');
+const { unknown } = require('zod');
 
 const router = express.Router();
 
@@ -225,6 +226,7 @@ router.post('/', [
       title,
       message,
       senderName: `${req.user.firstName} ${req.user.lastName}`,
+      senderRole: '${req.user.role}',
       createdAt: notification.createdAt
     },
     recipientCount: targetUsers.length
@@ -237,6 +239,7 @@ router.post('/', [
       notification: {
         ...notification.toObject(),
         senderName: `${req.user.firstName} ${req.user.lastName}`,
+        senderRole: '${req.user.role}',
         totalRecipients: targetUsers.length,
         targetType,
         targetValue
@@ -343,6 +346,7 @@ router.get('/', [
     title: un.notification.title,
     message: un.notification.message,
     sender: un.notification.sender,
+    senderRole: un.notification.sender ? '${un.notification.sender.role}' : 'unknown',
     senderName: un.notification.sender ? `${un.notification.sender.firstName} ${un.notification.sender.lastName}` : 'Unknown',
     priority: un.notification.priority,
     category: un.notification.category,
@@ -463,7 +467,7 @@ router.get('/sent', [
   // Format notifications to include expected fields
   const formattedNotifications = notifications.map(notification => ({
     ...notification.toObject(),
-    senderName: `${req.user.firstName} ${req.user.lastName}`,
+    senderName: `${req.user.firstName} ${req.user.lastName} ${req.user.role}`,
     totalRecipients: notification.deliveryStatus?.deliveredCount || 0,
     targetType: notification.recipientType === 'all-students' ? 'all_students' :
                 notification.recipientType === 'all-teachers' ? 'all_teachers' :

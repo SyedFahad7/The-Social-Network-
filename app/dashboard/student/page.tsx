@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { TextScramble } from '@/components/ui/TextScramble';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import PushNotificationSetup from '@/components/notifications/PushNotificationSetup';
@@ -173,35 +174,47 @@ export default function StudentDashboard() {
       <div className="p-4 lg:p-6 space-y-6">
         
         {/* Welcome Header */}
-        <div className="bg-gradient-to-r from-blue-600 to-teal-600 rounded-lg p-4 lg:p-6 text-white">
-          <h1 className="text-xl lg:text-2xl font-bold mb-2">Welcome back, {user?.lastName || 'Student'}!</h1>
-          <p className="text-blue-100 text-sm lg:text-base">Check what's happening with your academic journey.</p>
+        <div className="rounded-lg p-4 lg:p-6 bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 shadow-sm">
+          <h1 className="text-xl lg:text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-100">
+            <TextScramble>
+              {`Welcome back, ${user?.firstName || ''} ${user?.lastName || 'Student'}!`}
+            </TextScramble>
+          </h1>
+          <TextScramble as="span" className="text-zinc-500 dark:text-zinc-400 text-sm lg:text-base">Check what's happening with your academic journey.</TextScramble>
         </div>
 
         {/* Attendance & Notifications Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
           <Card
-            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-gradient-to-r from-green-400 to-blue-400 text-white"
+            className="cursor-pointer hover:shadow-md transition-shadow duration-200 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
             onClick={() => router.push('/dashboard/student/attendance')}
           >
             <CardContent className="flex items-center justify-between p-6">
               <div>
-                <CardTitle className="text-xl font-bold mb-1">Attendance</CardTitle>
-                <CardDescription className="text-white/80">Check your attendance records</CardDescription>
+                <CardTitle className="text-xl font-bold mb-1">
+                  <TextScramble>Attendance</TextScramble>
+                </CardTitle>
+                <CardDescription className="text-zinc-500 dark:text-zinc-400">
+                  <TextScramble as="span" className="text-zinc-500 dark:text-zinc-400">Check your attendance records</TextScramble>
+                </CardDescription>
               </div>
-              <CheckCircle className="w-10 h-10 text-white" />
+              <CheckCircle className="w-10 h-10 text-zinc-400 dark:text-zinc-500" />
             </CardContent>
           </Card>
           <Card
-            className="cursor-pointer hover:shadow-lg transition-shadow duration-200 bg-gradient-to-r from-blue-400 to-purple-400 text-white"
+            className="cursor-pointer hover:shadow-md transition-shadow duration-200 bg-zinc-50 dark:bg-zinc-800 border border-zinc-200 dark:border-zinc-700 text-zinc-900 dark:text-zinc-100"
             onClick={() => router.push('/dashboard/student/notifications')}
           >
             <CardContent className="flex items-center justify-between p-6">
               <div>
-                <CardTitle className="text-xl font-bold mb-1">Notifications</CardTitle>
-                <CardDescription className="text-white/80">View your latest notifications</CardDescription>
+                <CardTitle className="text-xl font-bold mb-1">
+                  <TextScramble>Notifications</TextScramble>
+                </CardTitle>
+                <CardDescription className="text-zinc-500 dark:text-zinc-400">
+                  <TextScramble as="span" className="text-zinc-500 dark:text-zinc-400">View your latest notifications</TextScramble>
+                </CardDescription>
               </div>
-              <Bell className="w-10 h-10 text-white" />
+              <Bell className="w-10 h-10 text-zinc-400 dark:text-zinc-500" />
             </CardContent>
           </Card>
         </div>
