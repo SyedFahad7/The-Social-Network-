@@ -18,7 +18,7 @@ import {
   Eye
 } from 'lucide-react';
 import { useSections } from '@/hooks/use-sections';
-import apiClient, { getUserAssignments } from '@/lib/api';
+import apiClient, { getAssignments } from '@/lib/api';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 
 export default function TeacherSections() {
