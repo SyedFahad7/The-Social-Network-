@@ -23,6 +23,7 @@ import {
   Edit2
 } from 'lucide-react';
 import apiClient from '@/lib/api';
+import TimetableEditor from '@/components/teacher/TimetableEditor';
 
 export default function SectionDetails() {
   const params = useParams();
@@ -265,6 +266,12 @@ export default function SectionDetails() {
     fetchAcademicYearLabel();
   }, [user, year, section, academicYear]);
 
+  // Determine if user is class teacher for this section
+  const isClassTeacher = Array.isArray(user?.classTeacherAssignments)
+    ? user.classTeacherAssignments.some((a: any) => a.section === section && String(a.year) === String(year) && (a.academicYear === academicYear || a.academicYear?._id === academicYear))
+    : false;
+  const departmentId = extractDepartmentId(user?.department);
+
   if (!user) return <div className="p-8 text-center text-gray-500">Loading...</div>;
 
   return (
@@ -285,6 +292,7 @@ export default function SectionDetails() {
             <TabsTrigger value="students">Students</TabsTrigger>
             <TabsTrigger value="attendance">Attendance</TabsTrigger>
             <TabsTrigger value="summary">Summary</TabsTrigger>
+            <TabsTrigger value="timetable">Timetable</TabsTrigger>
           </TabsList>
           <TabsContent value="students">
             {loading ? <div>Loading students...</div> : error ? <div className="text-red-600">{error}</div> : (
@@ -483,6 +491,16 @@ export default function SectionDetails() {
                 </table>
               </div>
             ) : null}
+          </TabsContent>
+          <TabsContent value="timetable">
+            <TimetableEditor
+              section={section}
+              year={Number(year)}
+              semester={subjects[0]?.semester || 1}
+              academicYear={academicYear}
+              department={departmentId || ''}
+              isClassTeacher={isClassTeacher}
+            />
           </TabsContent>
         </Tabs>
       </div>

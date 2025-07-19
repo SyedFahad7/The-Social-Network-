@@ -108,10 +108,9 @@ router.get('/', [
   if (req.user.role === 'teacher') {
     query.department = new mongoose.Types.ObjectId(req.user.department);
     query.role = 'student';
-    if (academicYear) query.academicYear = new mongoose.Types.ObjectId(academicYear); // <-- Fix here!
+    if (academicYear) query.academicYear = new mongoose.Types.ObjectId(academicYear);
     if (year) query.year = parseInt(year);
     if (section) query.section = section;
-    // Debug logging
     console.log('[USERS API] teacher query:', query);
   } else if (req.user.role === 'super-admin') {
     if (role) query.role = role;
@@ -120,18 +119,38 @@ router.get('/', [
     if (year) query.year = parseInt(year);
     if (section) query.section = section;
     if (search) {
-    query.$or = [
-      { firstName: { $regex: search, $options: 'i' } },
-      { lastName: { $regex: search, $options: 'i' } },
-      { email: { $regex: search, $options: 'i' } },
-      { rollNumber: { $regex: search, $options: 'i' } },
-      { employeeId: { $regex: search, $options: 'i' } }
-    ];
+      query.$or = [
+        { firstName: { $regex: search, $options: 'i' } },
+        { lastName: { $regex: search, $options: 'i' } },
+        { email: { $regex: search, $options: 'i' } },
+        { rollNumber: { $regex: search, $options: 'i' } },
+        { employeeId: { $regex: search, $options: 'i' } }
+      ];
     }
-    // Debug logging
     console.log('[USERS API] super-admin query:', query);
+  } else if (req.user.role === 'student' && role === 'teacher' && department) {
+    // Allow students to fetch teachers for their department only
+    query.role = 'teacher';
+    query.department = new mongoose.Types.ObjectId(department);
+    // Only allow basic info
+    const teachers = await User.find(query)
+      .select('firstName lastName email profilePicture teachingAssignments _id department employeeId isActive')
+      .sort({ firstName: 1, lastName: 1 });
+    return res.json({
+      success: true,
+      data: {
+        users: teachers,
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalUsers: teachers.length,
+          hasNextPage: false,
+          hasPrevPage: false,
+          limit: teachers.length
+        }
+      }
+    });
   } else {
-    // Debug logging
     console.log('[USERS API] Access denied for role:', req.user.role);
     return res.status(403).json({ success: false, message: 'Access denied. Required role: super-admin or teacher.' });
   }

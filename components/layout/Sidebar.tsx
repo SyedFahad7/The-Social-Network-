@@ -12,7 +12,8 @@ import {
   Calendar, 
   Upload, 
   Users, 
-  BookOpen, 
+  BookOpen,
+  Table, 
   MessageSquare, 
   Settings, 
   LogOut,
@@ -36,6 +37,7 @@ const roleMenus = {
     { icon: Users, label: 'Classmates', href: '/dashboard/student/classmates' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/student/attendance' },
     { icon: Bell, label: 'Notifications', href: '/dashboard/student/notifications' },
+    {icon: Table, label: 'TimeTable', href:'/dashboard/student/timetable'}
   ],
   teacher: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/teacher' },

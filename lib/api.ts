@@ -722,18 +722,3 @@ export const {
 } = apiClient;
 
 export default apiClient;
-
-export async function getUserAssignments(userId: string) {
-  const url = `${API_BASE_URL}/users/${userId}/assignments`;
-  console.log('DEBUG getUserAssignments: fetching', url);
-  const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-  const res = await fetch(url, {
-    headers: {
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      'Content-Type': 'application/json',
-    },
-  });
-  console.log('DEBUG getUserAssignments: response status', res.status);
-  if (!res.ok) throw new Error('Failed to fetch user assignments');
-  return res.json();
-}

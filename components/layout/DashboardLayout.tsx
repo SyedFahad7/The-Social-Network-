@@ -24,6 +24,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   const [notifOpen, setNotifOpen] = useState(false);
   const [recentNotifications, setRecentNotifications] = useState<any[]>([]);
   const [notifUnread, setNotifUnread] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef<HTMLButtonElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
@@ -109,11 +110,11 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
 
   useEffect(() => {
     if (!user) return;
-    // Fetch recent notifications
-    apiClient.getNotifications({ limit: 5 }).then(res => {
-      const notifs = res.data?.notifications || res.notifications || [];
-      setRecentNotifications(notifs);
-      setNotifUnread(notifs.some((n: any) => !n.isRead));
+    // Fetch unread notification count
+    apiClient.getUnreadNotificationCount().then(res => {
+      const count = res.data?.count || res.count || 0;
+      setUnreadCount(count);
+      setNotifUnread(count > 0);
     });
   }, [user, notifOpen]);
 
@@ -389,6 +390,11 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
                 <Button ref={notifRef} variant="ghost" size="sm" className="relative" onClick={() => setNotifOpen(v => !v)} aria-label="Notifications">
                   <Bell className="w-5 h-5" />
                   {notifUnread && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>}
+                  {unreadCount > 0 && (
+                    <span className="absolute -top-2 -right-4 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white dark:border-gray-800">
+                      {unreadCount}
+                    </span>
+                  )}
                 </Button>
                 {notifOpen && (
                   <div

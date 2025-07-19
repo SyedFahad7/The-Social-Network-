@@ -26,6 +26,13 @@ const subjectSchema = new mongoose.Schema({
     type: mongoose.Schema.Types.ObjectId,
     ref: 'AcademicYear',
     required: true
+  },
+  // Add type: lecture or lab
+  type: {
+    type: String,
+    enum: ['lecture', 'lab'],
+    default: 'lecture',
+    required: true
   }
 }, {
   timestamps: true

@@ -37,6 +37,7 @@ import apiClient from '@/lib/api';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import AttendanceSnapshot from '@/components/dashboard/AttendanceSnapshot';
 
 interface DashboardData {
   attendancePercentage: number;
@@ -59,6 +60,7 @@ export default function StudentDashboard() {
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const [unreadCount, setUnreadCount] = useState(0);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -75,10 +77,11 @@ export default function StudentDashboard() {
         setLoading(true);
         
         // Fetch all dashboard data in parallel
-        const [classmatesStats, attendanceData, notificationsData] = await Promise.all([
+        const [classmatesStats, attendanceData, notificationsData, unreadRes] = await Promise.all([
           apiClient.getClassmatesStats(),
           apiClient.getAttendanceStats(),
-          apiClient.getNotifications({ limit: 5 })
+          apiClient.getNotifications({ limit: 5 }),
+          apiClient.getUnreadNotificationCount()
         ]);
 
         setDashboardData({
@@ -89,6 +92,7 @@ export default function StudentDashboard() {
           notifications: notificationsData?.data?.notifications || [],
           recentActivity: []
         });
+        setUnreadCount(unreadRes?.data?.count || unreadRes.count || 0);
       } catch (error) {
         console.error('Error fetching dashboard data:', error);
       } finally {
@@ -188,7 +192,7 @@ export default function StudentDashboard() {
       bgColor: 'bg-purple-100 dark:bg-purple-900/30',
       hoverColor: 'hover:bg-purple-50 dark:hover:bg-purple-900/50',
       onClick: () => router.push('/dashboard/student/notifications'),
-      count: dashboardData.notifications.length
+      count: unreadCount // Use unreadCount here
     },
     {
       title: 'Timetable',
@@ -242,11 +246,11 @@ export default function StudentDashboard() {
         <div className="rounded-lg p-4 lg:p-6 bg-gradient-to-r from-blue-50 to-indigo-50 dark:from-blue-900/20 dark:to-indigo-900/20 border border-blue-200 dark:border-blue-800 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex-1">
-              <h1 className="text-xl lg:text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-100">
-                <TextScramble>
-                  {`Welcome back, ${user?.firstName || ''} ${user?.lastName || 'Student'}!`}
-                </TextScramble>
-              </h1>
+          <h1 className="text-xl lg:text-2xl font-bold mb-2 text-zinc-900 dark:text-zinc-100">
+            <TextScramble>
+              {`Welcome back, ${user?.firstName || ''} ${user?.lastName || 'Student'}!`}
+            </TextScramble>
+          </h1>
               <TextScramble as="span" className="text-zinc-500 dark:text-zinc-400 text-sm lg:text-base">
                 {user?.profile?.status?.text || 'Check what\'s happening with your academic journey.'}
               </TextScramble>
@@ -301,7 +305,7 @@ export default function StudentDashboard() {
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-700">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
+              <div>
                   <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Assignments</p>
                   <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{dashboardData.pendingAssignments}</p>
                   <p className="text-xs text-orange-600 dark:text-orange-400">pending</p>
@@ -316,9 +320,9 @@ export default function StudentDashboard() {
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-                <div>
+              <div>
                   <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Notifications</p>
-                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{dashboardData.notifications.length}</p>
+                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{unreadCount}</p>
                   <p className="text-xs text-purple-600 dark:text-purple-400">unread</p>
                 </div>
                 <div className="w-12 h-12 bg-purple-200 dark:bg-purple-800 rounded-lg flex items-center justify-center">
@@ -368,6 +372,9 @@ export default function StudentDashboard() {
             </Card>
           ))}
         </div>
+
+        {/* Attendance Snapshot Bar Chart */}
+        <AttendanceSnapshot userId={user?._id} />
 
         {/* Recent Notifications */}
         {dashboardData.notifications.length > 0 && (

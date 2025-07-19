@@ -33,6 +33,7 @@ router.post('/', [
   body('year').isInt(),
   body('semester').isInt(),
   body('academicYear').notEmpty(),
+  body('type').isIn(['lecture', 'lab']).withMessage('Type must be lecture or lab'),
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
@@ -52,6 +53,7 @@ router.put('/:id', [
   body('year').optional().isInt(),
   body('semester').optional().isInt(),
   body('academicYear').optional(),
+  body('type').optional().isIn(['lecture', 'lab']).withMessage('Type must be lecture or lab'),
 ], asyncHandler(async (req, res) => {
   const errors = validationResult(req);
   if (!errors.isEmpty()) {

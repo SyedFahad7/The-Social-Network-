@@ -21,6 +21,7 @@ require('./Timetable');
 module.exports = {
   Department: require('./Department'),
   User: require('./User'),
+  Subject: require('./Subject'),
   Assignment: require('./Assignment'),
   Attendance: require('./Attendance'),
   Certificate: require('./Certificate'),
