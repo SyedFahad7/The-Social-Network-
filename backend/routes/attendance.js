@@ -155,6 +155,107 @@ router.get('/student/:studentId/stats', authenticate, asyncHandler(async (req, r
   });
 }));
 
+// @route   GET /api/attendance/stats
+// @desc    Get attendance statistics for current user (student)
+// @access  Private (Student only)
+router.get('/stats', authenticate, asyncHandler(async (req, res) => {
+  if (req.user.role !== 'student') {
+    return res.status(403).json({
+      success: false,
+      message: 'Only students can access attendance statistics'
+    });
+  }
+
+  try {
+    // Convert string IDs to ObjectIds for proper MongoDB querying
+    const departmentId = mongoose.Types.ObjectId.isValid(req.user.department) 
+      ? new mongoose.Types.ObjectId(req.user.department) 
+      : req.user.department;
+
+    // Get attendance statistics for the current student
+    const attendanceStats = await Attendance.aggregate([
+      {
+        $match: {
+          'students.studentId': new mongoose.Types.ObjectId(req.user._id),
+          department: departmentId,
+          year: req.user.year,
+          section: req.user.section
+        }
+      },
+      {
+        $unwind: '$students'
+      },
+      {
+        $match: {
+          'students.studentId': new mongoose.Types.ObjectId(req.user._id)
+        }
+      },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          present: {
+            $sum: {
+              $cond: [
+                { $eq: ['$students.status', 'present'] },
+                1,
+                0
+              ]
+            }
+          },
+          absent: {
+            $sum: {
+              $cond: [
+                { $eq: ['$students.status', 'absent'] },
+                1,
+                0
+              ]
+            }
+          },
+          late: {
+            $sum: {
+              $cond: [
+                { $eq: ['$students.status', 'late'] },
+                1,
+                0
+              ]
+            }
+          }
+        }
+      }
+    ]);
+
+    let attendancePercentage = 0;
+    if (attendanceStats.length > 0) {
+      const stats = attendanceStats[0];
+      const total = stats.total || 0;
+      const present = stats.present || 0;
+      attendancePercentage = total > 0 ? Math.round((present / total) * 100) : 0;
+    }
+
+    res.json({
+      success: true,
+      data: {
+        attendancePercentage,
+        stats: attendanceStats.length > 0 ? attendanceStats[0] : {
+          total: 0,
+          present: 0,
+          absent: 0,
+          late: 0
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('[ATTENDANCE STATS] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch attendance statistics',
+      error: error.message
+    });
+  }
+}));
+
 // @route   PUT /api/attendance/:id
 // @desc    Update attendance record
 // @access  Private (Teacher only)

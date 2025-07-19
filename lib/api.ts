@@ -202,8 +202,14 @@ class ApiClient {
     });
   }
 
+  // Get student attendance statistics
   async getStudentAttendanceStats(studentId: string) {
     return this.request(`/attendance/student/${studentId}/stats`);
+  }
+
+  // Get attendance statistics for current user
+  async getAttendanceStats() {
+    return this.request('/attendance/stats');
   }
 
   async updateAttendance(id: string, attendanceData: any) {
@@ -573,6 +579,50 @@ class ApiClient {
       body: JSON.stringify(status ? { bio, status } : { bio }),
     });
   }
+
+  // Get classmates for student
+  async getClassmates(params = {}) {
+    const query = new URLSearchParams(params as any).toString();
+    const response = await fetch(`${this.baseURL}/classmates${query ? `?${query}` : ''}`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.json();
+  }
+
+  // Get classmates statistics
+  async getClassmatesStats() {
+    const response = await fetch(`${this.baseURL}/classmates/stats`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.json();
+  }
+
+  // Get user's favourite classmates
+  async getFavourites() {
+    const response = await fetch(`${this.baseURL}/classmates/favourites`, {
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`
+      }
+    });
+    return response.json();
+  }
+
+  // Toggle favourite classmate
+  async toggleFavourite(classmateId: string) {
+    const response = await fetch(`${this.baseURL}/classmates/favourites`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ classmateId }),
+    });
+    return response.json();
+  }
 }
 
 // Create and export a singleton instance
@@ -663,7 +713,12 @@ export const {
   verifyOtp,
   resetPassword,
   uploadProfilePicture,
-  updateProfile
+  updateProfile,
+  getClassmates,
+  getClassmatesStats,
+  getFavourites,
+  toggleFavourite,
+  getAttendanceStats
 } = apiClient;
 
 export default apiClient;

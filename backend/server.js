@@ -22,6 +22,7 @@ const sectionRoutes = require('./routes/sections');
 const subjectRoutes = require('./routes/subjects');
 const academicYearRoutes = require('./routes/academic-years');
 const notificationRoutes = require('./routes/notifications');
+const classmatesRoutes = require('./routes/classmates');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -97,6 +98,7 @@ app.use('/api/sections', sectionRoutes);
 app.use('/api/subjects', subjectRoutes);
 app.use('/api/academic-years', academicYearRoutes);
 app.use('/api/notifications', notificationRoutes);
+app.use('/api/classmates', classmatesRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);

@@ -341,7 +341,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
-        <div
+        <div 
           className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
           onClick={() => setSidebarOpen(false)}
         />
@@ -357,7 +357,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
           onClose={() => setSidebarOpen(false)}
         />
       </div>
-
+      
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navigation */}
         <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 lg:px-6 py-4">

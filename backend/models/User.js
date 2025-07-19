@@ -196,6 +196,23 @@ const userSchema = new mongoose.Schema({
     default: null
   },
 
+  // Favourites for students
+  favouriteClassmates: {
+    type: [mongoose.Schema.Types.ObjectId],
+    ref: 'User',
+    default: [],
+    validate: {
+      validator: function(v) {
+        // Only validate if user is a student
+        if (this.role === 'student') {
+          return Array.isArray(v);
+        }
+        return true;
+      },
+      message: 'Favourite classmates must be an array'
+    }
+  },
+
   otp: {
     code: String,
     expiresAt: Date,

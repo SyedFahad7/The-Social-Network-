@@ -33,6 +33,7 @@ interface SidebarProps {
 const roleMenus = {
   student: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/student' },
+    { icon: Users, label: 'Classmates', href: '/dashboard/student/classmates' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/student/attendance' },
     { icon: Bell, label: 'Notifications', href: '/dashboard/student/notifications' },
   ],
