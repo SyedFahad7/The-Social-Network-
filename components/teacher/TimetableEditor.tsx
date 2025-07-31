@@ -4,6 +4,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { BookOpen, FlaskConical } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
 
 const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
 const HOURS = [1, 2, 3, 4, 5, 6];
@@ -43,18 +44,44 @@ export default function TimetableEditor({
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
+
 
   useEffect(() => {
     setLoading(true);
-    Promise.all([
-      apiClient.getTimetable({ section, year, semester, academicYear }),
-      apiClient.getSubjects({ year, semester, department }),
-    ]).then(([ttRes, subjRes]) => {
-      setTimetable(ttRes.data || { days: {} });
-      setSubjects(subjRes.data || []);
-      setLoading(false);
-    });
+    
+    const loadData = async () => {
+      try {
+        const [ttRes, subjRes] = await Promise.all([
+          apiClient.getTimetable({ section, year, semester, academicYear }),
+          apiClient.getSubjects({ year, semester, department }),
+        ]);
+        
+        // Clean up the data - ensure subjects are always strings
+        const processedTimetable = ttRes.data || { days: {} };
+        if (processedTimetable.days) {
+          Object.keys(processedTimetable.days).forEach(day => {
+            const slots = processedTimetable.days[day] || [];
+            processedTimetable.days[day] = slots.map((slot: any) => ({
+              ...slot,
+              subject: typeof slot.subject === 'object' ? slot.subject?._id : slot.subject
+            }));
+          });
+        }
+        
+        setSubjects(subjRes.data || []);
+        setTimetable(processedTimetable);
+        setLoading(false);
+      } catch (err) {
+        console.error('Error loading timetable/subjects:', err);
+        setLoading(false);
+      }
+    };
+    
+    loadData();
   }, [section, year, semester, academicYear, department]);
+
+
 
   const handleChange = (day: string, hour: number, subjectId: string) => {
     if (!isClassTeacher) return;
@@ -78,15 +105,52 @@ export default function TimetableEditor({
     try {
       const res = await apiClient.createTimetableSlot({ section, year, semester, academicYear, days: timetable.days });
       if (!res.success) throw new Error(res.message || 'Failed to save');
-      setTimetable(res.data);
+      
+      // Refresh the timetable data
+      const ttRes = await apiClient.getTimetable({ section, year, semester, academicYear });
+      
+      // Clean up the data - ensure subjects are always strings
+      const processedTimetable = ttRes.data || { days: {} };
+      if (processedTimetable.days) {
+        Object.keys(processedTimetable.days).forEach(day => {
+          const slots = processedTimetable.days[day] || [];
+          processedTimetable.days[day] = slots.map((slot: any) => ({
+            ...slot,
+            subject: typeof slot.subject === 'object' ? slot.subject?._id : slot.subject
+          }));
+        });
+      }
+      
+      setTimetable(processedTimetable);
+      
+      // Show success toast
+      toast({
+        title: "Timetable Saved",
+        description: "Timetable has been saved successfully",
+        duration: 3000,
+      });
+      
     } catch (e: any) {
       setError(e.message);
+      toast({
+        title: "Error",
+        description: e.message || "Failed to save timetable",
+        variant: "destructive",
+        duration: 3000,
+      });
     } finally {
       setSaving(false);
     }
   };
 
-  if (loading) return <div className="py-8 text-center">Loading timetable...</div>;
+  if (loading) return (
+    <div className="py-8 text-center">
+      <div className="inline-flex items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <span className="ml-3">Loading timetable and subjects...</span>
+      </div>
+    </div>
+  );
 
   return (
     <Card className="w-full max-w-7xl mx-auto mt-6 shadow-lg">
@@ -134,7 +198,7 @@ export default function TimetableEditor({
                         <td key={day} className="p-2 border-b">
                           {isClassTeacher ? (
                             <Select
-                              value={slot?.type === 'special' ? `__${slot.label.toUpperCase()}__` : slot?.subject || ''}
+                              value={slot?.type === 'special' ? `__${slot.label.toUpperCase()}__` : slot?.subject || '__NONE__'}
                               onValueChange={val => {
                                 if (val === '__NAMAZ__' || val === '__RD__') {
                                   setTimetable((prev: any) => {
@@ -151,7 +215,7 @@ export default function TimetableEditor({
                                     return { ...prev, days };
                                   });
                                 } else {
-                                  handleChange(day, hour, val);
+                                  handleChange(day, hour, val === '__NONE__' ? '' : val);
                                 }
                               }}
                             >
@@ -159,11 +223,12 @@ export default function TimetableEditor({
                                 <SelectValue placeholder="Select subject" />
                               </SelectTrigger>
                               <SelectContent>
+                                <SelectItem value="__NONE__">None</SelectItem>
                                 {subjects.map(subj => (
                                   <SelectItem key={subj._id} value={subj._id}>
                                     <span className="inline-flex items-center gap-2">
                                       {subj.type === 'lab' ? <FlaskConical className="w-4 h-4 text-yellow-500" /> : <BookOpen className="w-4 h-4 text-blue-500" />}
-                                      {subj.name}
+                                      {subj.shortName}
                                     </span>
                                   </SelectItem>
                                 ))}
@@ -172,16 +237,26 @@ export default function TimetableEditor({
                               </SelectContent>
                             </Select>
                           ) : (
-                            <span className="inline-flex items-center gap-2">
-                              {slot?.subject ? (
-                                <>
-                                  {subjects.find(s => s._id === slot.subject)?.type === 'lab' ? <FlaskConical className="w-4 h-4 text-yellow-500" /> : <BookOpen className="w-4 h-4 text-blue-500" />}
-                                  {subjects.find(s => s._id === slot.subject)?.name || '—'}
-                                </>
-                              ) : slot?.type === 'special' ? (
-                                <span className="font-bold text-blue-700">{slot.label}</span>
-                              ) : '—'}
-                            </span>
+                            <div className="text-xs">
+                              <span className="inline-flex items-center gap-2">
+                                {slot?.subject ? (
+                                  (() => {
+                                    const subject = subjects.find(s => s._id === slot.subject);
+                                    if (!subject) {
+                                      return <span className="text-red-500">{slot.subject || 'Unknown'}</span>;
+                                    }
+                                    return (
+                                      <>
+                                        {subject.type === 'lab' ? <FlaskConical className="w-4 h-4 text-yellow-500" /> : <BookOpen className="w-4 h-4 text-blue-500" />}
+                                        <span className="text-green-600">{subject.shortName}</span>
+                                      </>
+                                    );
+                                  })()
+                                ) : slot?.type === 'special' ? (
+                                  <span className="font-bold text-blue-700">{slot.label}</span>
+                                ) : '—'}
+                              </span>
+                            </div>
                           )}
                         </td>
                       );
@@ -203,4 +278,4 @@ export default function TimetableEditor({
       </CardContent>
     </Card>
   );
-} 
+}

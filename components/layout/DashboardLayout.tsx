@@ -10,6 +10,7 @@ import { ThemeToggle } from '@/components/ui/theme-toggle';
 import apiClient from '@/lib/api';
 import Cropper from 'react-easy-crop';
 import { getCroppedImg } from '@/lib/utils';
+import { useTheme } from '@/contexts/ThemeContext';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ interface DashboardLayoutProps {
 
 export default function DashboardLayout({ children, role }: DashboardLayoutProps) {
   const router = useRouter();
+  const { theme } = useTheme();
   const [user, setUser] = useState<any>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -26,6 +28,7 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   const [notifUnread, setNotifUnread] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const notifRef = useRef<HTMLButtonElement>(null);
+  const notifPopupRef = useRef<HTMLDivElement>(null);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [profilePicture, setProfilePicture] = useState<string | null>(null);
   const [bio, setBio] = useState('');
@@ -115,6 +118,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
       const count = res.data?.count || res.count || 0;
       setUnreadCount(count);
       setNotifUnread(count > 0);
+    });
+    // Fetch recent notifications
+    apiClient.getNotifications({ read: false }).then(res => {
+      setRecentNotifications(res.data?.notifications || []);
     });
   }, [user, notifOpen]);
 
@@ -296,7 +303,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   // Close dropdown on outside click
   useEffect(() => {
     function handleClick(e: MouseEvent) {
-      if (notifRef.current && !notifRef.current.contains(e.target as Node)) {
+      // Only close if click is outside both the notification button and the popup
+      if (notifOpen && 
+          notifRef.current && !notifRef.current.contains(e.target as Node) &&
+          notifPopupRef.current && !notifPopupRef.current.contains(e.target as Node)) {
         setNotifOpen(false);
       }
     }
@@ -310,10 +320,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
 
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-gray-100 dark:bg-gray-900 flex items-center justify-center">
+      <div className="min-h-screen bg-background text-foreground transition-colors duration-300 ease-in-out flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
-          <p className="mt-4 text-gray-600 dark:text-gray-300">Loading...</p>
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary mx-auto"></div>
+          <p className="mt-4 text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -339,18 +349,18 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex">
+    <div className={`min-h-screen bg-background text-foreground transition-colors duration-300 ease-in-out flex ${theme === 'dark' ? 'dark-theme-active' : 'light-theme-active'}`}>
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden backdrop-blur-sm transition-all duration-300 ease-in-out"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <div className={`
-        fixed lg:static inset-y-0 left-0 z-50 w-64 transform transition-transform duration-300 ease-in-out lg:transform-none
+        fixed lg:static inset-y-0 left-0 z-50 w-64 bg-card text-card-foreground border-r border-border transform transition-all duration-300 ease-in-out lg:transform-none
         ${sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
       `}>
         <Sidebar
@@ -361,14 +371,14 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
       
       <div className="flex-1 flex flex-col min-w-0">
         {/* Top Navigation */}
-        <header className="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700 px-4 lg:px-6 py-4">
+        <header className="bg-card text-card-foreground shadow-sm border-b border-border px-4 lg:px-6 py-4 transition-colors duration-300 ease-in-out">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4">
               {/* Mobile Menu Button */}
               <Button
                 variant="ghost"
                 size="sm"
-                className="lg:hidden"
+                className="lg:hidden hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
                 onClick={() => setSidebarOpen(true)}
               >
                 <Menu className="w-5 h-5" />
@@ -376,10 +386,10 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
               {/* Search Bar */}
               <div className="hidden sm:block flex-1 max-w-md">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 transition-colors duration-200" />
                   <Input
                     placeholder="Search..."
-                    className="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-600 transition-colors text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
+                    className="pl-10 bg-muted/40 focus:bg-background border-border transition-all duration-200 focus:ring-2 ring-ring/30 text-foreground placeholder-muted-foreground"
                   />
                 </div>
               </div>
@@ -387,68 +397,144 @@ export default function DashboardLayout({ children, role }: DashboardLayoutProps
             <div className="flex items-center space-x-3">
               {/* Notifications */}
               <div className="relative">
-                <Button ref={notifRef} variant="ghost" size="sm" className="relative" onClick={() => setNotifOpen(v => !v)} aria-label="Notifications">
+                <Button ref={notifRef} variant="ghost" size="sm" className="relative hover:bg-accent hover:text-accent-foreground transition-colors duration-200" onClick={() => setNotifOpen(v => !v)} aria-label="Notifications">
                   <Bell className="w-5 h-5" />
-                  {notifUnread && <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full"></span>}
+                  {notifUnread && <span className="absolute -top-1 -right-1 w-3 h-3 bg-destructive rounded-full animate-pulse"></span>}
                   {unreadCount > 0 && (
-                    <span className="absolute -top-2 -right-4 bg-red-500 text-white text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-white dark:border-gray-800">
+                    <span className="absolute -top-2 -right-4 bg-destructive text-destructive-foreground text-xs rounded-full px-1.5 py-0.5 min-w-[18px] text-center font-bold border-2 border-background transition-colors duration-300">
                       {unreadCount}
                     </span>
                   )}
                 </Button>
-                {notifOpen && (
+{notifOpen && (
                   <div
+                    ref={notifPopupRef}
                     className={
-                      `absolute z-50 mt-2 bg-white dark:bg-gray-800 shadow-lg rounded-lg border border-gray-200 dark:border-gray-700 animate-fade-in flex flex-col ` +
+                      `absolute z-50 mt-2 bg-popover text-popover-foreground shadow-lg rounded-lg border border-border animate-fade-in flex flex-col transition-colors duration-300 ` +
                       `max-w-xs w-80 right-0 sm:left-auto sm:right-0 sm:w-80 sm:max-w-xs ` +
                       `w-screen left-0 right-0 mx-auto sm:w-80 sm:left-auto sm:right-0 sm:mx-0`
                     }
                     style={{ minWidth: '18rem', width: '100%', maxWidth: '20rem' }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      e.preventDefault();
+                      // Prevent the click from bubbling up to the document handler
+                      return false;
+                    }}
                   >
-                    <div className="p-4 border-b border-gray-100 dark:border-gray-700 flex items-center justify-between">
-                      <span className="font-semibold text-gray-900 dark:text-white">Notifications</span>
-                      <Button variant="ghost" size="sm" onClick={() => setNotifOpen(false)} aria-label="Close"><X className="w-4 h-4" /></Button>
+                    <div className="p-4 border-b border-border flex items-center justify-between transition-colors duration-300">
+                      <span className="font-semibold">Notifications</span>
+                      <Button variant="ghost" size="sm" onClick={() => setNotifOpen(false)} aria-label="Close" className="hover:bg-accent hover:text-accent-foreground transition-colors duration-200"><X className="w-4 h-4" /></Button>
                     </div>
-                    <div className="max-h-80 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700">
+                    <div className="max-h-80 overflow-y-auto divide-y divide-border transition-colors duration-300">
                       {recentNotifications.length === 0 ? (
-                        <div className="p-4 text-center text-gray-500 flex flex-col items-center">
-                          <Inbox className="w-8 h-8 mb-2" />
+                        <div className="p-4 text-center text-muted-foreground flex flex-col items-center transition-colors duration-300">
+                          <Inbox className="w-8 h-8 mb-2 opacity-70" />
                           No notifications
                         </div>
                       ) : recentNotifications.map((notif, idx) => (
-                        <button
+<div
                           key={notif._id || idx}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 focus:outline-none ${!notif.isRead ? 'bg-blue-50 dark:bg-blue-900/30' : ''}`}
-                          onClick={() => {
-                            setNotifOpen(false);
-                            if (role === 'student') {
-                              window.location.href = '/dashboard/student/notifications';
-                            } else if (role === 'teacher') {
-                              window.location.href = '/dashboard/teacher/notifications?tab=received';
-                            } else if (role === 'super-admin') {
-                              window.location.href = '/dashboard/super-admin/notifications?tab=received';
+                          role="button"
+                          tabIndex={0}
+                          className={`w-full text-left px-4 py-3 hover:bg-accent/40 focus:outline-none cursor-pointer transition-colors duration-200 ${!notif.isRead ? 'bg-primary/10' : ''}`}
+onClick={async (e) => {
+  console.log('Notification main click', notif._id);
+  e.preventDefault?.();
+  setNotifOpen(false);
+  try {
+    const markRes = await apiClient.markNotificationAsRead(notif._id);
+    console.log('mark as read result', markRes);
+    // log count before
+    const countRes = await apiClient.getUnreadNotificationCount();
+    const notifRes = await apiClient.getNotifications({ read: false });
+    console.log('unread count after', countRes, 'unread list:', notifRes);
+    setUnreadCount(countRes.data?.count || countRes.count || 0);
+    setNotifUnread((countRes.data?.count || countRes.count || 0) > 0);
+    setRecentNotifications(notifRes.data?.notifications || []);
+  } catch (err) {
+    console.error('Error updating notification as read:', err);
+  }
+  setTimeout(() => {
+    console.log('Navigating to notifications for role', role);
+    if (role === 'student') {
+      window.location.assign('/dashboard/student/notifications');
+    } else if (role === 'teacher') {
+      window.location.assign('/dashboard/teacher/notifications?tab=received');
+    } else if (role === 'super-admin') {
+      window.location.assign('/dashboard/super-admin/notifications?tab=received');
+    }
+  }, 250);
+}}
+                          onKeyDown={(e) => {
+                            // make div accessible with enter
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.currentTarget.click();
                             }
                           }}
                         >
                           <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900 dark:text-white truncate">{notif.title}</span>
-                            <span className="text-xs text-gray-500 ml-2">{new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                            <span className="font-medium truncate transition-colors duration-300">{notif.title}</span>
+                            <span className="flex items-center gap-1">
+                              <span className="text-xs text-muted-foreground ml-2 transition-colors duration-300">{new Date(notif.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+{!notif.isRead && (
+  <span
+    className="ml-2 p-1 rounded hover:bg-accent cursor-pointer transition-colors duration-200"
+    title="Mark as Read"
+    role="button"
+    tabIndex={0}
+onClick={async (e) => {
+  console.log('Tick click', notif._id);
+  e.stopPropagation();
+  e.preventDefault();
+  try {
+    const markRes = await apiClient.markNotificationAsRead(notif._id);
+    console.log('mark as read result', markRes);
+    if (markRes.success) {
+      // Update the notification in the current list to show as read
+      const updatedNotifications = recentNotifications.filter(n => n._id !== notif._id);
+      setRecentNotifications(updatedNotifications);
+      
+      // Update the unread count
+      const newCount = unreadCount > 0 ? unreadCount - 1 : 0;
+      setUnreadCount(newCount);
+      setNotifUnread(newCount > 0);
+    } else {
+      console.error('Failed to mark notification as read:', markRes.message);
+    }
+  } catch (err) {
+    console.error('Error updating notification as read:', err);
+  }
+}}
+    onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.currentTarget.click(); }}}
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" className="w-4 h-4 text-green-600">
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  </span>
+)}
+                            </span>
                           </div>
-                          <div className="text-xs text-gray-500 truncate">From: {notif.senderName || 'System'}</div>
-                        </button>
+                          <div className="text-xs text-muted-foreground truncate transition-colors duration-300">From: {notif.senderName || 'System'}</div>
+                        </div>
                       ))}
                     </div>
                     <div className="p-2 border-t border-gray-100 dark:border-gray-700 text-center">
-                      <Button variant="link" size="sm" className="w-full" onClick={() => {
-                        setNotifOpen(false);
-                        if (role === 'student') {
-                          window.location.href = '/dashboard/student/notifications';
-                        } else if (role === 'teacher') {
-                          window.location.href = '/dashboard/teacher/notifications?tab=received';
-                        } else if (role === 'super-admin') {
-                          window.location.href = '/dashboard/super-admin/notifications?tab=received';
-                        }
-                      }}>
+<Button variant="link" size="sm" className="w-full" onClick={(e) => {
+  console.log('View all notifications button click');
+  e.preventDefault();
+  setNotifOpen(false);
+  
+  // Navigate immediately without trying to mark all as read
+  console.log('Navigating from view-all to notifications for role', role);
+  if (role === 'student') {
+    window.location.assign('/dashboard/student/notifications');
+  } else if (role === 'teacher') {
+    window.location.assign('/dashboard/teacher/notifications?tab=received');
+  } else if (role === 'super-admin') {
+    window.location.assign('/dashboard/super-admin/notifications?tab=received');
+  }
+}}>
                         View all notifications
                       </Button>
                     </div>

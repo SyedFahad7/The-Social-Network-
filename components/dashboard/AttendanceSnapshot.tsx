@@ -43,16 +43,27 @@ export default function AttendanceSnapshot({ userId }: AttendanceSnapshotProps) 
       setLoading(true);
       const days: DayAttendance[] = [];
       const today = new Date();
+      const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+      
+      // Calculate the date of Monday in the current week
+      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+      const monday = new Date(today);
+      monday.setDate(today.getDate() + mondayOffset);
+      
       const fetches = [];
-      for (let i = 6; i >= 0; i--) {
-        const date = subDays(today, i);
+      // Fetch data for Monday to Saturday (6 days)
+      for (let i = 0; i < 6; i++) {
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
         const dateString = format(date, 'yyyy-MM-dd');
         fetches.push(apiClient.getStudentDailyAttendance(dateString));
       }
+      
       const results = await Promise.all(fetches);
       for (let i = 0; i < results.length; i++) {
         const res = results[i];
-        const date = subDays(today, 6 - i);
+        const date = new Date(monday);
+        date.setDate(monday.getDate() + i);
         const label = format(date, 'EEE');
         if (res.success && res.data && res.data.summary) {
           days.push({
@@ -78,7 +89,7 @@ export default function AttendanceSnapshot({ userId }: AttendanceSnapshotProps) 
           Attendance Snapshot
         </CardTitle>
         <CardDescription className="text-blue-700/70 dark:text-blue-200/70 text-sm mt-1">
-          Your weekly attendance overview (Mon–Sun, 6 class hours per day)
+          Your weekly attendance overview (Mon–Sat, 6 class hours per day)
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -103,4 +114,4 @@ export default function AttendanceSnapshot({ userId }: AttendanceSnapshotProps) 
       </CardContent>
     </Card>
   );
-} 
+}

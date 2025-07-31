@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import DashboardLayout from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { 
   Crown, 
@@ -28,6 +27,7 @@ import { StatsCard } from '@/components/dashboard';
 import { AttendanceOverview } from '@/components/dashboard/AttendanceOverview';
 import { getFirebaseApp } from '@/lib/firebase';
 import { getMessaging, getToken, onMessage } from 'firebase/messaging';
+import SuperAdminStatsCard from '@/components/dashboard/SuperAdminStatsCard'
 
 interface Department {
   _id: string;
@@ -190,143 +190,101 @@ export default function SuperAdminDashboard() {
   const [error, setError] = useState<string | null>(null);
   const [systemStats, setSystemStats] = useState<any[]>([]);
   const [departmentStats, setDepartmentStats] = useState<DepartmentStats[]>([]);
-  // Add separate state for teachers and students
-  const [teachers, setTeachers] = useState<User[]>([]);
-  const [students, setStudents] = useState<User[]>([]);
+    // Add separate state for teachers and students
+    const [teachers, setTeachers] = useState<User[]>([]);
+    const [students, setStudents] = useState<User[]>([]);
+    const [attendanceOverview, setAttendanceOverview] = useState<any>({
+      totalAttendanceRecords: 0,
+      totalPresent: 0,
+      totalAbsent: 0,
+      totalLate: 0,
+    });
+  const [hasFetchedData, setHasFetchedData] = useState(false);
 
-  const fetchDashboardData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      
-      console.log('Fetching dashboard data...');
-      // Fetch all data in parallel
-      const [departmentsResponse, teachersResponse, studentsResponse, attendanceResponse] = await Promise.all([
-        apiClient.getDepartments(),
-        apiClient.getUsers({ role: 'teacher', limit: 1000 }),
-        apiClient.getUsers({ role: 'student', limit: 1000 }),
-        apiClient.getAttendance()
-      ]);
-      
-      // Debug: print raw API responses
-      console.log('RAW departmentsResponse:', JSON.stringify(departmentsResponse, null, 2));
-      console.log('RAW usersResponse:', JSON.stringify(teachersResponse, null, 2));
-      console.log('RAW attendanceResponse:', JSON.stringify(studentsResponse, null, 2));
-      console.log('RAW attendanceResponse:', JSON.stringify(attendanceResponse, null, 2));
-      
-      // Handle departments
-      let deptData = [];
-      if (departmentsResponse.success) {
-        deptData = departmentsResponse.data || departmentsResponse.departments || [];
-        setDepartments(deptData);
+    const fetchDepartments = async () => {
+      try {
+        const departmentsResponse = await apiClient.getDepartments();
+        if (departmentsResponse.success) {
+          setDepartments(departmentsResponse.data || departmentsResponse.departments || []);
+        }
+        console.log('Departments API success:', departmentsResponse.success);
+      } catch (error: any) {
+        console.error('Error fetching departments data:', error);
+        setError(error.message || 'Error fetching departments data');
       }
-      // Debug: print processed departments
-      console.log('Processed departments:', deptData);
-      
-      // Handle teachers
-      let teacherData = [];
-      if (teachersResponse.success) {
-        teacherData = teachersResponse.data?.users || teachersResponse.users || teachersResponse.data || [];
-        setTeachers(teacherData);
+    };
+
+    const fetchUsers = async () => {
+      try {
+        const teachersResponse = await apiClient.getUsers({ role: 'teacher', limit: 1000 });
+        const studentsResponse = await apiClient.getUsers({ role: 'student', limit: 1000 });
+
+        if (teachersResponse.success) {
+          setTeachers(teachersResponse.data?.users || teachersResponse.users || teachersResponse.data || []);
+          console.log('Number of teachers being set:', teachersResponse.data?.users?.length);
+        }
+        console.log('Teachers API success:', teachersResponse.success);
+
+        if (studentsResponse.success) {
+          setStudents(studentsResponse.data?.users || teachersResponse.users || teachersResponse.data || []);
+          console.log('Number of students being set:', studentsResponse.data?.users?.length);
+        }
+        console.log('Students API success:', studentsResponse.success);
+
+      } catch (error: any) {
+        console.error('Error fetching user data:', error);
+        setError(error.message || 'Error fetching user data');
       }
-      // Debug: print processed teachers
-      console.log('Processed teachers:', teacherData);
-      
-      // Handle students
-      let studentData = [];
-      if (studentsResponse.success) {
-        studentData = studentsResponse.data?.users || studentsResponse.users || studentsResponse.data || [];
-        setStudents(studentData);
+    };
+
+    const fetchAttendance = async () => {
+      try {
+          const attendanceResponse = await apiClient.getSuperAdminAttendanceOverview();
+
+          if (attendanceResponse.success) {
+            console.log('attendanceOverview data is:', attendanceResponse.data)
+            setAttendanceOverview(attendanceResponse.data);
+            console.log('attendanceOverview sucessfully set.');
+          }
+      } catch (error: any) {
+        console.error('Error fetching Attendance data:', error);
+        setError(error.message || 'Error fetching Attendance data');
       }
-      // Debug: print processed students
-      console.log('Processed students:', studentData);
-      
-      // Handle attendance
-      let attendanceData = [];
-      if (attendanceResponse.success) {
-        attendanceData = attendanceResponse.data || attendanceResponse.attendance || [];
-        setAttendanceRecords(attendanceData);
-      }
-      // Debug: print processed attendance records
-      console.log('Processed attendanceRecords:', attendanceData);
-      
-      setTimeout(() => {
-        calculateSystemStats();
-        calculateDepartmentStats();
-      }, 100);
-    } catch (error: any) {
-      setError(error.message || 'Error fetching dashboard data');
-      console.error('Error fetching dashboard data:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
+    };
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       setUser(JSON.parse(userData));
     }
-    fetchDashboardData();
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {
-    if (!user) return;
-    if (typeof window === 'undefined' || !('Notification' in window) || !('serviceWorker' in navigator)) return;
-    if (Notification.permission === 'default') {
-      Notification.requestPermission().then(async (permission) => {
-        if (permission === 'granted') {
-          try {
-            const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-            if (!vapidKey) return;
-            const app = getFirebaseApp();
-            const messaging = getMessaging(app);
-            const registration = await navigator.serviceWorker.register('/sw.js');
-            const token = await getToken(messaging, {
-              vapidKey,
-              serviceWorkerRegistration: registration,
-            });
-            if (token) {
-              await apiClient.updateFCMToken(token);
-            }
-          } catch (err) {}
-        }
-      });
-    } else if (Notification.permission === 'granted') {
-      (async () => {
-        try {
-          const vapidKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY;
-          if (!vapidKey) return;
-          const app = getFirebaseApp();
-          const messaging = getMessaging(app);
-          const registration = await navigator.serviceWorker.register('/sw.js');
-          const token = await getToken(messaging, {
-            vapidKey,
-            serviceWorkerRegistration: registration,
-          });
-          if (token) {
-            await apiClient.updateFCMToken(token);
-          }
-        } catch (err) {}
-      })();
-    }
-  }, [user]);
+    fetchDepartments();
+  }, []);
 
-  // Add more debug logs after setting users, departments, attendanceRecords
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    fetchAttendance();
+  }, []);
+
   useEffect(() => {
     console.log('DEBUG: users state:', teachers);
     console.log('DEBUG: attendanceRecords state:', attendanceRecords);
-  }, [teachers, departments, attendanceRecords]);
+  }, [teachers, departments, attendanceRecords,students]);
 
   // Filter out malformed users (only students and teachers with a role)
   // const validUsers = teachers.filter(u => u && (u.role === 'student' || u.role === 'teacher'));
 
   const calculateSystemStats = () => {
-    console.log('Calculating system stats with:', { users: teachers.length + students.length, attendance: attendanceRecords.length });
-    
+
     const totalUsers = teachers.length + students.length;
     const activeUsers = teachers.filter(u => u.isActive).length + students.filter(u => u.isActive).length;
+    console.log('Calculating system stats with:', { users: teachers.length + students.length, attendance: attendanceRecords.length });
+
     const stats = [
       {
         title: 'Total Users',
@@ -354,7 +312,7 @@ export default function SuperAdminDashboard() {
       },
       {
         title: 'Attendance Records',
-        value: attendanceRecords.length.toString(),
+        value: attendanceOverview.totalAttendanceRecords.toString(),
         change: '',
         icon: Activity,
         color: 'text-yellow-600',
@@ -365,6 +323,77 @@ export default function SuperAdminDashboard() {
     console.log('System stats calculated:', stats);
     setSystemStats(stats);
   };
+
+  const [hasFetchedUsers, setHasFetchedUsers] = useState(false);
+  const [hasFetchedAttendance, setHasFetchedAttendance] = useState(false);
+  useEffect(() => {
+    const fetchDepartments = async () => {
+      try {
+        const departmentsResponse = await apiClient.getDepartments();
+        if (departmentsResponse.success) {
+          setDepartments(departmentsResponse.data || departmentsResponse.departments || []);
+        }
+        console.log('Departments API success:', departmentsResponse.success);
+      } catch (error: any) {
+        console.error('Error fetching departments data:', error);
+        setError(error.message || 'Error fetching departments data');
+      }
+    };
+    fetchDepartments();
+  }, []);
+
+  useEffect(() => {
+    if (departments.length > 0) {
+        const fetchUsers = async () => {
+          try {
+            const teachersResponse = await apiClient.getUsers({ role: 'teacher', limit: 1000 });
+            const studentsResponse = await apiClient.getUsers({ role: 'student', limit: 1000 });
+
+            if (teachersResponse.success) {
+              setTeachers(teachersResponse.data?.users || teachersResponse.users || teachersResponse.data || []);
+              console.log('Number of teachers being set:', teachersResponse.data?.users?.length);
+            }
+            console.log('Teachers API success:', teachersResponse.success);
+
+            if (studentsResponse.success) {
+              setStudents(studentsResponse.data?.users || teachersResponse.users || teachersResponse.data || []);
+              console.log('Number of students being set:', studentsResponse.data?.users?.length);
+            }
+            console.log('Students API success:', studentsResponse.success);
+            setHasFetchedUsers(true)
+          } catch (error: any) {
+            console.error('Error fetching user data:', error);
+            setError(error.message || 'Error fetching user data');
+          }
+        };
+        fetchUsers();
+    }
+  }, [departments]);
+
+  useEffect(() => {
+    const fetchAttendance = async () => {
+      try {
+          const attendanceResponse = await apiClient.getAttendance();
+
+          if (attendanceResponse.success) {
+            setAttendanceRecords(attendanceResponse.data);
+            console.log('All attendance records set.');
+          }
+      } catch (error: any) {
+        console.error('Error fetching Attendance data:', error);
+        setError(error.message || 'Error fetching Attendance data');
+      }
+    };
+    fetchAttendance();
+  }, []);
+
+  useEffect(() => {
+      if (teachers?.length > 0 && students?.length > 0 && departments?.length > 0 && hasFetchedAttendance ) {
+          calculateSystemStats();
+          calculateDepartmentStats();
+          setLoading(false)
+      }
+   },[teachers,students,departments,attendanceOverview, hasFetchedAttendance])
 
   const calculateDepartmentStats = () => {
     const deptStats: DepartmentStats[] = departments.map((dept: Department) => {
@@ -386,10 +415,10 @@ export default function SuperAdminDashboard() {
     console.log('Department stats calculated:', deptStats);
     setDepartmentStats(deptStats);
   };
+  
 
   const handleRetry = () => {
-    fetchDashboardData();
-  };
+    };
 
   // --- Add this helper for formatting date ---
   function formatDateTime(date: string | number | Date | null | undefined) {
@@ -399,19 +428,8 @@ export default function SuperAdminDashboard() {
     return d.toLocaleString();
   }
 
-  // Improve loading experience: only show dashboard when not loading and data is available
-  if (loading || (teachers.length === 0 && students.length === 0) || departments.length === 0) {
-    return (
-      <DashboardLayout role="super-admin">
-        <div className="flex items-center justify-center min-h-screen">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Loading dashboard data...</p>
-          </div>
-        </div>
-      </DashboardLayout>
-    );
-  }
+    // Improve loading experience: only show dashboard when not loading and data is available
+
 
   if (error) {
     return (
@@ -434,32 +452,28 @@ export default function SuperAdminDashboard() {
     <DashboardLayout role="super-admin">
       <div className="container mx-auto py-8 px-4">
         <div className="flex flex-col md:flex-row md:items-start md:gap-8">
-          <div className="flex-1">
+          <div className="flex-1 space-y-8">
             {/* Live Users Widget */}
             <LiveUsersWidget />
-            {/* System Stats Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-              {systemStats.map((stat, idx) => (
-                <StatsCard key={idx} {...stat} />
-              ))}
-            </div>
             {/* Main Content Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
               {/* Attendance Overview */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <BarChart3 className="h-5 w-5" />
+                       {/* System Stats Cards */}
+           <SuperAdminStatsCard teacherCount={teachers.length} studentCount={students.length}/>
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center space-x-2">
+                  <BarChart3 className="h-5 w-5" />
                     <span>Attendance Overview</span>
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <AttendanceOverview />
-                </CardContent>
-              </Card>
+              <CardContent>
+                <AttendanceOverview attendanceOverview={attendanceOverview}/>
+              </CardContent>
+            </Card>
 
               {/* Quick Actions */}
-              <Card>
+              {/* <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center space-x-2">
                     <Settings className="h-5 w-5" />
@@ -477,7 +491,7 @@ export default function SuperAdminDashboard() {
                     Attendance Reports
                   </Button>
                 </CardContent>
-              </Card>
+              </Card> */}
             </div>
 
             {/* Recent Activity */}

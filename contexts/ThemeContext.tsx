@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
+import { useMediaQuery } from '@/hooks/useMediaQuery';
 
 type Theme = 'light' | 'dark' | 'system';
 
@@ -16,6 +17,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('system');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [themeLoaded, setThemeLoaded] = useState(false);
+  const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
 
   useEffect(() => {
     // Load theme from localStorage on mount
@@ -31,10 +33,14 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     // Save theme to localStorage
     localStorage.setItem('theme', theme);
 
-    // Apply theme to document
+    // Apply theme to document with smooth transition
     const root = document.documentElement;
+    
+    // Add transition class before changing theme
+    root.classList.add('theme-transition');
+    
     if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+      const systemTheme = prefersDark ? 'dark' : 'light';
       setResolvedTheme(systemTheme);
       root.classList.remove('light', 'dark');
       root.classList.add(systemTheme);
@@ -43,15 +49,36 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       root.classList.remove('light', 'dark');
       root.classList.add(theme);
     }
-  }, [theme, themeLoaded]);
+    
+    // Remove transition class after theme change is complete
+    const transitionTimeout = setTimeout(() => {
+      root.classList.remove('theme-transition');
+    }, 300);
+    
+    return () => clearTimeout(transitionTimeout);
+  }, [theme, themeLoaded, prefersDark]);
 
-  // Force light mode on initial load
+  // Handle initial theme setup
   useEffect(() => {
-    // Force light mode on initial load
-    document.documentElement.classList.remove('dark');
-    document.documentElement.classList.add('light');
-    localStorage.setItem('theme', 'light');
-  }, []);
+    // Apply initial theme based on saved preference or system
+    const savedTheme = localStorage.getItem('theme') as Theme;
+    if (savedTheme) {
+      // Use saved theme
+      document.documentElement.classList.remove('dark', 'light');
+      if (savedTheme === 'system') {
+        const initialSystemTheme = prefersDark ? 'dark' : 'light';
+        document.documentElement.classList.add(initialSystemTheme);
+      } else {
+        document.documentElement.classList.add(savedTheme);
+      }
+    } else {
+      // Default to system preference
+      const initialTheme = prefersDark ? 'dark' : 'light';
+      document.documentElement.classList.remove('dark', 'light');
+      document.documentElement.classList.add(initialTheme);
+      localStorage.setItem('theme', 'system');
+    }
+  }, [prefersDark]);
 
   // Don't render children until theme is loaded
   if (!themeLoaded) return null;
@@ -69,4 +96,4 @@ export function useTheme() {
     throw new Error('useTheme must be used within a ThemeProvider');
   }
   return context;
-} 
+}

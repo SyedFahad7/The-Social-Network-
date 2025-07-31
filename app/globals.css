@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Theme transition */
+.theme-transition {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Theme-specific styles */
+.light-theme-active {
+  --theme-transition-speed: 300ms;
+}
+
+.dark-theme-active {
+  --theme-transition-speed: 300ms;
+}
+
 :root {
   --foreground-rgb: 0, 0, 0;
   --background-start-rgb: 214, 219, 220;
@@ -81,22 +95,41 @@
   }
 }
 
-/* Custom scrollbar for dark mode */
-.dark ::-webkit-scrollbar {
+/* Custom scrollbar for both light and dark mode */
+::-webkit-scrollbar {
   width: 8px;
+  transition: all 0.3s ease;
 }
 
-.dark ::-webkit-scrollbar-track {
-  background: #374151;
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+  transition: all 0.3s ease;
 }
 
-.dark ::-webkit-scrollbar-thumb {
-  background: #6b7280;
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
   border-radius: 4px;
+  transition: all 0.3s ease;
 }
 
-.dark ::-webkit-scrollbar-thumb:hover {
-  background: #9ca3af;
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--accent));
+  transition: all 0.3s ease;
+}
+
+/* Animation for theme toggle */
+@keyframes theme-fade {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+@keyframes theme-scale {
+  0% { transform: scale(0.95); }
+  100% { transform: scale(1); }
+}
+
+.animate-theme-change {
+  animation: theme-fade 0.3s ease-in-out, theme-scale 0.3s ease-in-out;
 }
 
 /* Responsive utilities */

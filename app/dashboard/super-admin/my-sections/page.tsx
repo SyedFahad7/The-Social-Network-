@@ -105,7 +105,7 @@ export default function SuperAdminMySections() {
                           <td className="border px-2 py-1 text-center">
                             <Button size="sm" onClick={() => {
                               const key = `${section.year}-${section.section}-${section.academicYear}`;
-                              window.location.href = `/dashboard/super-admin/my-sections/${encodeURIComponent(key)}`;
+                              window.location.href = `/dashboard/super-admin/sections/${encodeURIComponent(key)}`;
                             }}>Manage</Button>
                           </td>
                         </tr>

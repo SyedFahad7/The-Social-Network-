@@ -1,4 +1,5 @@
 const express = require('express');
+const mongoose = require('mongoose');
 const { body, validationResult, query } = require('express-validator');
 const Attendance = require('../models/Attendance');
 const User = require('../models/User');
@@ -8,7 +9,6 @@ const { asyncHandler } = require('../middleware/errorHandler');
 const { authenticate, requireTeacher } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 const stream = require('stream');
-const mongoose = require('mongoose');
 
 const router = express.Router();
 
@@ -409,7 +409,6 @@ router.get('/summary', authenticate, asyncHandler(async (req, res) => {
   if (!section || !year || !academicYear || !startDate || !endDate) {
     return res.status(400).json({ success: false, message: 'Missing required query parameters.' });
   }
-  const User = require('../models/User');
   const Subject = require('../models/Subject');
   // Force academicYear to ObjectId
   const academicYearId = new mongoose.Types.ObjectId(academicYear);
@@ -500,8 +499,6 @@ router.get('/summary', authenticate, asyncHandler(async (req, res) => {
 
 // Extract summary aggregation logic to a helper function
 async function getAttendanceSummary({ section, year, academicYear, startDate, endDate }) {
-  const mongoose = require('mongoose');
-  const User = require('../models/User');
   const Subject = require('../models/Subject');
   const Attendance = require('../models/Attendance');
   // Force academicYear to ObjectId
@@ -606,8 +603,8 @@ router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
   // Create PDF in A4 portrait with proper margins
   const doc = new PDFDocument({ 
     size: 'A4', 
-    layout: 'portrait',  // Changed from landscape to portrait
-    margin: { top: 30, bottom: 30, left: 5, right: 5 }
+    layout: 'portrait',
+    margin: { top: 5, bottom: 5, left: 2, right: 2 }
   });
 
   let filename = `Attendance_Summary_${section}_${year}_${academicYearLabel}_${startDate}_to_${endDate}.pdf`;
@@ -620,20 +617,19 @@ router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
 
   // Title and Header Info
   doc.fontSize(16).font('Helvetica-Bold').text('Attendance Summary', { align: 'center' });
+  doc.fontSize(6)
+    .text(`${section} | ${year} | ${academicYearLabel}`, { align: 'center' });
+  doc.text(`${startDate} to ${endDate}`, { align: 'center' });
   doc.moveDown(0.5);
-  doc.fontSize(10).font('Helvetica')
-    .text(`Section: ${section}   Year: ${year}   Academic Year: ${academicYearLabel}`, { align: 'center' });
-  doc.text(`Date Range: ${startDate} to ${endDate}`, { align: 'center' });
-  doc.moveDown(1);
 
-  // Table headers with full subject names (no truncation)
+  // Table headers with short names for single-line display
   const tableHeaders = [
-    'S. No.',
-    'Student Name',
-    'Roll Number',
-    ...subjects.map(s => s.shortName || s.name),
+    '#',
+    'Name',
+    'Roll',
+    ...subjects.map(s => s.shortName),
     'Total',
-    'Percent'
+    '%'
   ];
 
   const tableHeaderTotals = [
@@ -645,110 +641,49 @@ router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
     ''
   ];
 
-  // Column widths: auto-shrink subject columns to fit page, with a minimum width
+  // Maximize use of full page width
   const pageWidth = doc.page.width - doc.page.margins.left - doc.page.margins.right;
-  const minSubjectColWidth = 40;
-  let baseNameColWidth = 100;
-  let baseRollColWidth = 60;
-  let baseTotalColWidth = 40;
-  let basePercentColWidth = 50;
-  let baseSnoColWidth = 30;
-  let subjectColWidth = 80;
-
-  // Calculate initial widths
-  let fixedColsWidth = baseSnoColWidth + baseNameColWidth + baseRollColWidth + baseTotalColWidth + basePercentColWidth;
-  let availableForSubjects = pageWidth - fixedColsWidth;
-  subjectColWidth = subjects.length > 0 ? availableForSubjects / subjects.length : 80;
-
-  // If subjectColWidth is less than min, shrink name column to compensate
-  if (subjectColWidth < minSubjectColWidth) {
-    subjectColWidth = minSubjectColWidth;
-    // Recalculate available width for name column
-    const totalSubjectsWidth = subjectColWidth * subjects.length;
-    let remainingWidth = pageWidth - (baseSnoColWidth + baseRollColWidth + baseTotalColWidth + basePercentColWidth + totalSubjectsWidth);
-    baseNameColWidth = Math.max(60, remainingWidth); // Don't let name column go below 60
-  }
-
+  const usedByFixed = 20 + 80 + 20 + 18 + 18; // S.No + Name + Roll + Total + Percent
+  const availableForSubjects = pageWidth - usedByFixed;
+  const subjectWidth = Math.max(15, availableForSubjects / subjects.length);
+  
   const colWidths = [
-    baseSnoColWidth,    // S.No
-    baseNameColWidth,   // Student Name
-    baseRollColWidth,   // Roll Number
-    ...subjects.map(() => subjectColWidth), // Subject columns
-    baseTotalColWidth,  // Total
-    basePercentColWidth // Percent
+    20, // S.No
+    80, // Name
+    20, // Roll
+    ...Array(subjects.length).fill(subjectWidth),
+    18, // Total
+    18  // Percent
   ];
 
   const startX = doc.page.margins.left;
   let y = doc.y;
 
-  // Helper to wrap text for headers
-  function wrapHeaderText(text, width, fontSize, font) {
-    doc.font(font).fontSize(fontSize);
-    const words = text.split(' ');
-    let lines = [];
-    let currentLine = '';
-    words.forEach(word => {
-      const testLine = currentLine ? currentLine + ' ' + word : word;
-      const testWidth = doc.widthOfString(testLine);
-      if (testWidth > width - 4 && currentLine) {
-        lines.push(currentLine);
-        currentLine = word;
-      } else {
-        currentLine = testLine;
-      }
-    });
-    if (currentLine) lines.push(currentLine);
-    return lines;
-  }
-
-  // Function to draw table row (header supports wrapping)
+  // Ultra-compact single-line function for single page
   function drawTableRow(data, y, isHeader = false, isTotalRow = false) {
     let x = startX;
-    let rowHeight = isHeader ? 25 : isTotalRow ? 20 : 18;
-    const fontSize = isHeader ? 8 : isTotalRow ? 7 : 7;
+    const rowHeight = isHeader ? 14 : 10;
+    const fontSize = isHeader ? 7 : 6;
     const font = isHeader ? 'Helvetica-Bold' : 'Helvetica';
     doc.font(font).fontSize(fontSize);
-
-    // For header, calculate max height needed for wrapped text
-    let headerLineCounts = [];
-    if (isHeader) {
-      for (let i = 0; i < data.length; i++) {
-        const lines = wrapHeaderText(data[i], colWidths[i], fontSize, font);
-        headerLineCounts[i] = lines.length;
-      }
-      rowHeight = Math.max(...headerLineCounts) * (fontSize + 2) + 6;
-    }
 
     data.forEach((cell, i) => {
       const bgColor = isHeader ? '#e8e8e8' : isTotalRow ? '#f5f5f5' : '#ffffff';
       doc.rect(x, y, colWidths[i], rowHeight).fillAndStroke(bgColor, '#666666');
       doc.fillColor('#000000');
-      const textY = y + 4;
-      if (isHeader) {
-        // Wrap header text
-        const lines = wrapHeaderText(cell, colWidths[i], fontSize, font);
-        lines.forEach((line, idx) => {
-          doc.text(line, x + 2, textY + idx * (fontSize + 2), {
-            width: colWidths[i] - 4,
-            align: 'center',
-            ellipsis: true
-          });
-        });
-      } else if (i === 1) {
-        // Student name column - left align
-        doc.text(cell, x + 2, textY, {
-          width: colWidths[i] - 4,
-          align: 'left',
-          ellipsis: true
-        });
-      } else {
-        // All other columns - center align
-        doc.text(cell, x + 2, textY, {
-          width: colWidths[i] - 4,
-          align: 'center',
-          ellipsis: true
-        });
+      
+      // Aggressive truncation for single line
+      let displayText = String(cell || '');
+      const maxChars = Math.floor(colWidths[i] / (fontSize * 0.45));
+      if (displayText.length > maxChars) {
+        displayText = displayText.substring(0, maxChars - 1) + '...';
       }
+      
+      doc.text(displayText, x + 1, y + 1, {
+        width: colWidths[i] - 2,
+        align: i === 1 ? 'left' : 'center',
+        ellipsis: true
+      });
       x += colWidths[i];
     });
     return y + rowHeight;
@@ -761,13 +696,6 @@ router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
 
   // Draw student rows
   students.forEach((stu, idx) => {
-    // Check if we need a new page
-    if (y > doc.page.height - 60) {
-      doc.addPage({ size: 'A4', layout: 'portrait' });
-      y = doc.page.margins.top;
-      y = drawTableRow(tableHeaders, y, true);
-      y = drawTableRow(tableHeaderTotals, y, false, true);
-    }
     const row = [
       (idx + 1).toString(),
       stu.name || '',
@@ -909,6 +837,80 @@ router.get('/overview', authenticate, asyncHandler(async (req, res) => {
     }
   }
   res.json({ success: true, data: { date: todayStr, present, absent, late } });
+}));
+
+// @route   GET /api/attendance/super-admin/overview
+// @desc    Get attendance statistics for super admin dashboard for all time
+// @access  Private (Super Admin only)
+router.get('/super-admin/overview', authenticate, asyncHandler(async (req, res) => {
+  console.log('super-admin/overview route was called');
+  if (req.user.role !== 'super-admin') {
+    return res.status(403).json({ success: false, message: 'Access denied' });
+  }
+
+  try {
+    const today = new Date().toISOString().slice(0, 10);
+
+    const totalAttendanceRecords = await Attendance.countDocuments({ date: today });
+
+    // Fetch total number of students
+    const totalStudents = await User.countDocuments({ role: 'student' });
+
+    // Aggregate attendance data
+    const attendanceSummary = await Attendance.aggregate([
+      {
+        $match: {
+          date: today
+        }
+      },
+      {
+        $unwind: '$students'
+      },
+      {
+        $group: {
+          _id: null,
+          totalPresent: { $sum: { $cond: [{ $eq: ['$students.status', 'present'], then: 1, else: 0 }] } },
+          totalAbsent: { $sum: { $cond: [{ $eq: ['$students.status', 'absent'], then: 1, else: 0 }] } },
+          totalLate: { $sum: { $cond: [{ $eq: ['$students.status', 'late'], then: 1, else: 0 }] } }
+        }
+      }
+    ]);
+
+    const summary = attendanceSummary[0] || {
+      totalPresent: 0,
+      totalAbsent: 0,
+      totalLate: 0
+    };
+
+    console.log('super-admin/overview data being sent', {
+      totalAttendanceRecords,
+      totalStudents,
+      totalPresent: summary.totalPresent || 0,
+      totalAbsent: summary.totalAbsent || 0,
+      totalLate: summary.totalLate || 0,
+      date: today
+    });
+    
+
+    res.json({
+      success: true,
+      data: {
+        totalAttendanceRecords,
+        totalStudents,
+        totalPresent: summary.totalPresent || 0,
+        totalAbsent: summary.totalAbsent || 0,
+        totalLate: summary.totalLate || 0,
+        date: today
+      }
+    });
+  } catch (error) {
+    console.error('Error fetching super admin attendance overview:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch attendance overview',
+      error: error.message,
+    });
+  }
 }));
 
 module.exports = router;

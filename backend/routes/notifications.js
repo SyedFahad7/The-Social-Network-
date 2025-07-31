@@ -226,7 +226,7 @@ router.post('/', [
       title,
       message,
       senderName: `${req.user.firstName} ${req.user.lastName}`,
-      senderRole: '${req.user.role}',
+      senderRole: req.user.role,
       createdAt: notification.createdAt
     },
     recipientCount: targetUsers.length
@@ -239,7 +239,7 @@ router.post('/', [
       notification: {
         ...notification.toObject(),
         senderName: `${req.user.firstName} ${req.user.lastName}`,
-        senderRole: '${req.user.role}',
+        senderRole: `${req.user.role}`,
         totalRecipients: targetUsers.length,
         targetType,
         targetValue
@@ -346,7 +346,7 @@ router.get('/', [
     title: un.notification.title,
     message: un.notification.message,
     sender: un.notification.sender,
-    senderRole: un.notification.sender ? '${un.notification.sender.role}' : 'unknown',
+    senderRole: un.notification.sender ? un.notification.sender.role : 'unknown',
     senderName: un.notification.sender ? `${un.notification.sender.firstName} ${un.notification.sender.lastName}` : 'Unknown',
     priority: un.notification.priority,
     category: un.notification.category,
@@ -547,4 +547,4 @@ router.post('/track-click', asyncHandler(async (req, res) => {
   res.json({ success: true });
 }));
 
-module.exports = router; 
+module.exports = router;

@@ -154,12 +154,8 @@ export default function StudentNotificationsPage() {
                       <p className="text-gray-600 mb-2">{notification.message}</p>
                       <div className="flex items-center justify-between text-sm text-gray-500">
                         <span>
-                          From: {notification.senderName ? notification.senderName : (notification.sender && (notification.sender.firstName || notification.sender.lastName) ? `${notification.sender.firstName || ''} ${notification.sender.lastName || ''}`.trim() : 'Unknown')}
-                          {(() => {
-                            const role = notification.senderRole || (notification.sender && notification.sender.role) || 'Unknown';
-                            return ` (${role === 'super-admin' ? 'HoD' : role.charAt(0).toUpperCase() + role.slice(1)})`;
-                          })()}
-                        </span>
+                                  From: {notification.senderName ? notification.senderName : (notification.sender && (notification.sender.firstName || notification.sender.lastName) ? `${notification.sender.firstName || ''} ${notification.sender.lastName || ''}`.trim() : 'Unknown')}
+                                </span>
                         <span>{formatDate(notification.createdAt)}</span>
                       </div>
                     </div>
@@ -183,4 +179,4 @@ export default function StudentNotificationsPage() {
       </div>
     </DashboardLayout>
   );
-} 
+}

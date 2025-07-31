@@ -545,6 +545,11 @@ class ApiClient {
   }
 
   // FCM Token Management
+   // Super Admin Attendance Overview
+   async getSuperAdminAttendanceOverview() {
+    return this.request('/attendance/super-admin/overview');
+  }
+
   async updateFCMToken(fcmToken: string) {
     return this.request('/notifications/fcm-token', {
       method: 'POST',

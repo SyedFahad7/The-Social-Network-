@@ -164,7 +164,7 @@ export default function TeacherDashboard() {
               <p className="text-sm text-gray-600">View your notifications</p>
             </CardContent>
           </Card>
-          <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer group" onClick={() => window.location.href = '/dashboard/teacher/my-sections'}>
+          <Card className="hover:shadow-md transition-shadow duration-200 cursor-pointer group" onClick={() => window.location.href = '/dashboard/teacher/sections'}>
             <CardContent className="p-6 text-center">
               <Users className="w-12 h-12 text-purple-600 mx-auto mb-4 group-hover:scale-110 transition-transform" />
               <h3 className="font-semibold text-gray-900 mb-2">My Sections</h3>

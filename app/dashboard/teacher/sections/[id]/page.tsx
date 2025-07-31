@@ -150,7 +150,18 @@ export default function SectionDetails() {
     setSummaryData(null);
     try {
       const res = await apiClient.getAttendanceSummary({ section, year, academicYear, startDate: summaryStart, endDate: summaryEnd });
-      setSummaryData(res.subjects ? res : res.data);
+      let data = res.subjects ? res : res.data;
+      
+      // Sort students by roll number
+      if (data && data.students) {
+        data.students = data.students.sort((a: any, b: any) => {
+          const rollA = parseInt(a.rollNumber?.toString() || '0', 10);
+          const rollB = parseInt(b.rollNumber?.toString() || '0', 10);
+          return rollA - rollB;
+        });
+      }
+      
+      setSummaryData(data);
     } catch (err: any) {
       setSummaryError(err.message);
     } finally {
