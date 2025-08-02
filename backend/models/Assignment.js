@@ -49,6 +49,56 @@ const assignmentSchema = new mongoose.Schema({
     required: true
   }],
   
+  // New fields for assignment management
+  academicYear: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AcademicYear',
+    required: [true, 'Academic year is required']
+  },
+  year: {
+    type: Number,
+    enum: [2, 3, 4],
+    required: [true, 'Year is required']
+  },
+  semester: {
+    type: Number,
+    required: [true, 'Semester is required'],
+    enum: [1, 2, 3, 4, 5, 6, 7, 8]
+  },
+  assignmentNumber: {
+    type: Number,
+    required: [true, 'Assignment number is required'],
+    enum: [1, 2, 3],
+    validate: {
+      validator: async function(value) {
+        // Skip validation if this is a new document
+        if (this.isNew) {
+          const existing = await this.constructor.findOne({
+            subject: this.subject,
+            sections: { $in: this.sections },
+            year: this.year,
+            semester: this.semester,
+            academicYear: this.academicYear,
+            assignmentNumber: value,
+            isActive: true
+          });
+          return !existing;
+        }
+        return true;
+      },
+      message: 'Assignment number already exists for this subject and class'
+    }
+  },
+  assignedDate: {
+    type: Date,
+    required: [true, 'Assigned date is required']
+  },
+  instructions: {
+    type: String,
+    trim: true,
+    maxlength: [2000, 'Instructions cannot exceed 2000 characters']
+  },
+  
   // File Information
   fileUrl: {
     type: String,
@@ -66,13 +116,7 @@ const assignmentSchema = new mongoose.Schema({
   // Dates
   dueDate: {
     type: Date,
-    required: [true, 'Due date is required'],
-    validate: {
-      validator: function(v) {
-        return v > new Date();
-      },
-      message: 'Due date must be in the future'
-    }
+    required: [true, 'Due date is required']
   },
   
   // Submission tracking
@@ -106,11 +150,6 @@ const assignmentSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  },
-  year: {
-    type: Number,
-    enum: [2, 3, 4],
-    required: true
   }
 }, {
   timestamps: true
@@ -122,6 +161,10 @@ assignmentSchema.index({ department: 1 });
 assignmentSchema.index({ sections: 1 });
 assignmentSchema.index({ dueDate: 1 });
 assignmentSchema.index({ type: 1 });
+assignmentSchema.index({ academicYear: 1 });
+assignmentSchema.index({ year: 1 });
+assignmentSchema.index({ semester: 1 });
+assignmentSchema.index({ subject: 1, sections: 1, year: 1, semester: 1, academicYear: 1, assignmentNumber: 1 });
 
 // Virtual for submission count
 assignmentSchema.virtual('submissionCount').get(function() {
@@ -163,6 +206,19 @@ assignmentSchema.methods.updateGrade = function(studentId, grade, feedback = nul
   }
   
   throw new Error('Submission not found');
+};
+
+// Static method to check if assignment number exists
+assignmentSchema.statics.checkAssignmentNumber = function(data) {
+  return this.findOne({
+    subject: data.subject,
+    sections: { $in: data.sections },
+    year: data.year,
+    semester: data.semester,
+    academicYear: data.academicYear,
+    assignmentNumber: data.assignmentNumber,
+    isActive: true
+  });
 };
 
 // Static method to get assignments for student

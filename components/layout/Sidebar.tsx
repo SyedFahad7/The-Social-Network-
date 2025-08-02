@@ -44,6 +44,7 @@ const roleMenus = {
     { icon: BookOpen, label: 'My Sections', href: '/dashboard/teacher/sections' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/teacher/attendance' },
     { icon: Bell, label: 'Send Notifications', href: '/dashboard/teacher/notifications' },
+    { icon: Bell, label: 'Assignments', href: '/dashboard/teacher/assignments' },
   ],
   'super-admin': [
     { icon: Home, label: 'Dashboard', href: '/dashboard/super-admin' },

@@ -46,13 +46,68 @@ class ApiClient {
       const data = await response.json();
 
       if (!response.ok) {
-        // Instead of throwing, return a consistent error object
+        // Handle token expiration specifically
+        if (response.status === 401) {
+          // Check if it's a token expiration error
+          if (data.message?.includes('Token expired') || 
+              data.message?.includes('Invalid token') ||
+              data.message?.includes('Access denied')) {
+            
+            // Clear local storage
+            if (typeof window !== 'undefined') {
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+            }
+            
+            // Dispatch custom event for auth context to handle
+            if (typeof window !== 'undefined') {
+              window.dispatchEvent(new CustomEvent('api-error', {
+                detail: {
+                  status: 401,
+                  message: data.message,
+                  endpoint
+                }
+              }));
+            }
+          }
+        }
+        
+        // Return consistent error object
         return { success: false, ...data };
       }
 
       return data;
     } catch (error) {
-      // Only throw for network errors
+      // Handle network errors
+      console.error('API request error:', error);
+      
+      // If it's a network error and we have a token, it might be expired
+      if (this.token && typeof window !== 'undefined') {
+        // Check if token is actually expired
+        try {
+          const payload = JSON.parse(atob(this.token.split('.')[1]));
+          const currentTime = Date.now() / 1000;
+          
+          if (payload.exp && payload.exp < currentTime) {
+            // Token is expired, clear storage and dispatch event
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            
+            window.dispatchEvent(new CustomEvent('api-error', {
+              detail: {
+                status: 401,
+                message: 'Token expired',
+                endpoint
+              }
+            }));
+          }
+        } catch (e) {
+          // Token is malformed, clear it
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+        }
+      }
+      
       throw error;
     }
   }
@@ -156,6 +211,31 @@ class ApiClient {
   async getAssignments(params: any = {}) {
     const queryString = new URLSearchParams(params).toString();
     return this.request(`/assignments?${queryString}`);
+  }
+
+  async getFilteredAssignments(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/assignments/filtered?${queryString}`);
+  }
+
+  async checkAssignmentNumber(params: any) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/assignments/check-number?${queryString}`);
+  }
+
+  async uploadAssignmentFile(file: File) {
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    return this.request('/assignments/upload-file', {
+      method: 'POST',
+      headers: {}, // Let browser set Content-Type for FormData
+      body: formData
+    });
+  }
+
+  async getTeachingAssignments() {
+    return this.request('/assignments/teaching-assignments');
   }
 
   async createAssignment(assignmentData: any) {
