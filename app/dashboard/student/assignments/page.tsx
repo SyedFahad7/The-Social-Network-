@@ -203,7 +203,7 @@ export default function StudentAssignmentsPage() {
     }
     
     // Get current user from localStorage
-    let currentUser = null;
+    let currentUser: any = null;
     if (typeof window !== 'undefined') {
       const userData = localStorage.getItem('user');
       if (userData) {
