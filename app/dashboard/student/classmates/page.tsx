@@ -62,6 +62,7 @@ interface ClassmatesStats {
 
 export default function ClassmatesPage() {
   const [classmates, setClassmates] = useState<Classmate[]>([]);
+  const [allClassmates, setAllClassmates] = useState<Classmate[]>([]); // Store all classmates
   const [favourites, setFavourites] = useState<string[]>([]);
   const [stats, setStats] = useState<ClassmatesStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -88,31 +89,18 @@ export default function ClassmatesPage() {
     localStorage.setItem('classmate_favourites', JSON.stringify(favourites));
   }, [favourites]);
 
-  // Debounced search function
-  const debouncedSearch = useCallback(
-    (() => {
-      let timeoutId: NodeJS.Timeout;
-      return (term: string) => {
-        clearTimeout(timeoutId);
-        timeoutId = setTimeout(() => {
-          setSearchTerm(term);
-        }, 300);
-      };
-    })(),
-    []
-  );
-
-  // Fetch classmates data
+  // Fetch classmates data (only once on mount)
   useEffect(() => {
     const fetchData = async () => {
       try {
         setLoading(true);
         const [classmatesRes, statsRes] = await Promise.all([
-          apiClient.getClassmates({ search: searchTerm, limit: 1000 }),
+          apiClient.getClassmates({ limit: 1000 }), // Remove search parameter
           apiClient.getClassmatesStats()
         ]);
 
         if (classmatesRes.success) {
+          setAllClassmates(classmatesRes.data.classmates); // Store all classmates
           setClassmates(classmatesRes.data.classmates);
         }
 
@@ -127,7 +115,22 @@ export default function ClassmatesPage() {
     };
 
     fetchData();
-  }, [searchTerm]);
+  }, []); // Remove searchTerm dependency
+
+  // Client-side filtering based on search term
+  useEffect(() => {
+    if (!searchTerm.trim()) {
+      setClassmates(allClassmates);
+    } else {
+      const filtered = allClassmates.filter(classmate => 
+        classmate.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        classmate.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        classmate.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        classmate.rollNumber.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setClassmates(filtered);
+    }
+  }, [searchTerm, allClassmates]);
 
   // Calculate high performers from classmates data
   const highPerformers = classmates.filter(c => c.attendancePercentage >= 90).length;
@@ -262,7 +265,7 @@ export default function ClassmatesPage() {
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-zinc-400 w-4 h-4" />
               <Input
                 placeholder="Search classmates..."
-                onChange={(e) => debouncedSearch(e.target.value)}
+                onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 bg-white dark:bg-zinc-900 border-zinc-200 dark:border-zinc-800"
               />
             </div>
