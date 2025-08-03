@@ -8,13 +8,12 @@ type Theme = 'light' | 'dark' | 'system';
 interface ThemeContextType {
   theme: Theme;
   setTheme: (theme: Theme) => void;
-  resolvedTheme: 'light' | 'dark';
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>('system');
+  const [theme, setTheme] = useState<Theme>('light'); // Changed from 'system' to 'light'
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
   const [themeLoaded, setThemeLoaded] = useState(false);
   const prefersDark = useMediaQuery('(prefers-color-scheme: dark)');
@@ -60,7 +59,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
   // Handle initial theme setup
   useEffect(() => {
-    // Apply initial theme based on saved preference or system
+    // Apply initial theme based on saved preference or default to light
     const savedTheme = localStorage.getItem('theme') as Theme;
     if (savedTheme) {
       // Use saved theme
@@ -72,11 +71,10 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         document.documentElement.classList.add(savedTheme);
       }
     } else {
-      // Default to system preference
-      const initialTheme = prefersDark ? 'dark' : 'light';
+      // Default to light theme
       document.documentElement.classList.remove('dark', 'light');
-      document.documentElement.classList.add(initialTheme);
-      localStorage.setItem('theme', 'system');
+      document.documentElement.classList.add('light');
+      localStorage.setItem('theme', 'light'); // Changed from 'system' to 'light'
     }
   }, [prefersDark]);
 
@@ -84,7 +82,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   if (!themeLoaded) return null;
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme, resolvedTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme }}>
       {children}
     </ThemeContext.Provider>
   );
