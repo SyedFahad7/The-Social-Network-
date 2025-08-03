@@ -6,6 +6,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import AssignmentFilters from "@/components/assignments/AssignmentFilters";
 import AssignmentUploadForm from "@/components/assignments/AssignmentUploadForm";
 import AssignmentList from "@/components/assignments/AssignmentList";
+import AssignmentMarksAllocation from "@/components/assignments/AssignmentMarksAllocation";
 import {
   Card,
   CardContent,
@@ -13,13 +14,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Upload, FileText } from "lucide-react";
+import { Upload, FileText, Award } from "lucide-react";
 
 export default function TeacherAssignments() {
   const [filters, setFilters] = useState<any>({});
   const [assignmentExists, setAssignmentExists] = useState<boolean>(false);
   const [existingAssignment, setExistingAssignment] = useState<any>(null);
   const [refreshTrigger, setRefreshTrigger] = useState(0);
+  const [componentKey, setComponentKey] = useState(0);
 
   const handleFiltersChange = (newFilters: any) => {
     setFilters(newFilters);
@@ -31,7 +33,16 @@ export default function TeacherAssignments() {
   };
 
   const handleUploadSuccess = () => {
+    // Refresh the assignments list
     setRefreshTrigger((prev) => prev + 1);
+    
+    // Reset all filters and state
+    setFilters({});
+    setAssignmentExists(false);
+    setExistingAssignment(null);
+    
+    // Force component re-mount by changing the key
+    setComponentKey((prev) => prev + 1);
   };
 
   const allFiltersSelected =
@@ -41,6 +52,9 @@ export default function TeacherAssignments() {
     filters.section &&
     filters.subject &&
     filters.assignmentNumber;
+
+  // Show form if all filters are selected and assignment doesn't exist
+  const shouldShowForm = allFiltersSelected && !assignmentExists;
 
   return (
     <DashboardLayout role="teacher">
@@ -55,7 +69,7 @@ export default function TeacherAssignments() {
         </div>
 
         <Tabs defaultValue="upload" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="upload" className="flex items-center space-x-2">
               <Upload className="w-4 h-4" />
               <span>Upload Assignment</span>
@@ -64,18 +78,24 @@ export default function TeacherAssignments() {
               <FileText className="w-4 h-4" />
               <span>View Assignments</span>
             </TabsTrigger>
+            <TabsTrigger value="marks" className="flex items-center space-x-2">
+              <Award className="w-4 h-4" />
+              <span>Marks Allocation</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="upload" className="space-y-6">
             {/* Filters */}
             <AssignmentFilters
+              key={componentKey}
               onFiltersChange={handleFiltersChange}
               onAssignmentNumberCheck={handleAssignmentNumberCheck}
             />
 
             {/* Upload Form - Only show if all filters are selected and assignment doesn't exist */}
-            {allFiltersSelected && (
+            {shouldShowForm && (
               <AssignmentUploadForm
+                key={`upload-${componentKey}`}
                 filters={filters}
                 assignmentExists={assignmentExists}
                 onUploadSuccess={handleUploadSuccess}
@@ -116,6 +136,10 @@ export default function TeacherAssignments() {
 
           <TabsContent value="view" className="space-y-6">
             <AssignmentList refreshTrigger={refreshTrigger} />
+          </TabsContent>
+
+          <TabsContent value="marks" className="space-y-6">
+            <AssignmentMarksAllocation refreshTrigger={refreshTrigger} />
           </TabsContent>
         </Tabs>
       </div>

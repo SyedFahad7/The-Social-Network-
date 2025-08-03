@@ -309,7 +309,7 @@ router.put('/push-settings', [
 }));
 
 // @route   GET /api/notifications
-// @desc    Get notifications for current user
+// @desc    Get notifications for current user (dynamic filtering)
 // @access  Private
 router.get('/', [
   authenticate,
@@ -321,47 +321,70 @@ router.get('/', [
   const { page = 1, limit = 20, read, category } = req.query;
   const skip = (page - 1) * limit;
 
-  // Build query
-  const query = { user: req.user._id };
-  if (read !== undefined) query.read = read;
-  if (category) query['notification.category'] = category;
+  // Build dynamic query based on user properties
+  const query = { isActive: true };
+  
+  // Add category filter if specified
+  if (category) {
+    query.category = category;
+  }
 
-  const userNotifications = await UserNotification.find(query)
-    .populate({
-      path: 'notification',
-      populate: {
-        path: 'sender',
-        select: 'firstName lastName role'
+  // Build recipient targeting query
+  const recipientQuery = {
+    $or: [
+      // All users
+      { recipientType: 'all' },
+      // All students/teachers based on user role
+      { recipientType: req.user.role === 'student' ? 'all-students' : 'all-teachers' },
+      // Specific year (for students)
+      ...(req.user.role === 'student' ? [{
+        recipientType: 'year',
+        'recipientFilters.year': req.user.year
+      }] : []),
+      // Specific section (for students)
+      ...(req.user.role === 'student' ? [{
+        recipientType: 'section',
+        'recipientFilters.year': req.user.year,
+        'recipientFilters.section': req.user.section
+      }] : []),
+      // Individual users
+      {
+        recipientType: 'individual',
+        'recipientFilters.specificUsers': req.user._id
       }
-    })
+    ]
+  };
+
+  query.$and = [recipientQuery];
+
+  // Get notifications
+  const notifications = await Notification.find(query)
+    .populate('sender', 'firstName lastName role')
     .sort({ createdAt: -1 })
     .skip(skip)
     .limit(limit);
 
-  const total = await UserNotification.countDocuments(query);
+  const total = await Notification.countDocuments(query);
 
   // Format response
-  const notifications = userNotifications.map(un => ({
-    _id: un.notification._id,
-    title: un.notification.title,
-    message: un.notification.message,
-    sender: un.notification.sender,
-    senderRole: un.notification.sender ? un.notification.sender.role : 'unknown',
-    senderName: un.notification.sender ? `${un.notification.sender.firstName} ${un.notification.sender.lastName}` : 'Unknown',
-    priority: un.notification.priority,
-    category: un.notification.category,
-    read: un.read,
-    readAt: un.readAt,
-    delivered: un.delivered,
-    deliveredAt: un.deliveredAt,
-    createdAt: un.notification.createdAt,
-    isRead: un.read // Add this for frontend compatibility
+  const formattedNotifications = notifications.map(notification => ({
+    _id: notification._id,
+    title: notification.title,
+    message: notification.message,
+    sender: notification.sender,
+    senderRole: notification.sender ? notification.sender.role : 'unknown',
+    senderName: notification.sender ? `${notification.sender.firstName} ${notification.sender.lastName}` : 'Unknown',
+    priority: notification.priority,
+    category: notification.category,
+    createdAt: notification.createdAt,
+    // Read status will be handled by frontend localStorage
+    isRead: false // Default, frontend will override from localStorage
   }));
 
   res.json({
     success: true,
     data: {
-      notifications,
+      notifications: formattedNotifications,
       pagination: {
         page: parseInt(page),
         limit: parseInt(limit),
@@ -373,13 +396,42 @@ router.get('/', [
 }));
 
 // @route   GET /api/notifications/unread-count
-// @desc    Get unread notification count
+// @desc    Get unread notification count (dynamic filtering)
 // @access  Private
 router.get('/unread-count', authenticate, asyncHandler(async (req, res) => {
-  const count = await UserNotification.countDocuments({
-    user: req.user._id,
-    read: false
-  });
+  // Build dynamic query based on user properties (same as notifications route)
+  const query = { isActive: true };
+  
+  // Build recipient targeting query
+  const recipientQuery = {
+    $or: [
+      // All users
+      { recipientType: 'all' },
+      // All students/teachers based on user role
+      { recipientType: req.user.role === 'student' ? 'all-students' : 'all-teachers' },
+      // Specific year (for students)
+      ...(req.user.role === 'student' ? [{
+        recipientType: 'year',
+        'recipientFilters.year': req.user.year
+      }] : []),
+      // Specific section (for students)
+      ...(req.user.role === 'student' ? [{
+        recipientType: 'section',
+        'recipientFilters.year': req.user.year,
+        'recipientFilters.section': req.user.section
+      }] : []),
+      // Individual users
+      {
+        recipientType: 'individual',
+        'recipientFilters.specificUsers': req.user._id
+      }
+    ]
+  };
+
+  query.$and = [recipientQuery];
+
+  // Count notifications that match user's criteria
+  const count = await Notification.countDocuments(query);
 
   res.json({
     success: true,

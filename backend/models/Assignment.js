@@ -14,9 +14,9 @@ const assignmentSchema = new mongoose.Schema({
     maxlength: [2000, 'Description cannot exceed 2000 characters']
   },
   subject: {
-    type: String,
-    required: [true, 'Subject is required'],
-    trim: true
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Subject',
+    required: [true, 'Subject is required']
   },
   subjectCode: {
     type: String,
@@ -150,7 +150,31 @@ const assignmentSchema = new mongoose.Schema({
   isActive: {
     type: Boolean,
     default: true
-  }
+  },
+  
+  // Marks for students
+  marks: [{
+    studentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    marks: {
+      type: Number,
+      min: 0,
+      max: 10,
+      default: null
+    },
+    updatedAt: {
+      type: Date,
+      default: Date.now
+    },
+    updatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    }
+  }]
 }, {
   timestamps: true
 });

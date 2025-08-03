@@ -1,0 +1,494 @@
+{
+  "_id": {
+    "$oid": "687b91e72142f9888a6658b8"
+  },
+  "academicYear": {
+    "$oid": "6867050340150fc76c1cf688"
+  },
+  "year": 4,
+  "section": "C",
+  "semester": 7,
+  "__v": 0,
+  "days": {
+    "monday": [
+      {
+        "hour": 1,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f5a"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687b91e609d66c22be74e923"
+        }
+      },
+      {
+        "hour": 2,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f56"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bcbad33d4ad2a691e894b"
+        }
+      },
+      {
+        "hour": 3,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f57"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bcbad33d4ad2a691e894c"
+        }
+      },
+      {
+        "hour": 4,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f58"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bcbad33d4ad2a691e894d"
+        }
+      },
+      {
+        "hour": 5,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f58"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bcbad33d4ad2a691e894e"
+        }
+      },
+      {
+        "hour": 6,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f58"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bcbad33d4ad2a691e894f"
+        }
+      }
+    ],
+    "tuesday": [
+      {
+        "hour": 1,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f57"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bca5f33d4ad2a691e879e"
+        }
+      },
+      {
+        "hour": 2,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f57"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8bad"
+        }
+      },
+      {
+        "hour": 3,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f59"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8bae"
+        }
+      },
+      {
+        "hour": 4,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f56"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8baf"
+        }
+      },
+      {
+        "hour": 5,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f53"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8bb0"
+        }
+      },
+      {
+        "hour": 6,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f56"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8bb1"
+        }
+      }
+    ],
+    "wednesday": [
+      {
+        "hour": 1,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f59"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bca5f33d4ad2a691e879d"
+        }
+      },
+      {
+        "hour": 2,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f57"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba7"
+        }
+      },
+      {
+        "hour": 3,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f57"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba8"
+        }
+      },
+      {
+        "hour": 4,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba9"
+        }
+      },
+      {
+        "hour": 5,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f5a"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8baa"
+        }
+      },
+      {
+        "hour": 6,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f5a"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8bab"
+        }
+      }
+    ],
+    "thursday": [
+      {
+        "hour": 1,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f57"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bca5f33d4ad2a691e879c"
+        }
+      },
+      {
+        "hour": 2,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba1"
+        }
+      },
+      {
+        "hour": 3,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f57"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba2"
+        }
+      },
+      {
+        "hour": 4,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f53"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba3"
+        }
+      },
+      {
+        "hour": 5,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f5a"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba4"
+        }
+      },
+      {
+        "hour": 6,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f5a"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8ba5"
+        }
+      }
+    ],
+    "friday": [
+      {
+        "hour": 1,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f56"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bca5f33d4ad2a691e879b"
+        }
+      },
+      {
+        "hour": 2,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f55"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8b9e"
+        }
+      },
+      {
+        "hour": 3,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bd12f33d4ad2a691e8b9f"
+        }
+      },
+      {
+        "hour": 4,
+        "type": "special",
+        "label": "NAMAZ",
+        "_id": {
+          "$oid": "687bdb6898e81cabccf39268"
+        }
+      },
+      {
+        "hour": 5,
+        "type": "special",
+        "label": "R&D",
+        "_id": {
+          "$oid": "687bdb6898e81cabccf39269"
+        }
+      },
+      {
+        "hour": 6,
+        "type": "special",
+        "label": "R&D",
+        "_id": {
+          "$oid": "687bdb6898e81cabccf3926a"
+        }
+      }
+    ],
+    "saturday": [
+      {
+        "hour": 1,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bca5f33d4ad2a691e879a"
+        }
+      },
+      {
+        "hour": 2,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bde3098e81cabccf394e8"
+        }
+      },
+      {
+        "hour": 3,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bde3098e81cabccf394e9"
+        }
+      },
+      {
+        "hour": 6,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bde3098e81cabccf394ea"
+        }
+      },
+      {
+        "hour": 5,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "687bde3098e81cabccf394eb"
+        }
+      },
+      {
+        "hour": 4,
+        "subject": {
+          "$oid": "687460a6cf75310e216e1f54"
+        },
+        "type": "lecture",
+        "_id": {
+          "$oid": "688a9af5c800277419ff01d5"
+        }
+      }
+    ]
+  },
+  "updatedAt": {
+    "$date": "2025-08-02T15:21:50.437Z"
+  },
+  "updatedBy": {
+    "$oid": "68778ae355a8613431996cbf"
+  }
+}
+
+
+
+//teachers data 
+{
+  "_id": {
+    "$oid": "68778ae355a8613431996cbf"
+  },
+  "email": "zeba@lords.ac.in",
+  "password": "Lords@016",
+  "firstName": "Syeda",
+  "lastName": "Zeba Qureshi",
+  "role": "teacher",
+  "department": {
+    "$oid": "6866e33640150fc76c1cf66c"
+  },
+  "employeeId": "EMP016",
+  "profilePicture": null,
+  "isActive": true,
+  "isEmailVerified": true,
+  "pendingEmail": null,
+  "emailChangeOTP": null,
+  "emailChangeOTPExpires": null,
+  "resetPasswordToken": null,
+  "resetPasswordExpires": null,
+  "lastLogin": {
+    "$date": "2025-08-02T13:51:27.428Z"
+  },
+  "createdBy": {
+    "$oid": "6861a3e8d989366a1e90b512"
+  },
+  "createdAt": {
+    "$date": "2025-07-15T07:20:00.000Z"
+  },
+  "updatedAt": {
+    "$date": "2025-08-02T13:51:27.442Z"
+  },
+  "__v": 5,
+  "semesterHistory": [],
+  "classTeacherAssignments": [
+    {
+      "section": "C",
+      "year": 4,
+      "semester": 7,
+      "academicYear": {
+        "$oid": "6867050340150fc76c1cf688"
+      },
+      "_id": {
+        "$oid": "687790bde9e1fcdcc921313a"
+      }
+    }
+  ],
+  "teachingAssignments": [
+    {
+      "subject": {
+        "$oid": "687460a6cf75310e216e1f54"
+      },
+      "section": "C",
+      "year": 4,
+      "semester": 7,
+      "academicYear": {
+        "$oid": "6867050340150fc76c1cf688"
+      },
+      "_id": {
+        "$oid": "6877b58ae54019a3f4596926"
+      }
+    },
+    {
+      "subject": {
+        "$oid": "687460a6cf75310e216e1f59"
+      },
+      "section": "C",
+      "year": 4,
+      "semester": 7,
+      "academicYear": {
+        "$oid": "6867050340150fc76c1cf688"
+      },
+      "_id": {
+        "$oid": "6877b76fe54019a3f45969f1"
+      }
+    },
+    {
+      "subject": {
+        "$oid": "6876f68455a8613431996b13"
+      },
+      "section": "B",
+      "year": 3,
+      "semester": 5,
+      "academicYear": {
+        "$oid": "6867050340150fc76c1cf688"
+      },
+      "_id": {
+        "$oid": "68788dd8d68f298e8f7bb9d2"
+      }
+    }
+  ],
+  "pushNotificationsEnabled": true,
+  "favouriteClassmates": [],
+  "profile": {
+    "bio": "",
+    "picture": "https://imgs.search.brave.com/ato5dhMnOquUUR0B3NGkFp454zzJDhEsayJhUO1H44I/rs:fit:500:0:1:0/g:ce/aHR0cHM6Ly90NC5m/dGNkbi5uZXQvanBn/LzAyLzE1Lzg0LzQz/LzM2MF9GXzIxNTg0/NDMyNV90dFg5WWlJ/SXllYVI3TmU2RWFM/TGpNQW15NEd2UEM2/OS5qcGc",
+    "status": {
+      "emoji": "🎯",
+      "text": "Focusing"
+    }
+  },
+  "fcmToken": "f9cO72ZP7zCvWxkqKS39LS:APA91bEhV8aQ5ALaydGiRNoWBpRhEhRY2DBj2NHyOZko7PfPyM0XqO24I1-STvbACJgmebk0NeHNqCY5jTNRH0jwj6zid19JGCQSJ9Yuhf8My2ecr8NqdAE"
+}

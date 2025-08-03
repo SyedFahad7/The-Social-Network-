@@ -238,6 +238,10 @@ export default function AssignmentFilters({
       const uniqueSubjects = Array.from(
         new Map(
           sectionSubjects.map((subject: any) => {
+            // If subject is populated with name and code
+            if (subject && typeof subject === 'object' && subject.name) {
+              return [subject._id, subject];
+            }
             // If subject is just an ObjectId string, we need to handle it differently
             if (typeof subject === "string") {
               return [
@@ -245,7 +249,7 @@ export default function AssignmentFilters({
                 { _id: subject, name: "Unknown Subject", code: subject },
               ];
             }
-            // If subject is an object with _id
+            // If subject is an object with _id but no name
             return [subject._id, subject];
           })
         ).values()
@@ -255,10 +259,8 @@ export default function AssignmentFilters({
 
       setSubjects(
         uniqueSubjects.map((subject: any) => ({
-          value: subject.code || subject._id,
-          label: `${subject.name || "Unknown Subject"} (${
-            subject.code || subject._id
-          })`,
+          value: subject._id, // Use _id as value
+          label: subject.name || "Unknown Subject", // Show only name
         }))
       );
     } catch (error) {
@@ -275,14 +277,18 @@ export default function AssignmentFilters({
     try {
       const params = {
         subject: selectedSubject,
-        sections: selectedSection,
+        sections: [selectedSection], // Send as array as expected by backend
         year: selectedYear,
         semester: selectedSemester,
         academicYear: selectedAcademicYear,
         assignmentNumber: selectedAssignmentNumber,
       };
 
+      console.log("[ASSIGNMENT FILTERS] Checking assignment number with params:", params);
+
       const response = await apiClient.checkAssignmentNumber(params);
+
+      console.log("[ASSIGNMENT FILTERS] Check response:", response);
 
       if (response?.success) {
         const exists = response.data.exists;
@@ -293,7 +299,7 @@ export default function AssignmentFilters({
         if (exists) {
           toast({
             title: "Assignment Already Exists",
-            description: `Assignment ${selectedAssignmentNumber} already uploaded for ${selectedSubject} Section ${selectedSection}`,
+            description: `Assignment ${selectedAssignmentNumber} already uploaded for ${selectedSubject} for Section ${selectedSection}`,
             variant: "destructive",
           });
         }
@@ -326,6 +332,16 @@ export default function AssignmentFilters({
   };
 
   const handleFilterChange = (filterType: string, value: string) => {
+    let newFilters: any = {
+      academicYear: selectedAcademicYear,
+      year: selectedYear,
+      semester: selectedSemester,
+      section: selectedSection,
+      subject: selectedSubject,
+      subjectName: "", // Will be set when subject is selected
+      assignmentNumber: selectedAssignmentNumber,
+    };
+
     switch (filterType) {
       case "academicYear":
         setSelectedAcademicYear(value);
@@ -334,38 +350,43 @@ export default function AssignmentFilters({
         setSelectedSection("");
         setSelectedSubject("");
         setSelectedAssignmentNumber("");
+        newFilters = { academicYear: value };
         break;
       case "year":
         setSelectedYear(value);
+        newFilters.year = value;
         break;
       case "semester":
         setSelectedSemester(value);
+        newFilters.semester = value;
         break;
       case "section":
         console.log("[ASSIGNMENT FILTERS] Setting selectedSection to:", value);
         setSelectedSection(value);
         setSelectedSubject("");
         setSelectedAssignmentNumber("");
+        newFilters.section = value;
+        newFilters.subject = "";
+        newFilters.subjectName = "";
+        newFilters.assignmentNumber = "";
         break;
       case "subject":
         setSelectedSubject(value);
         setSelectedAssignmentNumber("");
+        newFilters.subject = value;
+        newFilters.assignmentNumber = "";
+        // Find the subject name from the subjects array
+        const selectedSubjectObj = subjects.find(s => s.value === value);
+        newFilters.subjectName = selectedSubjectObj?.label || value;
         break;
       case "assignmentNumber":
         setSelectedAssignmentNumber(value);
+        newFilters.assignmentNumber = value;
         break;
     }
 
     // Update parent component with current filters
-    const currentFilters = {
-      academicYear: selectedAcademicYear,
-      year: selectedYear,
-      semester: selectedSemester,
-      section: selectedSection,
-      subject: selectedSubject,
-      assignmentNumber: selectedAssignmentNumber,
-    };
-    onFiltersChange(currentFilters);
+    onFiltersChange(newFilters);
   };
 
   const allFiltersSelected =
@@ -518,7 +539,7 @@ export default function AssignmentFilters({
                 <Badge variant="destructive">Assignment Already Exists</Badge>
                 <span className="text-sm text-gray-600">
                   Assignment {selectedAssignmentNumber} already uploaded for{" "}
-                  {selectedSubject} Section {selectedSection}
+                  {subjects.find(s => s.value === selectedSubject)?.label || selectedSubject} For Section {selectedSection}
                 </span>
               </div>
             ) : (

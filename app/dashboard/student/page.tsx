@@ -44,8 +44,13 @@ interface DashboardData {
   totalClassmates: number;
   onlineClassmates: number;
   pendingAssignments: number;
+  overdueAssignments: number;
+  totalAssignments: number;
+  averageMarks: number;
   notifications: any[];
   recentActivity: any[];
+  upcomingDeadlines: any[];
+  studyStreak: number;
 }
 
 export default function StudentDashboard() {
@@ -55,8 +60,13 @@ export default function StudentDashboard() {
     totalClassmates: 0,
     onlineClassmates: 0,
     pendingAssignments: 0,
+    overdueAssignments: 0,
+    totalAssignments: 0,
+    averageMarks: 0,
     notifications: [],
-    recentActivity: []
+    recentActivity: [],
+    upcomingDeadlines: [],
+    studyStreak: 0
   });
   const [loading, setLoading] = useState(true);
   const router = useRouter();
@@ -77,20 +87,113 @@ export default function StudentDashboard() {
         setLoading(true);
         
         // Fetch all dashboard data in parallel
-        const [classmatesStats, attendanceData, notificationsData, unreadRes] = await Promise.all([
+        const [classmatesStats, attendanceData, notificationsData, unreadRes, assignmentsData] = await Promise.all([
           apiClient.getClassmatesStats(),
           apiClient.getAttendanceStats(),
           apiClient.getNotifications({ limit: 5 }),
-          apiClient.getUnreadNotificationCount()
+          apiClient.getUnreadNotificationCount(),
+          apiClient.getStudentAssignments()
         ]);
+
+        // Process assignments data
+        const assignments = assignmentsData?.data?.assignments || [];
+        const now = new Date();
+        const overdueAssignments = assignments.filter((a: any) => new Date(a.dueDate) < now).length;
+        const upcomingDeadlines = assignments
+          .filter((a: any) => {
+            const dueDate = new Date(a.dueDate);
+            const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+            return daysUntilDue <= 7 && daysUntilDue > 0;
+          })
+          .slice(0, 3);
+
+        // Calculate average marks
+        let totalMarks = 0;
+        let markedAssignments = 0;
+        assignments.forEach((assignment: any) => {
+          if (assignment.marks && assignment.marks.length > 0) {
+            const userMark = assignment.marks.find((mark: any) => mark.studentId === user._id);
+            if (userMark && userMark.marks !== null) {
+              totalMarks += userMark.marks;
+              markedAssignments++;
+            }
+          }
+        });
+        const averageMarks = markedAssignments > 0 ? Math.round((totalMarks / markedAssignments) * 10) / 10 : 0;
+
+        // Calculate study streak based on activity
+        const calculateStudyStreak = () => {
+          // Get last 30 days of activity
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+          
+          let currentStreak = 0;
+          let maxStreak = 0;
+          let currentDate = new Date();
+          
+          // Check each day for activity (attendance, assignment submissions, etc.)
+          for (let i = 0; i < 30; i++) {
+            const checkDate = new Date();
+            checkDate.setDate(checkDate.getDate() - i);
+            
+            // Check if there was activity on this date
+            const hasActivity = checkForActivityOnDate(checkDate, assignments, attendanceData);
+            
+            if (hasActivity) {
+              currentStreak++;
+              maxStreak = Math.max(maxStreak, currentStreak);
+            } else {
+              currentStreak = 0;
+            }
+          }
+          
+          return maxStreak;
+        };
+        
+        const checkForActivityOnDate = (date: Date, assignments: any[], attendanceData: any) => {
+          const dateStr = date.toISOString().split('T')[0];
+          
+          // Check for assignment submissions on this date
+          const hasAssignmentActivity = assignments.some((assignment: any) => {
+            const assignmentDate = new Date(assignment.createdAt).toISOString().split('T')[0];
+            return assignmentDate === dateStr;
+          });
+          
+          // Check for attendance on this date (if available)
+          const hasAttendanceActivity = attendanceData?.data?.attendanceRecords?.some((record: any) => {
+            const recordDate = new Date(record.date).toISOString().split('T')[0];
+            return recordDate === dateStr && record.status === 'present';
+          });
+          
+          // Check for marks received on this date
+          const hasMarksActivity = assignments.some((assignment: any) => {
+            if (assignment.marks && assignment.marks.length > 0) {
+              const userMark = assignment.marks.find((mark: any) => mark.studentId === user._id);
+              if (userMark) {
+                const markDate = new Date(userMark.updatedAt).toISOString().split('T')[0];
+                return markDate === dateStr;
+              }
+            }
+            return false;
+          });
+          
+          return hasAssignmentActivity || hasAttendanceActivity || hasMarksActivity;
+        };
+        
+        const studyStreak = calculateStudyStreak();
 
         setDashboardData({
           attendancePercentage: attendanceData?.data?.attendancePercentage || 0,
           totalClassmates: classmatesStats?.data?.totalClassmates || 0,
           onlineClassmates: classmatesStats?.data?.onlineClassmates || 0,
-          pendingAssignments: 0, // TODO: Add assignments API
+          pendingAssignments: assignments.length,
+          overdueAssignments,
+          totalAssignments: assignments.length,
+          averageMarks,
           notifications: notificationsData?.data?.notifications || [],
-          recentActivity: []
+          recentActivity: [],
+          upcomingDeadlines,
+          studyStreak
         });
         setUnreadCount(unreadRes?.data?.count || unreadRes.count || 0);
       } catch (error) {
@@ -270,7 +373,7 @@ export default function StudentDashboard() {
           </div>
         </div>
 
-        {/* Stats Overview */}
+        {/* Enhanced Stats Overview */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border-blue-200 dark:border-blue-700">
             <CardContent className="p-4">
@@ -291,12 +394,12 @@ export default function StudentDashboard() {
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Classmates</p>
-                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">{dashboardData.totalClassmates}</p>
-                  <p className="text-xs text-green-600 dark:text-green-400">{dashboardData.onlineClassmates} online</p>
+                  <p className="text-sm font-medium text-green-600 dark:text-green-400">Average Marks</p>
+                  <p className="text-2xl font-bold text-green-900 dark:text-green-100">{dashboardData.averageMarks}/10</p>
+                  <p className="text-xs text-green-600 dark:text-green-400">academic performance</p>
                 </div>
                 <div className="w-12 h-12 bg-green-200 dark:bg-green-800 rounded-lg flex items-center justify-center">
-                  <Users className="w-6 h-6 text-green-600 dark:text-green-400" />
+                  <Award className="w-6 h-6 text-green-600 dark:text-green-400" />
                 </div>
               </div>
             </CardContent>
@@ -305,10 +408,10 @@ export default function StudentDashboard() {
           <Card className="bg-gradient-to-br from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border-orange-200 dark:border-orange-700">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-              <div>
+                <div>
                   <p className="text-sm font-medium text-orange-600 dark:text-orange-400">Assignments</p>
-                  <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{dashboardData.pendingAssignments}</p>
-                  <p className="text-xs text-orange-600 dark:text-orange-400">pending</p>
+                  <p className="text-2xl font-bold text-orange-900 dark:text-orange-100">{dashboardData.totalAssignments}</p>
+                  <p className="text-xs text-orange-600 dark:text-orange-400">{dashboardData.overdueAssignments} overdue</p>
                 </div>
                 <div className="w-12 h-12 bg-orange-200 dark:bg-orange-800 rounded-lg flex items-center justify-center">
                   <FileText className="w-6 h-6 text-orange-600 dark:text-orange-400" />
@@ -320,18 +423,73 @@ export default function StudentDashboard() {
           <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-900/20 dark:to-purple-800/20 border-purple-200 dark:border-purple-700">
             <CardContent className="p-4">
               <div className="flex items-center justify-between">
-              <div>
-                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Notifications</p>
-                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{unreadCount}</p>
-                  <p className="text-xs text-purple-600 dark:text-purple-400">unread</p>
+                <div>
+                  <p className="text-sm font-medium text-purple-600 dark:text-purple-400">Study Streak</p>
+                  <p className="text-2xl font-bold text-purple-900 dark:text-purple-100">{dashboardData.studyStreak} days</p>
+                  <p className="text-xs text-purple-600 dark:text-purple-400">
+                    {dashboardData.studyStreak >= 7 ? '🔥 Amazing!' : 
+                     dashboardData.studyStreak >= 3 ? '💪 Great job!' : 'Keep going!'}
+                  </p>
                 </div>
                 <div className="w-12 h-12 bg-purple-200 dark:bg-purple-800 rounded-lg flex items-center justify-center">
-                  <Bell className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                  <Zap className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+                </div>
+              </div>
+              {/* Progress bar for streak */}
+              <div className="mt-3">
+                <div className="flex justify-between text-xs text-purple-600 dark:text-purple-400 mb-1">
+                  <span>Progress</span>
+                  <span>{Math.min(dashboardData.studyStreak, 30)}/30 days</span>
+                </div>
+                <div className="w-full bg-purple-200 dark:bg-purple-700 rounded-full h-2">
+                  <div 
+                    className="bg-purple-600 dark:bg-purple-400 h-2 rounded-full transition-all duration-300"
+                    style={{ width: `${Math.min((dashboardData.studyStreak / 30) * 100, 100)}%` }}
+                  ></div>
                 </div>
               </div>
             </CardContent>
           </Card>
         </div>
+
+        {/* Upcoming Deadlines */}
+        {dashboardData.upcomingDeadlines.length > 0 && (
+          <Card className="bg-gradient-to-r from-red-50 to-orange-50 dark:from-red-900/20 dark:to-orange-900/20 border-red-200 dark:border-red-700">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2 text-lg">
+                <AlertCircle className="w-5 h-5 text-red-600" />
+                <span>Upcoming Deadlines</span>
+              </CardTitle>
+              <CardDescription>Assignments due in the next 7 days</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {dashboardData.upcomingDeadlines.map((assignment: any, index: number) => {
+                  const dueDate = new Date(assignment.dueDate);
+                  const daysUntilDue = Math.ceil((dueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                  return (
+                    <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-zinc-800 border border-red-200 dark:border-red-700">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
+                          <FileText className="w-5 h-5 text-red-600" />
+                        </div>
+                        <div>
+                          <p className="font-medium text-zinc-900 dark:text-zinc-100">{assignment.title}</p>
+                          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                            Due in {daysUntilDue} day{daysUntilDue !== 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+                      <Badge variant="destructive" className="text-xs">
+                        {assignment.type}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Quick Actions Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 lg:gap-6">

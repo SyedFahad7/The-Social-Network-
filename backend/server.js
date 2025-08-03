@@ -23,6 +23,10 @@ const subjectRoutes = require('./routes/subjects');
 const academicYearRoutes = require('./routes/academic-years');
 const notificationRoutes = require('./routes/notifications');
 const classmatesRoutes = require('./routes/classmates');
+const classReminderRoutes = require('./routes/classReminders');
+
+// Import cron jobs
+const { startClassReminderJobs } = require('./cron/classReminderCron');
 
 // Import middleware
 const { errorHandler } = require('./middleware/errorHandler');
@@ -99,6 +103,7 @@ app.use('/api/subjects', subjectRoutes);
 app.use('/api/academic-years', academicYearRoutes);
 app.use('/api/notifications', notificationRoutes);
 app.use('/api/classmates', classmatesRoutes);
+app.use('/api/class-reminders', classReminderRoutes);
 
 // Error handling middleware (must be last)
 app.use(errorHandler);
@@ -118,6 +123,9 @@ mongoose.connect(process.env.MONGODB_URI, {
 })
 .then(() => {
   console.log('✅ Connected to MongoDB');
+  
+  // Start cron jobs
+  startClassReminderJobs();
   
   // Start server only after DB connection
   app.listen(PORT, '0.0.0.0', () => {

@@ -22,6 +22,7 @@ import {
   BarChart3,
   Shield,
   Bell,
+  FilePenLine,
   X
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
@@ -37,14 +38,15 @@ const roleMenus = {
     { icon: Users, label: 'Classmates', href: '/dashboard/student/classmates' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/student/attendance' },
     { icon: Bell, label: 'Notifications', href: '/dashboard/student/notifications' },
-    {icon: Table, label: 'TimeTable', href:'/dashboard/student/timetable'}
+    {icon: Table, label: 'TimeTable', href:'/dashboard/student/timetable'},
+    {icon: FilePenLine, label: 'Assignments', href: '/dashboard/student/assignments'}
   ],
   teacher: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/teacher' },
     { icon: BookOpen, label: 'My Sections', href: '/dashboard/teacher/sections' },
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/teacher/attendance' },
     { icon: Bell, label: 'Send Notifications', href: '/dashboard/teacher/notifications' },
-    { icon: Bell, label: 'Assignments', href: '/dashboard/teacher/assignments' },
+    { icon: FilePenLine, label: 'Assignments', href: '/dashboard/teacher/assignments' },
   ],
   'super-admin': [
     { icon: Home, label: 'Dashboard', href: '/dashboard/super-admin' },

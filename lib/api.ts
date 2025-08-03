@@ -218,8 +218,18 @@ class ApiClient {
     return this.request(`/assignments/filtered?${queryString}`);
   }
 
+  async getStudentAssignments() {
+    return this.request('/assignments/student');
+  }
+
   async checkAssignmentNumber(params: any) {
-    const queryString = new URLSearchParams(params).toString();
+    // Convert sections array to JSON string for URL encoding
+    const queryParams = { ...params };
+    if (Array.isArray(queryParams.sections)) {
+      queryParams.sections = JSON.stringify(queryParams.sections);
+    }
+    
+    const queryString = new URLSearchParams(queryParams).toString();
     return this.request(`/assignments/check-number?${queryString}`);
   }
 
@@ -227,9 +237,22 @@ class ApiClient {
     const formData = new FormData();
     formData.append('file', file);
     
+    // Get fresh token from localStorage
+    let token = this.token;
+    if (typeof window !== 'undefined') {
+      try {
+        token = localStorage.getItem('token');
+      } catch (error) {
+        console.warn('Could not access localStorage:', error);
+      }
+    }
+    
     return this.request('/assignments/upload-file', {
       method: 'POST',
-      headers: {}, // Let browser set Content-Type for FormData
+      headers: {
+        // Don't set Content-Type for FormData, let browser set it with boundary
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
       body: formData
     });
   }
@@ -242,6 +265,27 @@ class ApiClient {
     return this.request('/assignments', {
       method: 'POST',
       body: JSON.stringify(assignmentData),
+    });
+  }
+
+  async createAssignmentWithFile(formData: FormData) {
+    // Get fresh token from localStorage
+    let token = this.token;
+    if (typeof window !== 'undefined') {
+      try {
+        token = localStorage.getItem('token');
+      } catch (error) {
+        console.warn('Could not access localStorage:', error);
+      }
+    }
+    
+    return this.request('/assignments/with-file', {
+      method: 'POST',
+      headers: {
+        // Don't set Content-Type for FormData, let browser set it with boundary
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData
     });
   }
 
@@ -267,6 +311,42 @@ class ApiClient {
     return this.request(`/assignments/${id}`, {
       method: 'DELETE',
     });
+  }
+
+  async downloadAssignment(id: string) {
+    console.log('Starting download for assignment:', id);
+    
+    const response = await fetch(`${this.baseURL}/assignments/${id}/download`, {
+      headers: {
+        ...(this.token && { Authorization: `Bearer ${this.token}` }),
+      },
+      redirect: 'manual', // Don't follow redirects automatically
+    });
+
+    console.log('Response status:', response.status);
+
+    // Check if we got a redirect response (302, 301, etc.)
+    if (response.status >= 300 && response.status < 400) {
+      const redirectUrl = response.headers.get('location');
+      console.log('Redirect URL:', redirectUrl);
+      if (redirectUrl) {
+        console.log('Opening download URL in new tab');
+        // Open the download URL in a new tab/window
+        window.open(redirectUrl, '_blank');
+        return { success: true };
+      }
+    }
+
+    // If not a redirect, check for errors
+    if (!response.ok) {
+      console.log('Response not ok, status:', response.status);
+      const errorData = await response.json().catch(() => ({}));
+      console.log('Error data:', errorData);
+      throw new Error(errorData.message || 'Failed to download assignment');
+    }
+
+    console.log('Returning blob response');
+    return response.blob();
   }
 
   // Attendance methods
@@ -543,6 +623,10 @@ class ApiClient {
     return this.request(`/subjects?${queryString}`);
   }
 
+  async getSubjectById(id: string) {
+    return this.request(`/subjects/${id}`);
+  }
+
   // Student daily attendance
   async getStudentDailyAttendance(date: string) {
     return this.request(`/attendance/student/daily?date=${date}`);
@@ -708,6 +792,59 @@ class ApiClient {
     });
     return response.json();
   }
+
+  // Marks Allocation APIs
+  async getStudentsBySection(params: { section: string; year: number; semester: number }) {
+    return this.request(`/users?role=student&section=${params.section}&year=${params.year}&limit=1000`);
+  }
+
+  async getAssignmentMarks(assignmentId: string) {
+    return this.request(`/assignments/${assignmentId}/marks`);
+  }
+
+  async saveAssignmentMarks(marksData: { assignmentId: string; studentMarks: { studentId: string; marks: number | null }[] }) {
+    return this.request(`/assignments/${marksData.assignmentId}/marks`, {
+      method: 'POST',
+      body: JSON.stringify({ studentMarks: marksData.studentMarks }),
+    });
+  }
+
+  async getTeacherAssignmentDocuments() {
+    return this.request('/assignments/teacher/documents');
+  }
+
+  // Class Reminder methods
+  async getClassReminderStatus() {
+    return this.request('/class-reminders/status');
+  }
+
+  async generateClassReminders() {
+    return this.request('/class-reminders/generate', {
+      method: 'POST'
+    });
+  }
+
+  async sendClassReminders() {
+    return this.request('/class-reminders/send', {
+      method: 'POST'
+    });
+  }
+
+  async cleanupClassReminders() {
+    return this.request('/class-reminders/cleanup', {
+      method: 'POST'
+    });
+  }
+
+  async getStudentClassReminders(studentId: string) {
+    return this.request(`/class-reminders/student/${studentId}`);
+  }
+
+  async clearStudentClassReminders(studentId: string) {
+    return this.request(`/class-reminders/student/${studentId}`, {
+      method: 'DELETE'
+    });
+  }
 }
 
 // Create and export a singleton instance
@@ -731,6 +868,7 @@ export const {
   updateAssignmentSubmission,
   updateAssignment,
   deleteAssignment,
+  downloadAssignment,
   getAttendance,
   markAttendance,
   getStudentAttendanceStats,
@@ -777,8 +915,10 @@ export const {
   incrementDownloads,
   getAcademicYears,
   getSubjects,
+  getSubjectById,
   getStudentDailyAttendance,
   getTeacherAssignments,
+  getTeacherAssignmentDocuments,
   addTeachingAssignment,
   removeTeachingAssignment,
   addClassTeacherAssignment,
@@ -803,7 +943,13 @@ export const {
   getClassmatesStats,
   getFavourites,
   toggleFavourite,
-  getAttendanceStats
+  getAttendanceStats,
+  getClassReminderStatus,
+  generateClassReminders,
+  sendClassReminders,
+  cleanupClassReminders,
+  getStudentClassReminders,
+  clearStudentClassReminders
 } = apiClient;
 
 export default apiClient;

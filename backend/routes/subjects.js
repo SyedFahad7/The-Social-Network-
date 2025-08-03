@@ -23,6 +23,17 @@ router.get('/', [
   res.json({ success: true, data: subjects });
 }));
 
+// GET /api/subjects/:id - get subject by ID
+router.get('/:id', [
+  authenticate,
+], asyncHandler(async (req, res) => {
+  const subject = await Subject.findById(req.params.id);
+  if (!subject) {
+    return res.status(404).json({ success: false, message: 'Subject not found' });
+  }
+  res.json({ success: true, data: subject });
+}));
+
 // POST /api/subjects - create subject (super admin only)
 router.post('/', [
   authenticate,

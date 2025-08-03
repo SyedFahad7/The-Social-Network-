@@ -6,7 +6,6 @@ const userSchema = new mongoose.Schema({
   email: {
     type: String,
     required: [true, 'Email is required'],
-    unique: true,
     lowercase: true,
     trim: true,
     match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
@@ -81,7 +80,6 @@ const userSchema = new mongoose.Schema({
   rollNumber: {
     type: String,
     sparse: true, // Allows null values but ensures uniqueness when present
-    unique: true,
     uppercase: true,
     validate: {
       validator: function(v) {
@@ -125,12 +123,32 @@ const userSchema = new mongoose.Schema({
       message: 'Year is required for students and must be 2, 3, or 4'
     }
   },
+  academicYear: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'AcademicYear',
+    required: function() { return this.role === 'student'; },
+    validate: {
+      validator: async function(v) {
+        if (this.role === 'student') {
+          try {
+            const AcademicYear = mongoose.model('AcademicYear');
+            const academicYear = await AcademicYear.findById(v);
+            return academicYear && academicYear.isActive;
+          } catch (err) {
+            console.error('[ACADEMIC YEAR VALIDATION ERROR]', err);
+            return false;
+          }
+        }
+        return true;
+      },
+      message: 'Please select a valid academic year'
+    }
+  },
   
   // Teacher-specific fields
   employeeId: {
     type: String,
     sparse: true,
-    unique: true,
     uppercase: true,
     validate: {
       validator: function(v) {
@@ -280,11 +298,12 @@ const userSchema = new mongoose.Schema({
 });
 
 // Indexes for better performance
-userSchema.index({ email: 1 });
+userSchema.index({ email: 1 }, { unique: true });
 userSchema.index({ role: 1 });
 userSchema.index({ department: 1 });
-userSchema.index({ rollNumber: 1 }, { sparse: true });
-userSchema.index({ employeeId: 1 }, { sparse: true });
+userSchema.index({ rollNumber: 1 }, { sparse: true, unique: true });
+userSchema.index({ employeeId: 1 }, { sparse: true, unique: true });
+userSchema.index({ academicYear: 1 });
 
 // Virtual for full name
 userSchema.virtual('fullName').get(function() {

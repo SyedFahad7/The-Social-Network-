@@ -13,6 +13,12 @@ import { getCroppedImg } from "@/lib/utils";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { AuthLoading, TokenExpiredMessage } from "@/components/ui/auth-loading";
+import { 
+  getUnreadCount, 
+  addReadStatusToNotifications, 
+  markNotificationAsRead,
+  cleanupOldReadStatus 
+} from "@/lib/notificationUtils";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -140,19 +146,51 @@ export default function DashboardLayout({
     console.log("Status change:", newStatus);
   };
 
+  // Function to refresh notification data
+  const refreshNotifications = async () => {
+    if (!user) return;
+    try {
+      // Fetch notifications (no read filter needed since we handle it in frontend)
+      const notifRes = await apiClient.getNotifications();
+      const notifications = notifRes.data?.notifications || [];
+      
+      // Add read status from localStorage
+      const notificationsWithReadStatus = addReadStatusToNotifications(notifications);
+      setRecentNotifications(notificationsWithReadStatus);
+      
+      // Calculate unread count from frontend
+      const unreadCount = getUnreadCount(notificationsWithReadStatus);
+      setUnreadCount(unreadCount);
+      setNotifUnread(unreadCount > 0);
+      
+      // Cleanup old read status periodically
+      cleanupOldReadStatus();
+    } catch (error) {
+      console.error('Error refreshing notifications:', error);
+    }
+  };
+
+  useEffect(() => {
+    refreshNotifications();
+  }, [user]);
+
+  // Refresh notifications every 30 seconds
   useEffect(() => {
     if (!user) return;
-    // Fetch unread notification count
-    apiClient.getUnreadNotificationCount().then((res) => {
-      const count = res.data?.count || res.count || 0;
-      setUnreadCount(count);
-      setNotifUnread(count > 0);
-    });
-    // Fetch recent notifications
-    apiClient.getNotifications({ read: false }).then((res) => {
-      setRecentNotifications(res.data?.notifications || []);
-    });
-  }, [user, notifOpen]);
+    
+    const interval = setInterval(() => {
+      refreshNotifications();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, [user]);
+
+  // Refresh when notification popup opens/closes
+  useEffect(() => {
+    if (notifOpen) {
+      refreshNotifications();
+    }
+  }, [notifOpen]);
 
   useEffect(() => {
     if (user) {
@@ -515,15 +553,28 @@ export default function DashboardLayout({
                   >
                     <div className="p-4 border-b border-border flex items-center justify-between transition-colors duration-300">
                       <span className="font-semibold">Notifications</span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setNotifOpen(false)}
-                        aria-label="Close"
-                        className="hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
-                      >
-                        <X className="w-4 h-4" />
-                      </Button>
+                      <div className="flex items-center space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={refreshNotifications}
+                          aria-label="Refresh"
+                          className="hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+                        >
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                          </svg>
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setNotifOpen(false)}
+                          aria-label="Close"
+                          className="hover:bg-accent hover:text-accent-foreground transition-colors duration-200"
+                        >
+                          <X className="w-4 h-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="max-h-80 overflow-y-auto divide-y divide-border transition-colors duration-300">
                       {recentNotifications.length === 0 ? (
@@ -544,42 +595,20 @@ export default function DashboardLayout({
                               console.log("Notification main click", notif._id);
                               e.preventDefault?.();
                               setNotifOpen(false);
-                              try {
-                                const markRes =
-                                  await apiClient.markNotificationAsRead(
-                                    notif._id
-                                  );
-                                console.log("mark as read result", markRes);
-                                // log count before
-                                const countRes =
-                                  await apiClient.getUnreadNotificationCount();
-                                const notifRes =
-                                  await apiClient.getNotifications({
-                                    read: false,
-                                  });
-                                console.log(
-                                  "unread count after",
-                                  countRes,
-                                  "unread list:",
-                                  notifRes
-                                );
-                                setUnreadCount(
-                                  countRes.data?.count || countRes.count || 0
-                                );
-                                setNotifUnread(
-                                  (countRes.data?.count ||
-                                    countRes.count ||
-                                    0) > 0
-                                );
-                                setRecentNotifications(
-                                  notifRes.data?.notifications || []
-                                );
-                              } catch (err) {
-                                console.error(
-                                  "Error updating notification as read:",
-                                  err
-                                );
-                              }
+                              
+                              // Mark as read in localStorage
+                              markNotificationAsRead(notif._id);
+                              
+                              // Update the notification in the list
+                              const updatedNotifications = recentNotifications.map(n => 
+                                n._id === notif._id ? { ...n, isRead: true } : n
+                              );
+                              setRecentNotifications(updatedNotifications);
+                              
+                              // Update unread count
+                              const newUnreadCount = getUnreadCount(updatedNotifications);
+                              setUnreadCount(newUnreadCount);
+                              setNotifUnread(newUnreadCount > 0);
                               setTimeout(() => {
                                 console.log(
                                   "Navigating to notifications for role",
@@ -628,44 +657,20 @@ export default function DashboardLayout({
                                       console.log("Tick click", notif._id);
                                       e.stopPropagation();
                                       e.preventDefault();
-                                      try {
-                                        const markRes =
-                                          await apiClient.markNotificationAsRead(
-                                            notif._id
-                                          );
-                                        console.log(
-                                          "mark as read result",
-                                          markRes
-                                        );
-                                        if (markRes.success) {
-                                          // Update the notification in the current list to show as read
-                                          const updatedNotifications =
-                                            recentNotifications.filter(
-                                              (n) => n._id !== notif._id
-                                            );
-                                          setRecentNotifications(
-                                            updatedNotifications
-                                          );
+                                      
+                                      // Mark as read in localStorage
+                                      markNotificationAsRead(notif._id);
+                                      
+                                      // Update the notification in the current list to show as read
+                                      const updatedNotifications = recentNotifications.map(n => 
+                                        n._id === notif._id ? { ...n, isRead: true } : n
+                                      );
+                                      setRecentNotifications(updatedNotifications);
 
-                                          // Update the unread count
-                                          const newCount =
-                                            unreadCount > 0
-                                              ? unreadCount - 1
-                                              : 0;
-                                          setUnreadCount(newCount);
-                                          setNotifUnread(newCount > 0);
-                                        } else {
-                                          console.error(
-                                            "Failed to mark notification as read:",
-                                            markRes.message
-                                          );
-                                        }
-                                      } catch (err) {
-                                        console.error(
-                                          "Error updating notification as read:",
-                                          err
-                                        );
-                                      }
+                                      // Update the unread count
+                                      const newUnreadCount = getUnreadCount(updatedNotifications);
+                                      setUnreadCount(newUnreadCount);
+                                      setNotifUnread(newUnreadCount > 0);
                                     }}
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter" || e.key === " ") {

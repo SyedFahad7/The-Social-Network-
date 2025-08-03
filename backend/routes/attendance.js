@@ -619,7 +619,7 @@ router.get('/summary/pdf', authenticate, asyncHandler(async (req, res) => {
   doc.fontSize(16).font('Helvetica-Bold').text('Attendance Summary', { align: 'center' });
   doc.fontSize(6)
     .text(`${section} | ${year} | ${academicYearLabel}`, { align: 'center' });
-  doc.text(`${startDate} to ${endDate}`, { align: 'center' });
+  doc.text(`${startDate} to ${endDate}`, { align: 'center' });    
   doc.moveDown(0.5);
 
   // Table headers with short names for single-line display

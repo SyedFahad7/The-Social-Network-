@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -34,13 +34,11 @@ export default function AssignmentUploadForm({
     dueDate: "",
     instructions: "",
     file: null as File | null,
-    fileUrl: "",
     fileName: "",
     fileSize: 0,
   });
-  const [uploading, setUploading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-  const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [showSuccess, setShowSuccess] = useState(false);
   const { toast } = useToast();
 
   const handleInputChange = (field: string, value: any) => {
@@ -80,50 +78,7 @@ export default function AssignmentUploadForm({
         file,
         fileName: file.name,
         fileSize: file.size,
-        fileUrl: "",
       }));
-    }
-  };
-
-  const handleFileUpload = async () => {
-    if (!formData.file) {
-      toast({
-        title: "No File Selected",
-        description: "Please select a file to upload",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    try {
-      setUploading(true);
-      const response = await apiClient.uploadAssignmentFile(formData.file);
-
-      if (response?.success) {
-        setFormData((prev) => ({
-          ...prev,
-          fileUrl: response.data.fileUrl,
-          fileName: response.data.fileName,
-          fileSize: response.data.fileSize,
-        }));
-        setUploadSuccess(true);
-        toast({
-          title: "File Uploaded Successfully",
-          description: "File has been uploaded to Cloudinary",
-          variant: "default",
-        });
-      } else {
-        throw new Error(response?.message || "Upload failed");
-      }
-    } catch (error) {
-      console.error("File upload error:", error);
-      toast({
-        title: "Upload Failed",
-        description: "Failed to upload file. Please try again.",
-        variant: "destructive",
-      });
-    } finally {
-      setUploading(false);
     }
   };
 
@@ -157,10 +112,10 @@ export default function AssignmentUploadForm({
       return;
     }
 
-    if (!formData.fileUrl) {
+    if (!formData.file) {
       toast({
         title: "File Required",
-        description: "Please upload assignment file",
+        description: "Please select assignment file",
         variant: "destructive",
       });
       return;
@@ -169,34 +124,54 @@ export default function AssignmentUploadForm({
     try {
       setSubmitting(true);
 
-      const assignmentData = {
-        title: formData.title,
-        description: formData.instructions,
-        subject: filters.subject,
-        subjectCode: filters.subject,
-        type: "assignment",
-        sections: [filters.section],
-        academicYear: filters.academicYear,
-        year: parseInt(filters.year),
-        semester: parseInt(filters.semester),
-        assignmentNumber: parseInt(filters.assignmentNumber),
-        assignedDate: formData.assignedDate,
-        dueDate: formData.dueDate,
-        instructions: formData.instructions,
-        fileUrl: formData.fileUrl,
-        fileName: formData.fileName,
-        fileSize: formData.fileSize,
-      };
+      // Debug: Log filters object
+      console.log('Filters object:', filters);
 
-      const response = await apiClient.createAssignment(assignmentData);
+      // Get subject code from the selected subject
+      // We need to fetch the subject details to get the code
+      let subjectCode = '';
+      if (filters.subject) {
+        try {
+          const subjectResponse = await apiClient.getSubjectById(filters.subject);
+          if (subjectResponse?.success && subjectResponse?.data?.code) {
+            subjectCode = subjectResponse.data.code;
+          } else {
+            throw new Error('Could not fetch subject code');
+          }
+        } catch (error) {
+          console.error('Error fetching subject code:', error);
+          toast({
+            title: "Error",
+            description: "Could not fetch subject code. Please try again.",
+            variant: "destructive",
+          });
+          return;
+        }
+      }
+
+      // Create FormData for file upload
+      const formDataToSend = new FormData();
+      formDataToSend.append('file', formData.file);
+      formDataToSend.append('title', formData.title);
+      formDataToSend.append('description', formData.instructions);
+      formDataToSend.append('subject', filters.subject); // This is the ObjectId
+      formDataToSend.append('subjectCode', subjectCode); // Use the fetched subject code
+      formDataToSend.append('type', 'assignment');
+      formDataToSend.append('sections', JSON.stringify([filters.section]));
+      formDataToSend.append('academicYear', filters.academicYear);
+      formDataToSend.append('year', filters.year);
+      formDataToSend.append('semester', filters.semester);
+      formDataToSend.append('assignmentNumber', filters.assignmentNumber);
+      formDataToSend.append('assignedDate', formData.assignedDate);
+      formDataToSend.append('dueDate', formData.dueDate);
+      formDataToSend.append('instructions', formData.instructions);
+
+      const response = await apiClient.createAssignmentWithFile(formDataToSend);
 
       if (response?.success) {
-        toast({
-          title: "Assignment Uploaded Successfully",
-          description: "Assignment has been saved to database",
-          variant: "default",
-        });
-
+        // Show success state
+        setShowSuccess(true);
+        
         // Reset form
         setFormData({
           title: "",
@@ -204,12 +179,19 @@ export default function AssignmentUploadForm({
           dueDate: "",
           instructions: "",
           file: null,
-          fileUrl: "",
           fileName: "",
           fileSize: 0,
         });
-        setUploadSuccess(false);
-        onUploadSuccess();
+        
+        // Immediately trigger refresh with a small delay to show success message
+        setTimeout(() => {
+          onUploadSuccess();
+        }, 500);
+        
+        // Hide success message after 3 seconds
+        setTimeout(() => {
+          setShowSuccess(false);
+        }, 3000);
       } else {
         throw new Error(response?.message || "Failed to save assignment");
       }
@@ -229,11 +211,9 @@ export default function AssignmentUploadForm({
     setFormData((prev) => ({
       ...prev,
       file: null,
-      fileUrl: "",
       fileName: "",
       fileSize: 0,
     }));
-    setUploadSuccess(false);
   };
 
   if (assignmentExists) {
@@ -246,7 +226,7 @@ export default function AssignmentUploadForm({
           </CardTitle>
           <CardDescription className="text-red-600">
             Assignment {filters.assignmentNumber} already uploaded for{" "}
-            {filters.subject} Section {filters.section}
+            {filters.subjectName || filters.subject} For Section {filters.section}
           </CardDescription>
         </CardHeader>
       </Card>
@@ -261,11 +241,20 @@ export default function AssignmentUploadForm({
           <span>Upload Assignment</span>
         </CardTitle>
         <CardDescription>
-          Upload assignment for {filters.subject} Section {filters.section} -
+          Upload assignment for Section {filters.section} -
           Assignment {filters.assignmentNumber}
         </CardDescription>
       </CardHeader>
       <CardContent>
+        {showSuccess && (
+          <div className="mb-6 p-4 bg-green-100 border border-green-300 rounded-lg">
+            <div className="flex items-center space-x-2 text-green-700">
+              <CheckCircle className="w-5 h-5" />
+              <span className="font-medium text-lg">Uploaded!</span>
+            </div>
+          </div>
+        )}
+        
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* File Upload Section */}
           <div className="space-y-4">
@@ -280,7 +269,7 @@ export default function AssignmentUploadForm({
                   accept=".pdf,.doc,.docx"
                   onChange={handleFileChange}
                   className="cursor-pointer"
-                  disabled={uploading || uploadSuccess}
+                  disabled={submitting}
                 />
               </div>
               <p className="text-sm text-gray-500 mt-1">
@@ -288,52 +277,23 @@ export default function AssignmentUploadForm({
               </p>
             </div>
 
-            {formData.file && !uploadSuccess && (
-              <div className="flex items-center space-x-2">
-                <Button
-                  type="button"
-                  onClick={handleFileUpload}
-                  disabled={uploading}
-                  className="bg-blue-600 hover:bg-blue-700"
-                >
-                  {uploading ? (
-                    <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Uploading...
-                    </>
-                  ) : (
-                    <>
-                      <Upload className="w-4 h-4 mr-2" />
-                      Upload to Cloudinary
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={removeFile}
-                  disabled={uploading}
-                >
-                  <X className="w-4 h-4 mr-2" />
-                  Remove
-                </Button>
-              </div>
-            )}
-
-            {uploadSuccess && (
-              <div className="flex items-center space-x-2 p-3 bg-green-100 rounded-lg">
-                <CheckCircle className="w-5 h-5 text-green-600" />
+            {formData.file && (
+              <div className="flex items-center space-x-2 p-3 bg-blue-100 rounded-lg">
+                <FileText className="w-5 h-5 text-blue-600" />
                 <div>
-                  <p className="text-sm font-medium text-green-800">
-                    File uploaded successfully
+                  <p className="text-sm font-medium text-blue-800">
+                    {formData.fileName}
                   </p>
-                  <p className="text-xs text-green-600">{formData.fileName}</p>
+                  <p className="text-xs text-blue-600">
+                    {(formData.fileSize / 1024 / 1024).toFixed(2)} MB
+                  </p>
                 </div>
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={removeFile}
+                  disabled={submitting}
                 >
                   <X className="w-4 h-4" />
                 </Button>
@@ -396,7 +356,7 @@ export default function AssignmentUploadForm({
           <div className="flex space-x-4">
             <Button
               type="submit"
-              disabled={submitting || !uploadSuccess}
+              disabled={submitting || !formData.file}
               className="bg-green-600 hover:bg-green-700"
             >
               {submitting ? (
