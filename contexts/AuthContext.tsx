@@ -177,10 +177,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const isAuth = await checkAuth();
 
         if (!isAuth) {
-          // If not authenticated and not on login page, redirect
+          // If not authenticated and not on login page or home page, redirect
           if (
             typeof window !== "undefined" &&
-            !window.location.pathname.includes("/auth/")
+            !window.location.pathname.includes("/auth/") &&
+            window.location.pathname !== "/" &&
+            !window.location.pathname.startsWith("/dashboard/")
           ) {
             router.replace("/auth/login");
           }
@@ -190,7 +192,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         clearAuth();
         if (
           typeof window !== "undefined" &&
-          !window.location.pathname.includes("/auth/")
+          !window.location.pathname.includes("/auth/") &&
+          window.location.pathname !== "/" &&
+          !window.location.pathname.startsWith("/dashboard/")
         ) {
           router.replace("/auth/login");
         }
@@ -211,7 +215,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         event.detail?.message?.includes("Invalid token")
       ) {
         clearAuth();
-        router.replace("/auth/login");
+        // Only redirect to login if not on home page
+        if (
+          typeof window !== "undefined" &&
+          window.location.pathname !== "/" &&
+          !window.location.pathname.includes("/auth/")
+        ) {
+          router.replace("/auth/login");
+        }
       }
     };
 
