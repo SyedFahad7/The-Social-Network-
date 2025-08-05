@@ -363,6 +363,7 @@ router.get('/subject-assigned-exists', [authenticate, requireSuperAdmin], asyncH
   if (!section || !year || !semester || !academicYear || !subject) {
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
+  
   const teacher = await User.findOne({
     role: 'teacher',
     teachingAssignments: {
@@ -375,6 +376,7 @@ router.get('/subject-assigned-exists', [authenticate, requireSuperAdmin], asyncH
       }
     }
   });
+  
   res.json({ exists: !!teacher, teacher });
 }));
 
@@ -680,7 +682,7 @@ router.post('/:id/teaching-assignment', [authenticate, requireSuperAdmin], async
   if (!subject || !section || !year || !semester || !academicYear) {
     return res.status(400).json({ success: false, message: 'All fields are required.' });
   }
-  // Prevent another teacher from being assigned the same subject/section/year/semester/AY
+    // Prevent another teacher from being assigned the same subject/section/year/semester/AY
   const assignedToAnother = await User.findOne({
     _id: { $ne: id },
     role: 'teacher',

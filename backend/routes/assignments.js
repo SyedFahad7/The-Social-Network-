@@ -325,6 +325,37 @@ router.get('/teaching-assignments', [
   });
 }));
 
+// @route   GET /api/assignments/teacher/documents
+// @desc    Get teacher's uploaded assignment documents
+// @access  Private (Teacher)
+router.get('/teacher/documents', [
+  authenticate,
+  requireTeacher
+], asyncHandler(async (req, res) => {
+  try {
+    const assignments = await Assignment.find({
+      teacher: req.user._id,
+      isActive: true
+    })
+    .populate('teacher', 'firstName lastName email')
+    .populate('academicYear', 'name')
+    .populate('subject', 'name code')
+    .populate('submissions.student', 'firstName lastName rollNumber')
+    .sort({ createdAt: -1 });
+
+    res.json({
+      success: true,
+      data: { assignments }
+    });
+  } catch (error) {
+    console.error('Error fetching teacher documents:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch assignments'
+    });
+  }
+}));
+
 // @route   GET /api/assignments
 // @desc    Get assignments (filtered by role)
 // @access  Private

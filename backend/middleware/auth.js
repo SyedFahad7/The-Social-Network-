@@ -86,6 +86,9 @@ const requireSuperAdmin = authorize('super-admin');
 // Check if user is teacher or above
 const requireTeacher = authorize('teacher', 'super-admin');
 
+// Check if user is student
+const requireStudent = authorize('student');
+
 // Check if user owns the resource or is admin
 const requireOwnershipOrAdmin = (req, res, next) => {
   const resourceUserId = req.params.userId || req.body.userId;
@@ -109,5 +112,6 @@ module.exports = {
   authorize,
   requireSuperAdmin,
   requireTeacher,
+  requireStudent,
   requireOwnershipOrAdmin
 };

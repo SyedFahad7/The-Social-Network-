@@ -372,6 +372,26 @@ class ApiClient {
     return this.request('/attendance/stats');
   }
 
+  async getStudentStudyStreak() {
+    return this.request('/attendance/student/streak');
+  }
+
+  async getStudentDailyAttendanceSummary(date?: string) {
+    const params = date ? `?date=${date}` : '';
+    return this.request(`/attendance/student/daily-summary${params}`);
+  }
+
+  async getStudentAttendanceStats(days: number = 30) {
+    return this.request(`/attendance/student/stats?days=${days}`);
+  }
+
+  async recalculateStudentAttendance(startDate: string, endDate: string) {
+    return this.request('/attendance/student/recalculate', {
+      method: 'POST',
+      body: JSON.stringify({ startDate, endDate }),
+    });
+  }
+
   async updateAttendance(id: string, attendanceData: any) {
     return this.request(`/attendance/${id}`, {
       method: 'PUT',
@@ -630,6 +650,11 @@ class ApiClient {
   // Student daily attendance
   async getStudentDailyAttendance(date: string) {
     return this.request(`/attendance/student/daily?date=${date}`);
+  }
+
+  // Student weekly attendance (optimized - single call for entire week)
+  async getStudentWeeklyAttendance() {
+    return this.request('/attendance/student/weekly');
   }
 
   // Faculty Assignment methods
@@ -917,6 +942,7 @@ export const {
   getSubjects,
   getSubjectById,
   getStudentDailyAttendance,
+  getStudentWeeklyAttendance,
   getTeacherAssignments,
   getTeacherAssignmentDocuments,
   addTeachingAssignment,

@@ -99,12 +99,26 @@ export default function StudentDashboard() {
         const assignments = assignmentsData?.data?.assignments || [];
         const now = new Date();
         const overdueAssignments = assignments.filter((a: any) => new Date(a.dueDate) < now).length;
+        
+        // Helper function to check if assignment is submitted (has marks)
+        const isAssignmentSubmitted = (assignment: any) => {
+          if (assignment.marks && assignment.marks.length > 0) {
+            const userMark = assignment.marks.find((mark: any) => mark.studentId === user._id);
+            return userMark && userMark.marks !== null;
+          }
+          return false;
+        };
+        
         const upcomingDeadlines = assignments
           .filter((a: any) => {
             const dueDate = new Date(a.dueDate);
             const daysUntilDue = Math.ceil((dueDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
             return daysUntilDue <= 7 && daysUntilDue > 0;
           })
+          .map((a: any) => ({
+            ...a,
+            isSubmitted: isAssignmentSubmitted(a)
+          }))
           .slice(0, 3);
 
         // Calculate average marks
@@ -121,66 +135,76 @@ export default function StudentDashboard() {
         });
         const averageMarks = markedAssignments > 0 ? Math.round((totalMarks / markedAssignments) * 10) / 10 : 0;
 
-        // Calculate study streak based on activity
-        const calculateStudyStreak = () => {
-          // Get last 30 days of activity
-          const thirtyDaysAgo = new Date();
-          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-          
-          let currentStreak = 0;
-          let maxStreak = 0;
-          let currentDate = new Date();
-          
-          // Check each day for activity (attendance, assignment submissions, etc.)
-          for (let i = 0; i < 30; i++) {
-            const checkDate = new Date();
-            checkDate.setDate(checkDate.getDate() - i);
-            
-            // Check if there was activity on this date
-            const hasActivity = checkForActivityOnDate(checkDate, assignments, attendanceData);
-            
-            if (hasActivity) {
-              currentStreak++;
-              maxStreak = Math.max(maxStreak, currentStreak);
-            } else {
-              currentStreak = 0;
-            }
+        // Get study streak using the new API
+        let studyStreak = 0;
+        try {
+          const streakResponse = await apiClient.getStudentStudyStreak();
+          if (streakResponse?.success) {
+            studyStreak = streakResponse.data.streak;
           }
-          
-          return maxStreak;
-        };
-        
-        const checkForActivityOnDate = (date: Date, assignments: any[], attendanceData: any) => {
-          const dateStr = date.toISOString().split('T')[0];
-          
-          // Check for assignment submissions on this date
-          const hasAssignmentActivity = assignments.some((assignment: any) => {
-            const assignmentDate = new Date(assignment.createdAt).toISOString().split('T')[0];
-            return assignmentDate === dateStr;
-          });
-          
-          // Check for attendance on this date (if available)
-          const hasAttendanceActivity = attendanceData?.data?.attendanceRecords?.some((record: any) => {
-            const recordDate = new Date(record.date).toISOString().split('T')[0];
-            return recordDate === dateStr && record.status === 'present';
-          });
-          
-          // Check for marks received on this date
-          const hasMarksActivity = assignments.some((assignment: any) => {
-            if (assignment.marks && assignment.marks.length > 0) {
-              const userMark = assignment.marks.find((mark: any) => mark.studentId === user._id);
-              if (userMark) {
-                const markDate = new Date(userMark.updatedAt).toISOString().split('T')[0];
-                return markDate === dateStr;
+        } catch (error) {
+          console.error('Error fetching study streak:', error);
+          // Fallback to old calculation if new API fails
+          const calculateStudyStreak = () => {
+            // Get last 30 days of activity
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+            
+            let currentStreak = 0;
+            let maxStreak = 0;
+            let currentDate = new Date();
+            
+            // Check each day for activity (attendance, assignment submissions, etc.)
+            for (let i = 0; i < 30; i++) {
+              const checkDate = new Date();
+              checkDate.setDate(checkDate.getDate() - i);
+              
+              // Check if there was activity on this date
+              const hasActivity = checkForActivityOnDate(checkDate, assignments, attendanceData);
+              
+              if (hasActivity) {
+                currentStreak++;
+                maxStreak = Math.max(maxStreak, currentStreak);
+              } else {
+                currentStreak = 0;
               }
             }
-            return false;
-          });
+            
+            return maxStreak;
+          };
           
-          return hasAssignmentActivity || hasAttendanceActivity || hasMarksActivity;
-        };
-        
-        const studyStreak = calculateStudyStreak();
+          const checkForActivityOnDate = (date: Date, assignments: any[], attendanceData: any) => {
+            const dateStr = date.toISOString().split('T')[0];
+            
+            // Check for assignment submissions on this date
+            const hasAssignmentActivity = assignments.some((assignment: any) => {
+              const assignmentDate = new Date(assignment.createdAt).toISOString().split('T')[0];
+              return assignmentDate === dateStr;
+            });
+            
+            // Check for attendance on this date (if available)
+            const hasAttendanceActivity = attendanceData?.data?.attendanceRecords?.some((record: any) => {
+              const recordDate = new Date(record.date).toISOString().split('T')[0];
+              return recordDate === dateStr && record.status === 'present';
+            });
+            
+            // Check for marks received on this date
+            const hasMarksActivity = assignments.some((assignment: any) => {
+              if (assignment.marks && assignment.marks.length > 0) {
+                const userMark = assignment.marks.find((mark: any) => mark.studentId === user._id);
+                if (userMark) {
+                  const markDate = new Date(userMark.updatedAt).toISOString().split('T')[0];
+                  return markDate === dateStr;
+                }
+              }
+              return false;
+            });
+            
+            return hasAssignmentActivity || hasAttendanceActivity || hasMarksActivity;
+          };
+          
+          studyStreak = calculateStudyStreak();
+        }
 
         setDashboardData({
           attendancePercentage: attendanceData?.data?.attendancePercentage || 0,
@@ -467,21 +491,53 @@ export default function StudentDashboard() {
                 {dashboardData.upcomingDeadlines.map((assignment: any, index: number) => {
                   const dueDate = new Date(assignment.dueDate);
                   const daysUntilDue = Math.ceil((dueDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+                  const isSubmitted = assignment.isSubmitted;
+                  
                   return (
-                    <div key={index} className="flex items-center justify-between p-3 rounded-lg bg-white dark:bg-zinc-800 border border-red-200 dark:border-red-700">
+                    <div 
+                      key={index} 
+                      className={`flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all duration-200 hover:shadow-md ${
+                        isSubmitted 
+                          ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 hover:bg-green-100 dark:hover:bg-green-900/30' 
+                          : 'bg-white dark:bg-zinc-800 border border-red-200 dark:border-red-700 hover:bg-red-50 dark:hover:bg-red-900/20'
+                      }`}
+                      onClick={() => router.push('/dashboard/student/assignments')}
+                    >
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-red-100 dark:bg-red-900/30 rounded-lg flex items-center justify-center">
-                          <FileText className="w-5 h-5 text-red-600" />
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          isSubmitted 
+                            ? 'bg-green-100 dark:bg-green-900/30' 
+                            : 'bg-red-100 dark:bg-red-900/30'
+                        }`}>
+                          {isSubmitted ? (
+                            <CheckCircle className="w-5 h-5 text-green-600" />
+                          ) : (
+                            <FileText className="w-5 h-5 text-red-600" />
+                          )}
                         </div>
                         <div>
                           <p className="font-medium text-zinc-900 dark:text-zinc-100">{assignment.title}</p>
-                          <p className="text-sm text-zinc-500 dark:text-zinc-400">
-                            Due in {daysUntilDue} day{daysUntilDue !== 1 ? 's' : ''}
-                          </p>
+                          {isSubmitted ? (
+                            <p className="text-sm text-green-600 dark:text-green-400 font-medium">
+                              ✅ Good work! Submitted successfully
+                            </p>
+                          ) : (
+                            <p className="text-sm text-zinc-500 dark:text-zinc-400">
+                              Due in {daysUntilDue} day{daysUntilDue !== 1 ? 's' : ''}
+                            </p>
+                          )}
+                          {isSubmitted && (
+                            <p className="text-xs text-green-500 dark:text-green-400 mt-1">
+                              Remind your friends to submit too! 🚀
+                            </p>
+                          )}
                         </div>
                       </div>
-                      <Badge variant="destructive" className="text-xs">
-                        {assignment.type}
+                      <Badge 
+                        variant={isSubmitted ? "default" : "destructive"} 
+                        className={`text-xs ${isSubmitted ? 'bg-green-500 hover:bg-green-600' : ''}`}
+                      >
+                        {isSubmitted ? 'Submitted' : assignment.type}
                       </Badge>
                     </div>
                   );

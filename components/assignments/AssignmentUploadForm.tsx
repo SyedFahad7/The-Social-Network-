@@ -112,6 +112,15 @@ export default function AssignmentUploadForm({
       return;
     }
 
+    if (!formData.instructions.trim()) {
+      toast({
+        title: "Instructions Required",
+        description: "Please enter assignment instructions",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!formData.file) {
       toast({
         title: "File Required",
@@ -339,15 +348,16 @@ export default function AssignmentUploadForm({
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="instructions">Instructions</Label>
+              <Label htmlFor="instructions">Instructions *</Label>
               <Textarea
                 id="instructions"
-                placeholder="Provide instructions for students (optional)"
+                placeholder="Provide instructions for students (required)"
                 value={formData.instructions}
                 onChange={(e) =>
                   handleInputChange("instructions", e.target.value)
                 }
                 rows={3}
+                required
               />
             </div>
           </div>
@@ -356,7 +366,14 @@ export default function AssignmentUploadForm({
           <div className="flex space-x-4">
             <Button
               type="submit"
-              disabled={submitting || !formData.file}
+              disabled={
+                submitting || 
+                !formData.file || 
+                !formData.title.trim() || 
+                !formData.assignedDate || 
+                !formData.dueDate || 
+                !formData.instructions.trim()
+              }
               className="bg-green-600 hover:bg-green-700"
             >
               {submitting ? (

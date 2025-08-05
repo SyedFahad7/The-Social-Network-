@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Sidebar from "./Sidebar";
+import SearchBar from "./SearchBar";
 import { Bell, Search, Menu, X, Inbox, User, Camera } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -501,13 +502,7 @@ export default function DashboardLayout({
               </Button>
               {/* Search Bar */}
               <div className="hidden sm:block flex-1 max-w-md">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground w-4 h-4 transition-colors duration-200" />
-                  <Input
-                    placeholder="Search..."
-                    className="pl-10 bg-muted/40 focus:bg-background border-border transition-all duration-200 focus:ring-2 ring-ring/30 text-foreground placeholder-muted-foreground"
-                  />
-                </div>
+                <SearchBar role={role} />
               </div>
             </div>
             <div className="flex items-center space-x-3">
@@ -1020,13 +1015,7 @@ export default function DashboardLayout({
 
           {/* Mobile Search Bar */}
           <div className="sm:hidden mt-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
-              <Input
-                placeholder="Search..."
-                className="pl-10 bg-gray-50 dark:bg-gray-700 border-gray-200 dark:border-gray-600 focus:bg-white dark:focus:bg-gray-600 transition-colors text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400"
-              />
-            </div>
+            <SearchBar role={role} />
           </div>
         </header>
 

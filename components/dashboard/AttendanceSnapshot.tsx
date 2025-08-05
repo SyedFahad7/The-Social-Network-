@@ -41,43 +41,49 @@ export default function AttendanceSnapshot({ userId }: AttendanceSnapshotProps) 
     if (!userId) return;
     const fetchWeekAttendance = async () => {
       setLoading(true);
-      const days: DayAttendance[] = [];
-      const today = new Date();
-      const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-      
-      // Calculate the date of Monday in the current week
-      const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
-      const monday = new Date(today);
-      monday.setDate(today.getDate() + mondayOffset);
-      
-      const fetches = [];
-      // Fetch data for Monday to Saturday (6 days)
-      for (let i = 0; i < 6; i++) {
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + i);
-        const dateString = format(date, 'yyyy-MM-dd');
-        fetches.push(apiClient.getStudentDailyAttendance(dateString));
-      }
-      
-      const results = await Promise.all(fetches);
-      for (let i = 0; i < results.length; i++) {
-        const res = results[i];
-        const date = new Date(monday);
-        date.setDate(monday.getDate() + i);
-        const label = format(date, 'EEE');
-        if (res.success && res.data && res.data.summary) {
-          days.push({
-            date: label,
-            present: res.data.summary.present,
-            absent: res.data.summary.absent,
-            late: res.data.summary.late,
-          });
+      try {
+        // Use the new optimized weekly endpoint instead of 6 separate calls
+        const response = await apiClient.getStudentWeeklyAttendance();
+        
+        if (response.success && response.data && response.data.weeklyData) {
+          setData(response.data.weeklyData);
         } else {
+          // Fallback: create empty data if API fails
+          const days: DayAttendance[] = [];
+          const today = new Date();
+          const currentDay = today.getDay();
+          const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+          const monday = new Date(today);
+          monday.setDate(today.getDate() + mondayOffset);
+          
+          for (let i = 0; i < 6; i++) {
+            const date = new Date(monday);
+            date.setDate(monday.getDate() + i);
+            const label = format(date, 'EEE');
+            days.push({ date: label, present: 0, absent: 0, late: 0 });
+          }
+          setData(days);
+        }
+      } catch (error) {
+        console.error('Error fetching weekly attendance:', error);
+        // Fallback: create empty data on error
+        const days: DayAttendance[] = [];
+        const today = new Date();
+        const currentDay = today.getDay();
+        const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+        const monday = new Date(today);
+        monday.setDate(today.getDate() + mondayOffset);
+        
+        for (let i = 0; i < 6; i++) {
+          const date = new Date(monday);
+          date.setDate(monday.getDate() + i);
+          const label = format(date, 'EEE');
           days.push({ date: label, present: 0, absent: 0, late: 0 });
         }
+        setData(days);
+      } finally {
+        setLoading(false);
       }
-      setData(days);
-      setLoading(false);
     };
     fetchWeekAttendance();
   }, [userId]);

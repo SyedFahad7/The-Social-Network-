@@ -6,7 +6,7 @@ const User = require('../models/User');
 const Subject = require('../models/Subject');
 const AcademicYear = require('../models/AcademicYear');
 const { asyncHandler } = require('../middleware/errorHandler');
-const { authenticate, requireTeacher } = require('../middleware/auth');
+const { authenticate, requireTeacher, requireStudent } = require('../middleware/auth');
 const PDFDocument = require('pdfkit');
 const stream = require('stream');
 
@@ -814,6 +814,157 @@ router.get('/student/daily', [
   });
 }));
 
+// @route   GET /api/attendance/student/weekly
+// @desc    Get student's attendance for the current week (Monday to Saturday) in a single query
+// @access  Private (Student can only access their own data)
+router.get('/student/weekly', [
+  authenticate
+], asyncHandler(async (req, res) => {
+  const studentId = req.user._id;
+
+  // Get student's details
+  const student = await User.findById(studentId);
+  if (!student) {
+    return res.status(404).json({
+      success: false,
+      message: 'Student not found'
+    });
+  }
+
+  try {
+    // Calculate the date of Monday in the current week
+    const today = new Date();
+    const currentDay = today.getDay(); // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+    const mondayOffset = currentDay === 0 ? -6 : 1 - currentDay;
+    const monday = new Date(today);
+    monday.setDate(today.getDate() + mondayOffset);
+
+    // Generate array of dates for Monday to Saturday
+    const weekDates = [];
+    for (let i = 0; i < 6; i++) {
+      const date = new Date(monday);
+      date.setDate(monday.getDate() + i);
+      weekDates.push(date.toISOString().split('T')[0]);
+    }
+
+    // Build filter for the student
+    const filter = {
+      academicYear: student.academicYear || student._doc?.academicYear || (student.get && student.get('academicYear')),
+      department: student.department,
+      year: student.year,
+      semester: student.currentSemester,
+      section: student.section,
+      date: { $in: weekDates }
+    };
+
+    // Find all attendance records for the student's section for the entire week
+    const attendanceRecords = await Attendance.find(filter)
+      .populate('subject', 'name code')
+      .populate('markedBy', 'firstName lastName')
+      .sort({ date: 1, hour: 1 });
+
+    // Create a map for all 6 days with 6 hours each
+    const weeklyAttendance = {};
+    weekDates.forEach(date => {
+      weeklyAttendance[date] = {};
+      for (let hour = 1; hour <= 6; hour++) {
+        weeklyAttendance[date][hour] = {
+          hour,
+          subject: null,
+          status: 'not_marked',
+          markedBy: null,
+          timestamp: null
+        };
+      }
+    });
+
+    // Populate with actual attendance data
+    attendanceRecords.forEach(record => {
+      const studentRecord = record.students.find(s => 
+        getIdString(s.studentId) === getIdString(studentId)
+      );
+
+      if (studentRecord) {
+        weeklyAttendance[record.date][record.hour] = {
+          hour: record.hour,
+          subject: record.subject,
+          status: studentRecord.late ? 'late' : studentRecord.status,
+          markedBy: record.markedBy,
+          timestamp: record.lastEditedAt,
+          comments: studentRecord.comments || ''
+        };
+      } else {
+        // Record exists but student not marked
+        weeklyAttendance[record.date][record.hour] = {
+          hour: record.hour,
+          subject: record.subject,
+          status: 'not_marked',
+          markedBy: record.markedBy,
+          timestamp: record.lastEditedAt
+        };
+      }
+    });
+
+    // Calculate summary for each day
+    const dailySummaries = {};
+    weekDates.forEach(date => {
+      const dayData = weeklyAttendance[date];
+      const summary = {
+        total: 6,
+        present: 0,
+        absent: 0,
+        late: 0,
+        not_marked: 0
+      };
+
+      Object.values(dayData).forEach(record => {
+        summary[record.status]++;
+      });
+
+      dailySummaries[date] = summary;
+    });
+
+    // Format response for frontend
+    const formattedData = weekDates.map(date => {
+      const dayName = new Date(date).toLocaleDateString('en-US', { weekday: 'short' });
+      const summary = dailySummaries[date];
+      
+      return {
+        date: dayName,
+        present: summary.present,
+        absent: summary.absent,
+        late: summary.late,
+        not_marked: summary.not_marked
+      };
+    });
+
+    res.json({
+      success: true,
+      data: {
+        weekDates,
+        student: {
+          name: `${student.firstName || ''} ${student.lastName || ''}`.trim(),
+          rollNumber: student.rollNumber,
+          section: student.section,
+          year: student.year,
+          semester: student.currentSemester
+        },
+        dailySummaries,
+        weeklyData: formattedData,
+        detailedAttendance: weeklyAttendance
+      }
+    });
+
+  } catch (error) {
+    console.error('[ATTENDANCE/STUDENT/WEEKLY] Error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch weekly attendance',
+      error: error.message
+    });
+  }
+}));
+
 // @route   GET /api/attendance/overview
 // @desc    Get attendance overview for today (present, absent, late counts)
 // @access  Private (Super Admin only)
@@ -909,6 +1060,169 @@ router.get('/super-admin/overview', authenticate, asyncHandler(async (req, res) 
       success: false,
       message: 'Failed to fetch attendance overview',
       error: error.message,
+    });
+  }
+}));
+
+// @route   GET /api/attendance/student/streak
+// @desc    Get student's study streak
+// @access  Private (Student)
+router.get('/student/streak', [
+  authenticate,
+  requireStudent
+], asyncHandler(async (req, res) => {
+  const DailyAttendanceSummary = require('../models/DailyAttendanceSummary');
+  
+  try {
+    const streak = await DailyAttendanceSummary.calculateStudyStreak(req.user._id);
+    
+    res.json({
+      success: true,
+      data: {
+        streak,
+        studentId: req.user._id
+      }
+    });
+  } catch (error) {
+    console.error('Error calculating study streak:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to calculate study streak'
+    });
+  }
+}));
+
+// @route   GET /api/attendance/student/daily-summary
+// @desc    Get student's daily attendance summary
+// @access  Private (Student)
+router.get('/student/daily-summary', [
+  authenticate,
+  requireStudent,
+  query('date').optional().isISO8601().withMessage('Valid date is required')
+], asyncHandler(async (req, res) => {
+  const DailyAttendanceSummary = require('../models/DailyAttendanceSummary');
+  const errors = validationResult(req);
+  
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: errors.array()
+    });
+  }
+
+  const date = req.query.date || new Date().toISOString().split('T')[0];
+  
+  try {
+    const summary = await DailyAttendanceSummary.calculateDailyAttendance(req.user._id, date);
+    
+    res.json({
+      success: true,
+      data: {
+        summary,
+        date
+      }
+    });
+  } catch (error) {
+    console.error('Error getting daily summary:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get daily summary'
+    });
+  }
+}));
+
+// @route   GET /api/attendance/student/stats
+// @desc    Get student's attendance statistics
+// @access  Private (Student)
+router.get('/student/stats', [
+  authenticate,
+  requireStudent,
+  query('days').optional().isInt({ min: 1, max: 365 }).withMessage('Days must be between 1 and 365')
+], asyncHandler(async (req, res) => {
+  const DailyAttendanceSummary = require('../models/DailyAttendanceSummary');
+  const errors = validationResult(req);
+  
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: errors.array()
+    });
+  }
+
+  const days = parseInt(req.query.days) || 30;
+  
+  try {
+    const stats = await DailyAttendanceSummary.getAttendanceStats(req.user._id, days);
+    const streak = await DailyAttendanceSummary.calculateStudyStreak(req.user._id);
+    
+    res.json({
+      success: true,
+      data: {
+        ...stats,
+        currentStreak: streak
+      }
+    });
+  } catch (error) {
+    console.error('Error getting attendance stats:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get attendance statistics'
+    });
+  }
+}));
+
+// @route   POST /api/attendance/student/recalculate
+// @desc    Recalculate attendance for a specific date range
+// @access  Private (Student)
+router.post('/student/recalculate', [
+  authenticate,
+  requireStudent,
+  body('startDate').isISO8601().withMessage('Valid start date is required'),
+  body('endDate').isISO8601().withMessage('Valid end date is required')
+], asyncHandler(async (req, res) => {
+  const DailyAttendanceSummary = require('../models/DailyAttendanceSummary');
+  const errors = validationResult(req);
+  
+  if (!errors.isEmpty()) {
+    return res.status(400).json({
+      success: false,
+      message: 'Validation failed',
+      errors: errors.array()
+    });
+  }
+
+  const { startDate, endDate } = req.body;
+  
+  try {
+    const start = new Date(startDate);
+    const end = new Date(endDate);
+    const summaries = [];
+    
+    // Recalculate for each day in the range
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      const dateStr = date.toISOString().split('T')[0];
+      const summary = await DailyAttendanceSummary.calculateDailyAttendance(req.user._id, dateStr);
+      summaries.push(summary);
+    }
+    
+    // Recalculate overall streak
+    const streak = await DailyAttendanceSummary.calculateStudyStreak(req.user._id);
+    
+    res.json({
+      success: true,
+      data: {
+        summaries,
+        currentStreak: streak,
+        message: `Recalculated attendance for ${summaries.length} days`
+      }
+    });
+  } catch (error) {
+    console.error('Error recalculating attendance:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to recalculate attendance'
     });
   }
 }));
