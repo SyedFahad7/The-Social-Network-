@@ -381,7 +381,7 @@ class ApiClient {
     return this.request(`/attendance/student/daily-summary${params}`);
   }
 
-  async getStudentAttendanceStats(days: number = 30) {
+  async getStudentAttendanceStatsByDays(days: number = 30) {
     return this.request(`/attendance/student/stats?days=${days}`);
   }
 
