@@ -6,35 +6,33 @@ services:
     dockerContext: ./backend
     plan: starter
     port: 5000
-    buildCommand: ""
-    startCommand: ""
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 5000
       - key: MONGODB_URI
-        value: mongodb+srv://socialnetwork:socialnetwork123@socialnetwork.nbtzdc2.mongodb.net/?retryWrites=true&w=majority&appName=SocialNetwork
+        value: "mongodb+srv://socialnetwork:socialnetwork123@socialnetwork.nbtzdc2.mongodb.net/?retryWrites=true&w=majority&appName=SocialNetwork"
       - key: REDIS_URL
-        value: rediss://red-d1s1n03uibrs73aj7dkg:sqOGDuxa6HhfAhwlGVRPq5dA1aMxOzhD@oregon-keyvalue.render.com:6379
+        value: "rediss://red-d1s1n03uibrs73aj7dkg:sqOGDuxa6HhfAhwlGVRPq5dA1aMxOzhD@oregon-keyvalue.render.com:6379"
       - key: JWT_SECRET
-        value: a5ebca41b2d85bb5321911769e541786726696c8c386a2fada43109b30ceac201f4ab2c9a9587fe3d7555135fe9cc7ad5f06df8da17d61bdc9c36032ec7b3b12
+        value: "a5ebca41b2d85bb5321911769e541786726696c8c386a2fada43109b30ceac201f4ab2c9a9587fe3d7555135fe9cc7ad5f06df8da17d61bdc9c36032ec7b3b12"
       - key: CLOUDINARY_CLOUD_NAME
         value: dqtjlg3xt
       - key: CLOUDINARY_API_KEY
-        value: 587838936496132
+        value: "587838936496132"
       - key: CLOUDINARY_API_SECRET
-        value: 5Iajixy-zFqmuNWsqRZYBHJ7GiU
+        value: "5Iajixy-zFqmuNWsqRZYBHJ7GiU"
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_USER
         value: socialnetwork.edu@gmail.com
       - key: EMAIL_PASS
-        value: peeo tcob mkrz xraz
+        value: "peeo tcob mkrz xraz"
       - key: VAPID_PUBLIC_KEY
-        value: BK59kcjJ7eHCMM3CRjOqv9yEE3K06_43ZHhPEn3er7Zp5B_-Tlbt2iXtD6yV2EnSXN7MgUm8NUgojf_aPNcAE34
+        value: "BK59kcjJ7eHCMM3CRjOqv9yEE3K06_43ZHhPEn3er7Zp5B_-Tlbt2iXtD6yV2EnSXN7MgUm8NUgojf_aPNcAE34"
       - key: VAPID_PRIVATE_KEY
-        value: 3xQ5RumVO0EzH4HTCkEItpLqqusQBv8ZuSwwHP9reR4
+        value: "3xQ5RumVO0EzH4HTCkEItpLqqusQBv8ZuSwwHP9reR4"
       - key: FIREBASE_PROJECT_ID
         value: social-network-af7a3
       - key: FIREBASE_CLIENT_EMAIL
@@ -49,8 +47,6 @@ services:
     dockerfilePath: ./Dockerfile.prod
     plan: starter
     port: 3000
-    buildCommand: ""
-    startCommand: ""
     envVars:
       - key: NODE_ENV
         value: production
@@ -65,9 +61,9 @@ services:
       - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
         value: social-network-af7a3.firebasestorage.app
       - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-        value: 142046412638
+        value: "142046412638"
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
-        value: 1:142046412638:web:31629d61da333fe82859cf
+        value: "1:142046412638:web:31629d61da333fe82859cf"
       - key: NEXT_PUBLIC_VAPID_PUBLIC_KEY
-        value: BK59kcjJ7eHCMM3CRjOqv9yEE3K06_43ZHhPEn3er7Zp5B_-Tlbt2iXtD6yV2EnSXN7MgUm8NUgojf_aPNcAE34
+        value: "BK59kcjJ7eHCMM3CRjOqv9yEE3K06_43ZHhPEn3er7Zp5B_-Tlbt2iXtD6yV2EnSXN7MgUm8NUgojf_aPNcAE34"
     healthCheckPath: /
