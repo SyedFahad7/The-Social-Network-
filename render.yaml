@@ -3,7 +3,7 @@ services:
     name: social-network-backend
     env: docker
     dockerfilePath: ./backend/Dockerfile.prod
-    plan: starter
+    plan: free
     envVars:
       - key: NODE_ENV
         value: production
@@ -40,7 +40,7 @@ services:
     name: social-network-frontend
     env: docker
     dockerfilePath: ./Dockerfile.prod
-    plan: starter
+    plan: free
     envVars:
       - key: NODE_ENV
         value: production
