@@ -23,7 +23,8 @@ import {
   Shield,
   Bell,
   FilePenLine,
-  X
+  X,
+  UserPlus
 } from 'lucide-react';
 import { apiClient } from '@/lib/api';
 
@@ -39,7 +40,10 @@ const roleMenus = {
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/student/attendance' },
     { icon: Bell, label: 'Notifications', href: '/dashboard/student/notifications' },
     {icon: Table, label: 'TimeTable', href:'/dashboard/student/timetable'},
-    {icon: FilePenLine, label: 'Assignments', href: '/dashboard/student/assignments'}
+    {icon: FilePenLine, label: 'Assignments', href: '/dashboard/student/assignments'},
+    {icon: FileText, label: 'Surprise Tests', href: '/dashboard/student/tests'},
+    {icon: Award, label: 'My Work', href: '/dashboard/student/my-work'},
+    {icon: BarChart3, label: 'Feed', href: '/dashboard/student/feed'}
   ],
   teacher: [
     { icon: Home, label: 'Dashboard', href: '/dashboard/teacher' },
@@ -47,12 +51,14 @@ const roleMenus = {
     { icon: ClipboardList, label: 'Attendance', href: '/dashboard/teacher/attendance' },
     { icon: Bell, label: 'Send Notifications', href: '/dashboard/teacher/notifications' },
     { icon: FilePenLine, label: 'Assignments', href: '/dashboard/teacher/assignments' },
+    { icon: FileText, label: 'Surprise Tests', href: '/dashboard/teacher/tests' },
   ],
   'super-admin': [
     { icon: Home, label: 'Dashboard', href: '/dashboard/super-admin' },
     { icon: BookOpen, label: 'My Sections', href: '/dashboard/super-admin/my-sections' },
     { icon: Bell, label: 'Send Notifications', href: '/dashboard/super-admin/notifications' },
     {icon:Users, label:'My Faculty', href:'/dashboard/super-admin/my-faculty'},
+    {icon: UserPlus, label:'Add Users', href:'/dashboard/super-admin/users/add'},
   ],
 };
 

@@ -1,0 +1,73 @@
+{
+  "family": "social-network-frontend",
+  "networkMode": "awsvpc",
+  "requiresCompatibilities": ["FARGATE"],
+  "cpu": "256",
+  "memory": "512",
+  "executionRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::ACCOUNT_ID:role/ecsTaskRole",
+  "containerDefinitions": [
+    {
+      "name": "frontend",
+      "image": "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/social-network-frontend:latest",
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "protocol": "tcp"
+        }
+      ],
+      "environment": [
+        {
+          "name": "NODE_ENV",
+          "value": "production"
+        }
+      ],
+      "secrets": [
+        {
+          "name": "NEXT_PUBLIC_API_URL",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/social-network/api-url"
+        },
+        {
+          "name": "NEXT_PUBLIC_FIREBASE_API_KEY",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/social-network/firebase-api-key"
+        },
+        {
+          "name": "NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/social-network/firebase-auth-domain"
+        },
+        {
+          "name": "NEXT_PUBLIC_FIREBASE_PROJECT_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/social-network/firebase-project-id"
+        },
+        {
+          "name": "NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/social-network/firebase-storage-bucket"
+        },
+        {
+          "name": "NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/social-network/firebase-messaging-sender-id"
+        },
+        {
+          "name": "NEXT_PUBLIC_FIREBASE_APP_ID",
+          "valueFrom": "arn:aws:ssm:us-east-1:ACCOUNT_ID:parameter/social-network/firebase-app-id"
+        }
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/social-network-frontend",
+          "awslogs-region": "us-east-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      },
+      "healthCheck": {
+        "command": ["CMD-SHELL", "curl -f http://localhost:3000 || exit 1"],
+        "interval": 30,
+        "timeout": 5,
+        "retries": 3,
+        "startPeriod": 60
+      },
+      "essential": true
+    }
+  ]
+}

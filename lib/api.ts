@@ -442,8 +442,26 @@ class ApiClient {
 
   // Certificate methods
   async getCertificates(params: any = {}) {
+    // If a specific certificate ID is provided, use the single certificate endpoint
+    if (params.certificateId) {
+      const certificateId = params.certificateId;
+      delete params.certificateId; // Remove from params to avoid adding to query string
+      return this.request(`/certificates/${certificateId}`);
+    }
+    
     const queryString = new URLSearchParams(params).toString();
     return this.request(`/certificates?${queryString}`);
+  }
+
+  async getMyCertificates(params: any = {}) {
+    const queryString = new URLSearchParams(params).toString();
+    return this.request(`/certificates/my?${queryString}`);
+  }
+
+  async deleteCertificate(id: string) {
+    return this.request(`/certificates/${id}`, {
+      method: 'DELETE',
+    });
   }
 
   async uploadCertificate(certificateData: any) {
@@ -451,6 +469,33 @@ class ApiClient {
       method: 'POST',
       body: JSON.stringify(certificateData),
     });
+  }
+
+  async uploadCertificateWithFile(formData: FormData) {
+    // For file uploads, we don't set Content-Type header (let browser set it with boundary)
+    const url = `${this.baseURL}/certificates`;
+    
+    const config: RequestInit = {
+      method: 'POST',
+      body: formData,
+      credentials: 'include',
+    };
+
+    // Add Authorization header if token exists
+    if (this.token) {
+      config.headers = {
+        'Authorization': `Bearer ${this.token}`,
+      };
+    }
+
+    const response = await fetch(url, config);
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.message || `HTTP ${response.status}`);
+    }
+
+    return data;
   }
 
   async approveCertificate(id: string, approvalData: any) {
@@ -469,6 +514,46 @@ class ApiClient {
 
   async getCertificateStats() {
     return this.request('/certificates/stats');
+  }
+
+  // Certificate Feed Methods
+  async getDepartmentFeed(params: { page?: number; limit?: number; certificateType?: string } = {}) {
+    const queryString = new URLSearchParams(params as any).toString();
+    return this.request(`/certificates/feed/department${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getYearFeed(params: { page?: number; limit?: number; certificateType?: string } = {}) {
+    const queryString = new URLSearchParams(params as any).toString();
+    return this.request(`/certificates/feed/year${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getClassFeed(params: { page?: number; limit?: number; certificateType?: string } = {}) {
+    const queryString = new URLSearchParams(params as any).toString();
+    return this.request(`/certificates/feed/class${queryString ? `?${queryString}` : ''}`);
+  }
+
+  async getCertificateTypes() {
+    return this.request('/certificates/types');
+  }
+
+  // Certificate Social Features
+  async likeCertificate(certificateId: string) {
+    return this.request(`/certificates/${certificateId}/like`, {
+      method: 'POST',
+    });
+  }
+
+  async unlikeCertificate(certificateId: string) {
+    return this.request(`/certificates/${certificateId}/like`, {
+      method: 'DELETE',
+    });
+  }
+
+  async addComment(certificateId: string, text: string) {
+    return this.request(`/certificates/${certificateId}/comment`, {
+      method: 'POST',
+      body: JSON.stringify({ text }),
+    });
   }
 
   // Feedback methods
@@ -910,6 +995,13 @@ export const {
   approveCertificate,
   rejectCertificate,
   getCertificateStats,
+  getDepartmentFeed,
+  getYearFeed,
+  getClassFeed,
+  getCertificateTypes,
+  likeCertificate,
+  unlikeCertificate,
+  addComment,
   getFeedback,
   createFeedback,
   submitFeedbackResponse,

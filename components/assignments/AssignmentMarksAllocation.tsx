@@ -54,9 +54,10 @@ interface AssignmentMarks {
 
 interface AssignmentMarksAllocationProps {
   refreshTrigger: number;
+  typeFilter?: 'assignment' | 'test';
 }
 
-export default function AssignmentMarksAllocation({ refreshTrigger }: AssignmentMarksAllocationProps) {
+export default function AssignmentMarksAllocation({ refreshTrigger, typeFilter }: AssignmentMarksAllocationProps) {
   const [assignments, setAssignments] = useState<Assignment[]>([]);
   const [loading, setLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -74,7 +75,8 @@ export default function AssignmentMarksAllocation({ refreshTrigger }: Assignment
       const response = await apiClient.getTeacherAssignmentDocuments();
 
       if (response?.success) {
-        setAssignments(response.data.assignments);
+        const items: Assignment[] = response.data.assignments || [];
+        setAssignments(typeFilter ? items.filter(a => a.type === typeFilter) : items);
       } else {
         throw new Error(response?.message || "Failed to fetch assignments");
       }

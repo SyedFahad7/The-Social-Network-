@@ -18,11 +18,13 @@ import { useToast } from "@/hooks/use-toast";
 interface AssignmentFiltersProps {
   onFiltersChange: (filters: any) => void;
   onAssignmentNumberCheck: (exists: boolean, assignment?: any) => void;
+  defaultType?: 'assignment' | 'test';
 }
 
 export default function AssignmentFilters({
   onFiltersChange,
   onAssignmentNumberCheck,
+  defaultType = 'assignment',
 }: AssignmentFiltersProps) {
   const [academicYears, setAcademicYears] = useState<any[]>([]);
   const [selectedAcademicYear, setSelectedAcademicYear] = useState<string>("");
@@ -401,7 +403,7 @@ export default function AssignmentFilters({
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <Filter className="w-5 h-5" />
-          <span>Assignment Filters</span>
+          <span>{defaultType === 'test' ? 'Surprise Test Filters' : 'Assignment Filters'}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>

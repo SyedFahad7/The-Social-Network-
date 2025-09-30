@@ -29,14 +29,66 @@ const certificateSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Certificate type is required'],
     enum: [
-      'course-completion',
-      'certification',
-      'achievement',
-      'participation',
-      'internship',
-      'project',
-      'competition',
-      'other'
+      'Participation',
+      'Achievement', 
+      'Recognition',
+      'Workshop',
+      'Award',
+      'Appreciation',
+      'Internship',
+      'Extra-curricular',
+      'Course Completion',
+      'Certification',
+      'Project',
+      'Competition',
+      'Leadership',
+      'Volunteer',
+      'Research',
+      'Publication',
+      'Training',
+      'Conference',
+      'Seminar',
+      'Bootcamp',
+      'Hackathon',
+      'Scholarship',
+      'Honor',
+      'Distinction',
+      'Merit',
+      'Excellence',
+      'Innovation',
+      'Creativity',
+      'Teamwork',
+      'Communication',
+      'Problem Solving',
+      'Critical Thinking',
+      'Leadership',
+      'Mentorship',
+      'Community Service',
+      'Social Impact',
+      'Environmental',
+      'Cultural',
+      'Sports',
+      'Arts',
+      'Music',
+      'Drama',
+      'Debate',
+      'Public Speaking',
+      'Writing',
+      'Photography',
+      'Design',
+      'Technology',
+      'Programming',
+      'Data Science',
+      'AI/ML',
+      'Cybersecurity',
+      'Cloud Computing',
+      'Mobile Development',
+      'Web Development',
+      'Game Development',
+      'Blockchain',
+      'IoT',
+      'Robotics',
+      'Other'
     ]
   },
   category: {
@@ -137,6 +189,38 @@ const certificateSchema = new mongoose.Schema({
     max: 100
   },
   
+  // LinkedIn-style additional fields
+  skills: [{
+    type: String,
+    trim: true,
+    lowercase: true
+  }],
+  duration: {
+    type: String, // e.g., "3 months", "6 weeks", "1 year"
+    trim: true
+  },
+  grade: {
+    type: String, // e.g., "A+", "95%", "Distinction"
+    trim: true
+  },
+  verificationCode: {
+    type: String,
+    trim: true
+  },
+  externalUrl: {
+    type: String,
+    trim: true,
+    validate: {
+      validator: function(v) {
+        if (v) {
+          return /^https?:\/\/.+/.test(v);
+        }
+        return true;
+      },
+      message: 'External URL must be a valid HTTP/HTTPS URL'
+    }
+  },
+  
   // Metadata
   tags: [{
     type: String,
@@ -145,7 +229,53 @@ const certificateSchema = new mongoose.Schema({
   }],
   isPublic: {
     type: Boolean,
+    default: true // Changed to true for LinkedIn-style public sharing
+  },
+  isVerified: {
+    type: Boolean,
     default: false
+  },
+  verifiedAt: {
+    type: Date,
+    default: null
+  },
+  
+  // Social Features
+  likes: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    likedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  likesCount: {
+    type: Number,
+    default: 0
+  },
+  comments: [{
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    text: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: [500, 'Comment cannot exceed 500 characters']
+    },
+    createdAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
+  commentsCount: {
+    type: Number,
+    default: 0
   }
 }, {
   timestamps: true
@@ -238,6 +368,279 @@ certificateSchema.statics.getStats = async function() {
   });
   
   return result;
+};
+
+// Static method to get department feed (all students in department)
+certificateSchema.statics.getDepartmentFeed = async function(departmentId, page = 1, limit = 10, certificateType = null) {
+  const skip = (page - 1) * limit;
+  const matchQuery = {
+    status: 'approved',
+    isPublic: true
+  };
+  
+  if (certificateType) {
+    matchQuery.certificateType = certificateType;
+  }
+  
+  const pipeline = [
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'student',
+        foreignField: '_id',
+        as: 'studentInfo'
+      }
+    },
+    {
+      $unwind: '$studentInfo'
+    },
+    {
+      $match: {
+        'studentInfo.department': departmentId,
+        ...matchQuery
+      }
+    },
+    {
+      $sort: { createdAt: -1 }
+    },
+    {
+      $skip: skip
+    },
+    {
+      $limit: limit
+    },
+    {
+      $project: {
+        title: 1,
+        description: 1,
+        issuer: 1,
+        certificateType: 1,
+        category: 1,
+        issueDate: 1,
+        fileUrl: 1,
+        skills: 1,
+        duration: 1,
+        grade: 1,
+        externalUrl: 1,
+        isVerified: 1,
+        createdAt: 1,
+        likes: 1,
+        likesCount: 1,
+        comments: 1,
+        commentsCount: 1,
+        student: {
+          _id: '$studentInfo._id',
+          firstName: '$studentInfo.firstName',
+          lastName: '$studentInfo.lastName',
+          rollNumber: '$studentInfo.rollNumber',
+          year: '$studentInfo.year',
+          section: '$studentInfo.section',
+          profilePicture: '$studentInfo.profilePicture'
+        }
+      }
+    }
+  ];
+  
+  return await this.aggregate(pipeline);
+};
+
+// Static method to get year feed (students in same year)
+certificateSchema.statics.getYearFeed = async function(departmentId, year, page = 1, limit = 10, certificateType = null) {
+  const skip = (page - 1) * limit;
+  const matchQuery = {
+    status: 'approved',
+    isPublic: true
+  };
+  
+  if (certificateType) {
+    matchQuery.certificateType = certificateType;
+  }
+  
+  const pipeline = [
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'student',
+        foreignField: '_id',
+        as: 'studentInfo'
+      }
+    },
+    {
+      $unwind: '$studentInfo'
+    },
+    {
+      $match: {
+        'studentInfo.department': departmentId,
+        'studentInfo.year': year,
+        ...matchQuery
+      }
+    },
+    {
+      $sort: { createdAt: -1 }
+    },
+    {
+      $skip: skip
+    },
+    {
+      $limit: limit
+    },
+    {
+      $project: {
+        title: 1,
+        description: 1,
+        issuer: 1,
+        certificateType: 1,
+        category: 1,
+        issueDate: 1,
+        fileUrl: 1,
+        skills: 1,
+        duration: 1,
+        grade: 1,
+        externalUrl: 1,
+        isVerified: 1,
+        createdAt: 1,
+        likes: 1,
+        likesCount: 1,
+        comments: 1,
+        commentsCount: 1,
+        student: {
+          _id: '$studentInfo._id',
+          firstName: '$studentInfo.firstName',
+          lastName: '$studentInfo.lastName',
+          rollNumber: '$studentInfo.rollNumber',
+          year: '$studentInfo.year',
+          section: '$studentInfo.section',
+          profilePicture: '$studentInfo.profilePicture'
+        }
+      }
+    }
+  ];
+  
+  return await this.aggregate(pipeline);
+};
+
+// Static method to get class feed (students in same section)
+certificateSchema.statics.getClassFeed = async function(departmentId, year, section, page = 1, limit = 10, certificateType = null) {
+  const skip = (page - 1) * limit;
+  const matchQuery = {
+    status: 'approved',
+    isPublic: true
+  };
+  
+  if (certificateType) {
+    matchQuery.certificateType = certificateType;
+  }
+  
+  const pipeline = [
+    {
+      $lookup: {
+        from: 'users',
+        localField: 'student',
+        foreignField: '_id',
+        as: 'studentInfo'
+      }
+    },
+    {
+      $unwind: '$studentInfo'
+    },
+    {
+      $match: {
+        'studentInfo.department': departmentId,
+        'studentInfo.year': year,
+        'studentInfo.section': section,
+        ...matchQuery
+      }
+    },
+    {
+      $sort: { createdAt: -1 }
+    },
+    {
+      $skip: skip
+    },
+    {
+      $limit: limit
+    },
+    {
+      $project: {
+        title: 1,
+        description: 1,
+        issuer: 1,
+        certificateType: 1,
+        category: 1,
+        issueDate: 1,
+        fileUrl: 1,
+        skills: 1,
+        duration: 1,
+        grade: 1,
+        externalUrl: 1,
+        isVerified: 1,
+        createdAt: 1,
+        likes: 1,
+        likesCount: 1,
+        comments: 1,
+        commentsCount: 1,
+        student: {
+          _id: '$studentInfo._id',
+          firstName: '$studentInfo.firstName',
+          lastName: '$studentInfo.lastName',
+          rollNumber: '$studentInfo.rollNumber',
+          year: '$studentInfo.year',
+          section: '$studentInfo.section',
+          profilePicture: '$studentInfo.profilePicture'
+        }
+      }
+    }
+  ];
+  
+  return await this.aggregate(pipeline);
+};
+
+// Like/Unlike functionality
+certificateSchema.statics.likeCertificate = async function(certificateId, userId) {
+  const certificate = await this.findById(certificateId);
+  if (!certificate) {
+    throw new Error('Certificate not found');
+  }
+  
+  // Check if user already liked
+  const existingLike = certificate.likes.find(like => like.user.toString() === userId.toString());
+  if (existingLike) {
+    throw new Error('Certificate already liked');
+  }
+  
+  // Add like
+  certificate.likes.push({ user: userId });
+  certificate.likesCount = certificate.likes.length;
+  
+  await certificate.save();
+  return certificate;
+};
+
+certificateSchema.statics.unlikeCertificate = async function(certificateId, userId) {
+  const certificate = await this.findById(certificateId);
+  if (!certificate) {
+    throw new Error('Certificate not found');
+  }
+  
+  // Remove like
+  certificate.likes = certificate.likes.filter(like => like.user.toString() !== userId.toString());
+  certificate.likesCount = certificate.likes.length;
+  
+  await certificate.save();
+  return certificate;
+};
+
+certificateSchema.statics.addComment = async function(certificateId, userId, text) {
+  const certificate = await this.findById(certificateId);
+  if (!certificate) {
+    throw new Error('Certificate not found');
+  }
+  
+  certificate.comments.push({ user: userId, text });
+  certificate.commentsCount = certificate.comments.length;
+  
+  await certificate.save();
+  return certificate;
 };
 
 module.exports = mongoose.model('Certificate', certificateSchema);
