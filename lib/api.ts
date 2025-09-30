@@ -9,6 +9,10 @@ class ApiClient {
 
   constructor() {
     this.baseURL = API_BASE_URL;
+    console.log('DEBUG apiClient:', {
+      token: this.token,
+      baseURL: this.baseURL
+    });
     // Get token from localStorage if available
     this.token = null;
     if (typeof window !== 'undefined') {
@@ -22,6 +26,14 @@ class ApiClient {
 
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    
+    // Debug logging
+    console.log('DEBUG API Request:', {
+      url,
+      baseURL: this.baseURL,
+      endpoint,
+      options
+    });
     
     // Refresh token from localStorage if we're in browser
     if (typeof window !== 'undefined' && !this.token) {
@@ -41,9 +53,27 @@ class ApiClient {
       ...options,
     };
 
+    console.log('DEBUG Request config:', config);
+
     try {
       const response = await fetch(url, config);
-      const data = await response.json();
+      console.log('DEBUG Response:', {
+        status: response.status,
+        statusText: response.statusText,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      
+      const responseText = await response.text();
+      console.log('DEBUG Response text:', responseText);
+      
+      let data;
+      try {
+        data = JSON.parse(responseText);
+      } catch (parseError) {
+        console.error('DEBUG JSON Parse Error:', parseError);
+        console.error('DEBUG Response was not JSON:', responseText);
+        throw new Error(`Invalid JSON response: ${responseText.substring(0, 100)}...`);
+      }
 
       if (!response.ok) {
         // Handle token expiration specifically
