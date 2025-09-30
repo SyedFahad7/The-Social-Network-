@@ -47,7 +47,8 @@ app.use(cors({
       'http://localhost:3003',
       'http://localhost:3004',
       'http://localhost:3005',
-      'https://social-network-final.vercel.app'
+      'https://social-network-final.vercel.app',
+      'https://social-network-frontend-chm0.onrender.com'
     ];
     
     // Allow requests from allowed origins
