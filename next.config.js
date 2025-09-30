@@ -4,14 +4,16 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   images: { unoptimized: true },
-  // Enable hot reload in Docker containers
-  webpackDevMiddleware: config => {
-    config.watchOptions = {
-      poll: 1000,
-      aggregateTimeout: 300,
+  // Enable hot reload in Docker containers - only in development
+  ...(process.env.NODE_ENV === 'development' && {
+    webpackDevMiddleware: config => {
+      config.watchOptions = {
+        poll: 1000,
+        aggregateTimeout: 300,
+      }
+      return config
     }
-    return config
-  },
+  }),
   async rewrites() {
     if (process.env.NODE_ENV === 'development') {
       return [

@@ -45,7 +45,7 @@ services:
       - key: NODE_ENV
         value: production
       - key: NEXT_PUBLIC_API_URL
-        value: https://social-network-backend.onrender.com/api
+        value: https://social-network-backend-6don.onrender.com/api
       - key: NEXT_PUBLIC_FIREBASE_API_KEY
         value: AIzaSyC7OR9Sqte5dUuasFOf6dTsYL7i6C_YqaQ
       - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
