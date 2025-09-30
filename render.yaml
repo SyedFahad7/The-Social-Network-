@@ -42,6 +42,23 @@ services:
     env: docker
     dockerfilePath: ./Dockerfile.prod
     plan: free
+    dockerBuildArgs:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://social-network-backend-6don.onrender.com/api
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        value: AIzaSyC7OR9Sqte5dUuasFOf6dTsYL7i6C_YqaQ
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        value: social-network-af7a3.firebaseapp.com
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        value: social-network-af7a3
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        value: social-network-af7a3.firebasestorage.app
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        value: 142046412638
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        value: 1:142046412638:web:31629d61da333fe82859cf
+      - key: NEXT_PUBLIC_VAPID_PUBLIC_KEY
+        value: BK59kcjJ7eHCMM3CRjOqv9yEE3K06_43ZHhPEn3er7Zp5B_-Tlbt2iXtD6yV2EnSXN7MgUm8NUgojf_aPNcAE34
     envVars:
       - key: NODE_ENV
         value: production
