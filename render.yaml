@@ -14,31 +14,33 @@ services:
       - key: PORT
         value: 5000
       - key: MONGODB_URI
-        fromDatabase:
-          name: social-network-db
-          property: connectionString
+        value: mongodb+srv://socialnetwork:socialnetwork123@socialnetwork.nbtzdc2.mongodb.net/?retryWrites=true&w=majority&appName=SocialNetwork
       - key: REDIS_URL
-        fromDatabase:
-          name: social-network-redis
-          property: connectionString
+        value: rediss://red-d1s1n03uibrs73aj7dkg:sqOGDuxa6HhfAhwlGVRPq5dA1aMxOzhD@oregon-keyvalue.render.com:6379
       - key: JWT_SECRET
-        generateValue: true
+        value: a5ebca41b2d85bb5321911769e541786726696c8c386a2fada43109b30ceac201f4ab2c9a9587fe3d7555135fe9cc7ad5f06df8da17d61bdc9c36032ec7b3b12
       - key: CLOUDINARY_CLOUD_NAME
-        sync: false
+        value: dqtjlg3xt
       - key: CLOUDINARY_API_KEY
-        sync: false
+        value: 587838936496132
       - key: CLOUDINARY_API_SECRET
-        sync: false
+        value: 5Iajixy-zFqmuNWsqRZYBHJ7GiU
       - key: EMAIL_HOST
         value: smtp.gmail.com
       - key: EMAIL_USER
-        sync: false
+        value: socialnetwork.edu@gmail.com
       - key: EMAIL_PASS
-        sync: false
+        value: peeo tcob mkrz xraz
       - key: VAPID_PUBLIC_KEY
-        sync: false
+        value: BK59kcjJ7eHCMM3CRjOqv9yEE3K06_43ZHhPEn3er7Zp5B_-Tlbt2iXtD6yV2EnSXN7MgUm8NUgojf_aPNcAE34
       - key: VAPID_PRIVATE_KEY
-        sync: false
+        value: 3xQ5RumVO0EzH4HTCkEItpLqqusQBv8ZuSwwHP9reR4
+      - key: FIREBASE_PROJECT_ID
+        value: social-network-af7a3
+      - key: FIREBASE_CLIENT_EMAIL
+        value: firebase-adminsdk-fbsvc@social-network-af7a3.iam.gserviceaccount.com
+      - key: FIREBASE_PRIVATE_KEY
+        value: "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCBKcwggSjAgEAAoIBAQDa2foAzbHH3mJK\nt9gwmeEbkUPr1yZMCStaPjIYHD3lvuCt1zpLCVQVPZOQIzwGmIrEgSp8QHAwVCsQ\nA97w0FXSCuZACviBB4QyWfwFueeWxWMP4jEOrHpkqbLZV8hUGocrnBoJ/ZWBHDZl\nqyfwQQFt9n55mXGJV1V2mqfLXs7kW3sYQD49gr9MT+9Dq+PivoWoKPUr2G5aRlxh\n8apvwwpxqYks+3onvfXfSMzo/I3C/xLS+3GQgsNuyGY6+oS0bonMab+xFFwmM8tH\nlCNlLUKvK9VxorvPinR0mY3vewZysAs8v2pMuF47CNs2/z4mNJEBFyU6aAgEOsE6\nBz78hXp3AgMBAAECggEAEmNfPKMLzXnTc2i4Cvla7yiI9u9oYdohYN858UmqL7wW\nf7TGSpi5jmFSnTlAqWM2waUCr1bwtjbUOW/B0yUGGPRefUIOuDSr+FkUMlz45vOl\ny6dbLNr0G7Ige1+DTwG9mr3ueCls3uDCd09mtyqXFqiv3sK0RfBnF2SONam9I3We\ndC9ZOmvrFRxBIpRdUB/oQ/PItND1jvfqLZZgsUhQR8r/R5RS79RNepDwo2dJ/lEF\nVAXa0dGV7ncsYI5g8kh5r4TduHc+TPvLp7JfWD+mAxqj0Gd841NKKNxR1CYMpaxx\nKczjuYWL8ingbS4aCq08//cdVj1xqoq02+tFgmnYTQKBgQD32dVtI1thJRHlrcKG\n+/iA3ZbN7z9zzc5+3wOSyKLbK54KQVX2KYKE1QD+MKXF6dixjexutH0AAooqE7Yc\nESeep6K6bDtQl90W0f7KDnwzo/wQduLRV2wXxjI3lIzak2HSCKyflH4C6UQzV2W4\n/UYMolxFXBzIEhPd9JmR0GygowKBgQDiDA3RCwmdGaDRgKRmMzeHyOsPGn002eZA\nDEieoW4raPJFdGTA6WqjazGZSVilI18Rg2TXCLpAS0DSkBF0fEB7JfXlJtz2ERyt\nphhPkeu9rG6PBnOEtc2hyEzCWqg2cEJCfYCxvDC2IPwReVet5VhAZDXlx4YWgBHy\nyw8wFLgYHQKBgH4se9UigbtzlqfZDEWRclGP/Nx7Zk76v5ugxn3r+9QdYUgROMSn\nHxWmJepBM7MMN88z0+ALq/LcWB/RhwzEwummp1XGEXAWz2t1ngKY2yui2Ig9LXyq\nx5FWyWu4CPigvNSiq9ZVTs0GmTyVymghL47w/I4mtVQ4t7pvcdpkQ1iHAoGBALKt\nKoKxgdDfQCI52Dk8hMldBIh0vMF496pqy0AwhB/mHZLO9RETsAoqohLzShGGixAR\n1zSuHmLR2RRXcqSrzmBJWjve40vRrOSJ5K+IvVm5Ic8GH2uoNTmLVTlPZaVaSNW7\n1G0pPyvHmNfLHYZEQeTsETpm41OHuig7X+72gan1AoGACY2MqHLCkq0HHpxDIdrT\n5L67W6wWiEVH7vVkCqRbfiRwfK3vanzJiCC0DFgyoStiE7KKnnCnP9jiO0x06yBx\nlwiQRDvkG1NGKfkKKzErubSlyB+PSPMlojXcyMICxvCBXFjAX1d7Jp4vMdqzAy0V\n0qUgmlyVpjuy7FNAaXzWb9w=\n-----END PRIVATE KEY-----\n"
     healthCheckPath: /api/health
 
   - type: web
@@ -55,26 +57,17 @@ services:
       - key: NEXT_PUBLIC_API_URL
         value: https://social-network-backend.onrender.com/api
       - key: NEXT_PUBLIC_FIREBASE_API_KEY
-        sync: false
+        value: AIzaSyC7OR9Sqte5dUuasFOf6dTsYL7i6C_YqaQ
       - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
-        sync: false
+        value: social-network-af7a3.firebaseapp.com
       - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
-        sync: false
+        value: social-network-af7a3
       - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
-        sync: false
+        value: social-network-af7a3.firebasestorage.app
       - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
-        sync: false
+        value: 142046412638
       - key: NEXT_PUBLIC_FIREBASE_APP_ID
-        sync: false
+        value: 1:142046412638:web:31629d61da333fe82859cf
       - key: NEXT_PUBLIC_VAPID_PUBLIC_KEY
-        sync: false
+        value: BK59kcjJ7eHCMM3CRjOqv9yEE3K06_43ZHhPEn3er7Zp5B_-Tlbt2iXtD6yV2EnSXN7MgUm8NUgojf_aPNcAE34
     healthCheckPath: /
-
-databases:
-  - name: social-network-db
-    databaseName: social_network_prod
-    user: admin
-    plan: starter
-
-  - name: social-network-redis
-    plan: starter
