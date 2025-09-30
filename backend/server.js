@@ -87,6 +87,16 @@ app.get('/api/health', (req, res) => {
   });
 });
 
+// IP info endpoint for debugging
+app.get('/api/ip-info', (req, res) => {
+  res.json({
+    clientIP: req.ip,
+    forwardedFor: req.headers['x-forwarded-for'],
+    realIP: req.headers['x-real-ip'],
+    headers: req.headers
+  });
+});
+
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);

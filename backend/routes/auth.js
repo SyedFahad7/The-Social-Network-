@@ -79,10 +79,14 @@ router.post('/login', [
     // Generate token
     const token = generateToken(user._id);
 
-    // --- Redis: Mark user as live ---
-    await connectRedis();
-    await redisClient.sAdd('live_users', user._id.toString());
-    await redisClient.set(`user_last_seen:${user._id}`, Date.now());
+    // --- Redis: Mark user as live (non-blocking) ---
+    try {
+      await connectRedis();
+      await redisClient.sAdd('live_users', user._id.toString());
+      await redisClient.set(`user_last_seen:${user._id}`, Date.now());
+    } catch (redisError) {
+      console.warn('Redis operation failed (non-critical):', redisError.message);
+    }
 
     // Send response
     res.json({
@@ -132,12 +136,17 @@ router.get('/me', authenticate, asyncHandler(async (req, res) => {
 // @desc    Logout user (client-side token removal)
 // @access  Private
 router.post('/logout', authenticate, asyncHandler(async (req, res) => {
-  // --- Redis: Remove user from live set ---
-  await connectRedis();
-  if (req.user && req.user._id) {
-    await redisClient.sRem('live_users', req.user._id.toString());
-    await redisClient.del(`user_last_seen:${req.user._id}`);
+  // --- Redis: Remove user from live set (non-blocking) ---
+  try {
+    await connectRedis();
+    if (req.user && req.user._id) {
+      await redisClient.sRem('live_users', req.user._id.toString());
+      await redisClient.del(`user_last_seen:${req.user._id}`);
+    }
+  } catch (redisError) {
+    console.warn('Redis operation failed (non-critical):', redisError.message);
   }
+  
   res.json({
     success: true,
     message: 'Logged out successfully'
@@ -198,21 +207,34 @@ router.post('/change-password', [
 // @desc    Get list and count of currently live users (active in last 5 minutes)
 // @access  Private (Admin/Super Admin)
 router.get('/live-users', authenticate, asyncHandler(async (req, res) => {
-  await connectRedis();
-  const userIds = await redisClient.sMembers('live_users');
-  const now = Date.now();
-  const activeUserIds = [];
-  for (const id of userIds) {
-    const lastSeen = await redisClient.get(`user_last_seen:${id}`);
-    if (lastSeen && now - Number(lastSeen) < 5 * 60 * 1000) { // 5 minutes
-      activeUserIds.push(id);
+  try {
+    await connectRedis();
+    const userIds = await redisClient.sMembers('live_users');
+    const now = Date.now();
+    const activeUserIds = [];
+    for (const id of userIds) {
+      const lastSeen = await redisClient.get(`user_last_seen:${id}`);
+      if (lastSeen && now - Number(lastSeen) < 5 * 60 * 1000) { // 5 minutes
+        activeUserIds.push(id);
+      }
     }
+    res.json({
+      success: true,
+      data: {
+        count: activeUserIds.length,
+        userIds: activeUserIds
+      }
+    });
+  } catch (redisError) {
+    console.warn('Redis operation failed:', redisError.message);
+    res.json({
+      success: true,
+      data: {
+        count: 0,
+        userIds: []
+      }
+    });
   }
-  res.json({
-    success: true,
-    count: activeUserIds.length,
-    userIds: activeUserIds
-  });
 }));
 
 router.post('/request-reset', async (req, res) => {
