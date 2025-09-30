@@ -10,7 +10,7 @@ COPY package*.json ./
 # Install dependencies
 RUN npm ci --only=production
 
-# Copy source code (only backend files)
+# Copy source code
 COPY . .
 
 # Production stage
@@ -29,15 +29,14 @@ RUN adduser -S backend -u 1001
 COPY package*.json ./
 RUN npm ci --only=production && npm cache clean --force
 
-# Copy only backend application code
-COPY --from=builder /app/lib ./lib
-COPY --from=builder /app/middleware ./middleware
-COPY --from=builder /app/models ./models
-COPY --from=builder /app/routes ./routes
-COPY --from=builder /app/services ./services
-COPY --from=builder /app/cron ./cron
-COPY --from=builder /app/server.js ./server.js
-COPY --from=builder /app/*.js ./
+# Copy all backend application code from builder
+COPY --from=builder /app .
+
+# Remove unnecessary files from production
+RUN rm -rf node_modules/.cache \
+    && rm -rf .next \
+    && rm -f Dockerfile* \
+    && rm -f .dockerignore
 
 # Change ownership
 RUN chown -R backend:nodejs /app
